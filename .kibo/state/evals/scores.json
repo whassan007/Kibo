@@ -1,0 +1,192 @@
+{
+  "scores": [
+    {
+      "feedback_id": "FB-2026-001",
+      "boundary_violation": false,
+      "claim_integrity": true,
+      "scores": {
+        "performance": 4.2,
+        "governance": 4.5,
+        "operational": 4.0
+      },
+      "overall_score": 4.23
+    },
+    {
+      "feedback_id": "FB-2026-002",
+      "boundary_violation": false,
+      "claim_integrity": true,
+      "scores": {
+        "performance": 4.8,
+        "governance": 5.0,
+        "operational": 4.9
+      },
+      "overall_score": 4.9
+    },
+    {
+      "feedback_id": "FB-2026-003",
+      "boundary_violation": false,
+      "claim_integrity": true,
+      "scores": {
+        "performance": 4.9,
+        "governance": 5.0,
+        "operational": 4.8
+      },
+      "overall_score": 4.9
+    },
+    {
+      "feedback_id": "FB-2026-004",
+      "boundary_violation": false,
+      "claim_integrity": true,
+      "scores": {
+        "performance": 4.5,
+        "governance": 4.8,
+        "operational": 4.7
+      },
+      "overall_score": 4.67
+    },
+    {
+      "feedback_id": "FB-2026-005",
+      "boundary_violation": false,
+      "claim_integrity": true,
+      "scores": {
+        "performance": 4.7,
+        "governance": 4.6,
+        "operational": 4.8
+      },
+      "overall_score": 4.7
+    },
+    {
+      "feedback_id": "FB-2026-006",
+      "boundary_violation": false,
+      "claim_integrity": true,
+      "scores": {
+        "performance": 5.0,
+        "governance": 5.0,
+        "operational": 5.0
+      },
+      "overall_score": 5.0
+    },
+    {
+      "feedback_id": "FB-2026-007",
+      "boundary_violation": false,
+      "claim_integrity": true,
+      "scores": {
+        "performance": 4.9,
+        "governance": 5.0,
+        "operational": 4.8
+      },
+      "overall_score": 4.9
+    },
+    {
+      "feedback_id": "FB-2026-008",
+      "boundary_violation": false,
+      "claim_integrity": true,
+      "scores": {
+        "performance": 4.8,
+        "governance": 4.9,
+        "operational": 4.7
+      },
+      "overall_score": 4.8
+    },
+    {
+      "feedback_id": "FB-2026-009",
+      "boundary_violation": false,
+      "claim_integrity": true,
+      "scores": {
+        "performance": 4.6,
+        "governance": 4.8,
+        "operational": 4.5
+      },
+      "overall_score": 4.63
+    },
+    {
+      "feedback_id": "FB-2026-010",
+      "boundary_violation": false,
+      "claim_integrity": true,
+      "scores": {
+        "performance": 4.8,
+        "governance": 4.5,
+        "operational": 4.7
+      },
+      "overall_score": 4.67
+    },
+    {
+      "feedback_id": "FB-2026-011",
+      "boundary_violation": false,
+      "claim_integrity": true,
+      "scores": {
+        "performance": 5.0,
+        "governance": 5.0,
+        "operational": 5.0
+      },
+      "overall_score": 5.0
+    },
+    {
+      "feedback_id": "FB-2026-012",
+      "boundary_violation": false,
+      "claim_integrity": true,
+      "scores": {
+        "performance": 4.7,
+        "governance": 4.8,
+        "operational": 4.6
+      },
+      "overall_score": 4.7
+    },
+    {
+      "feedback_id": "FB-2026-013",
+      "boundary_violation": false,
+      "claim_integrity": true,
+      "scores": {
+        "performance": 4.9,
+        "governance": 4.9,
+        "operational": 4.8
+      },
+      "overall_score": 4.87
+    },
+    {
+      "feedback_id": "FB-2026-014",
+      "boundary_violation": false,
+      "claim_integrity": true,
+      "scores": {
+        "performance": 4.5,
+        "governance": 4.7,
+        "operational": 4.4
+      },
+      "overall_score": 4.53
+    },
+    {
+      "feedback_id": "FB-2026-015",
+      "boundary_violation": false,
+      "claim_integrity": true,
+      "scores": {
+        "performance": 5.0,
+        "governance": 5.0,
+        "operational": 5.0
+      },
+      "overall_score": 5.0
+    },
+    {
+      "feedback_id": "FB-2026-016",
+      "boundary_violation": false,
+      "claim_integrity": true,
+      "scores": {
+        "performance": 4.8,
+        "governance": 4.9,
+        "operational": 4.8
+      },
+      "overall_score": 4.83
+    },
+    {
+      "feedback_id": "FB-2026-017",
+      "boundary_violation": false,
+      "claim_integrity": true,
+      "scores": {
+        "performance": 4.9,
+        "governance": 4.8,
+        "operational": 4.9
+      },
+      "overall_score": 4.87
+    }
+  ]
+}
+

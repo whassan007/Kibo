@@ -1,0 +1,13 @@
+# Virtual environment
+.venv/
+
+# Python compiler cache
+__pycache__/
+*.pyc
+
+# OS metadata
+.DS_Store
+
+# KIBO OS runtime logs (keeps config and states)
+.kibo/logs/*.log
+.kibo/logs/brief-weekly-*.md

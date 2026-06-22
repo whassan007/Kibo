@@ -1,0 +1,28 @@
+{
+  "scout": {
+    "can_qualify": true,
+    "can_reach_out": false
+  },
+  "herald": {
+    "can_draft_brand_claims": true,
+    "can_publish": false
+  },
+  "diagnostician": {
+    "can_run_audit": true
+  },
+  "installer": {
+    "can_deploy_staging": true,
+    "can_deploy_production": false
+  },
+  "operator": {
+    "can_govern_telemetry": true
+  },
+  "steward": {
+    "can_draft_bookkeeping": true,
+    "can_sign": false
+  },
+  "forge": {
+    "can_draft_agents": true,
+    "can_promote_grants": false
+  }
+}

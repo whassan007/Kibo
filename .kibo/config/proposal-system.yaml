@@ -1,0 +1,44 @@
+proposal_system:
+  schema:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+        pattern: "^prop_[0-9a-hjkmnp-tv-z]{26}$"
+      target:
+        type: "string"
+        pattern: "^(autonomy:[a-z_]+:[a-z_]+|deployability:[a-zA-Z0-9_ -]+|brand:[a-z_]+|catalog:[a-z_-]+|pricing:[a-z_-]+|system_prompt)$"
+      rationale:
+        type: "string"
+        minLength: 10
+      diff:
+        type: "string"
+        minLength: 1
+      evidence:
+        type: "array"
+        items:
+          type: "string"
+        minItems: 1
+      expected_effect:
+        type: "object"
+        properties:
+          cac:
+            type: "string"
+            pattern: "^-?[0-9]+%$"
+          gates_per_deployment:
+            type: "string"
+            pattern: "^-?[0-9]+$"
+          founder_dependence:
+            type: "string"
+            enum: ["high", "medium", "low", "none"]
+        required: ["cac", "gates_per_deployment", "founder_dependence"]
+      semver_bump:
+        type: "string"
+        enum: ["patch", "minor", "major"]
+      status:
+        type: "string"
+        enum: ["proposed", "reviewed", "promoted", "rejected"]
+    required: ["id", "target", "rationale", "diff", "evidence", "expected_effect", "semver_bump", "status"]
+  gates:
+    promotion: "human_only"
+    validation: "regression_test_pass"

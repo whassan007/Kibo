@@ -1,0 +1,5 @@
+corrections:
+  - id: "corr_01"
+    issue: "Tailscale DNS propagation latency"
+    action: "Configure DNS local fallback caching (e.g. systemd-resolved local cache) on staging and production host nodes to prevent Layer 2 tailscale mesh startup delays."
+    status: "promoted"

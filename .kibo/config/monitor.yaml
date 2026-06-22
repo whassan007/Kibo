@@ -1,0 +1,11 @@
+monitor_drift_layer:
+  triggers:
+    - name: "degraded_evals"
+      condition: "eval_score < 4.0"
+      action: "escalate_to_human"
+    - name: "safety_drift"
+      condition: "boundary_violation == true"
+      action: "halt_autonomy"
+    - name: "high_cac"
+      condition: "cac_metric > budget_cac"
+      action: "alert_marketing"

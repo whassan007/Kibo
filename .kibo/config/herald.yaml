@@ -1,0 +1,18 @@
+herald_crew:
+  objective: "Lower Cost-to-Acquire-and-Trust (CAC) per deployment through category authority and proof artifacts."
+  brand_voice:
+    category_exclusive: true
+    prevent_unverified_claims: true
+    use_placeholders: false
+  category_content:
+    strategic_focus: "mid-market operations scaling"
+    proof_artifacts:
+      - "kibo://proof"
+      - "kibo://company/profile"
+  claim_library:
+    - claim: "Operate like a company 10x your size without 10x headcount"
+      evidence_source: "kibo://feedback/log"
+      verified: true
+    - claim: "Sovereign in-boundary agent deployment reduces compliance overhead"
+      evidence_source: "kibo://catalog"
+      verified: true

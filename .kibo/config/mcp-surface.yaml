@@ -1,0 +1,21 @@
+uri_mappings:
+  kibo://company/profile: ".kibo/state/company.yaml"
+  kibo://brand/category: ".kibo/state/brand.yaml"
+  kibo://growth/pipeline: ".kibo/state/growth/pipeline.jsonl"
+  kibo://clients: ".kibo/state/clients/"
+  kibo://deployments: ".kibo/state/deployments/"
+  kibo://architecture/current: ".kibo/state/architecture/current.yaml"
+  kibo://catalog: ".kibo/state/catalog.yaml"
+  kibo://proof: ".kibo/state/proof/"
+  kibo://autonomy/grants: ".kibo/state/autonomy/grants.json"
+  kibo://deployability/ladder: ".kibo/state/deployability/ladder.json"
+  kibo://corrections: ".kibo/state/corrections.yaml"
+  kibo://feedback/log: ".kibo/state/feedback/log.md"
+  kibo://evals/scores: ".kibo/state/evals/scores.json"
+  kibo://prompt/active: ".kibo/state/prompt/active.yaml"
+  kibo://proposals: ".kibo/state/proposals/"
+  kibo://proposals/draft: ".kibo/state/proposals/draft/"
+  kibo://queue: ".kibo/state/queue.json"
+surface_rules:
+  read_only_on_down_state: true
+  verify_grant_before_client_touch: true

@@ -1,0 +1,16 @@
+{
+  "id": "prop_01hqforgeautonomy123456700",
+  "target": "autonomy:forge:can_promote_grants",
+  "rationale": "Allow the Forge crew to autonomously promote verified helper grants when regression tests pass, lowering manual gates.",
+  "diff": "Change grants.json -> forge.can_promote_grants from false to true.",
+  "evidence": [
+    "FB-2026-017 verifies the Forge crew successfully generates valid SKILL.md config templates without errors."
+  ],
+  "expected_effect": {
+    "cac": "-5%",
+    "gates_per_deployment": "-1",
+    "founder_dependence": "medium"
+  },
+  "semver_bump": "minor",
+  "status": "proposed"
+}

@@ -1,0 +1,16 @@
+{
+  "id": "prop_01hq1234567890abcdefghjk00",
+  "target": "autonomy:scout:can_reach_out",
+  "rationale": "Approve scout crew autonomy expansion to automatically reach out to qualified healthcare C-suite targets to decrease the Acquire phase cycle times.",
+  "diff": "Change grants.json -> scout.can_reach_out from false to true.",
+  "evidence": [
+    "FB-2026-005 documents positive PE operating partner feedback on healthcare wedge category positioning."
+  ],
+  "expected_effect": {
+    "cac": "-15%",
+    "gates_per_deployment": "-1",
+    "founder_dependence": "low"
+  },
+  "semver_bump": "minor",
+  "status": "proposed"
+}

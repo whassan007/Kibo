@@ -1,0 +1,40 @@
+deployment_flow:
+  metadata:
+    description: "KIBO OS W-Method 7-Layer deployment flow"
+    note: "All steps with gate_type: human automatically route their required actions to the judgment queue (queue.for_human) for manual operator authorization."
+  steps:
+    1:
+      name: "Attract"
+      crew: "herald"
+      gate: "none"
+      gate_type: "none"
+    2:
+      name: "Acquire"
+      crew: "scout"
+      gate: "human_handshake"
+      gate_type: "human"
+    3:
+      name: "Diagnose"
+      crew: "diagnostician"
+      gate: "audit_report_generation"
+      gate_type: "artifact"
+    4:
+      name: "Agree"
+      crew: "steward"
+      gate: "human_signs_terms"
+      gate_type: "human"
+    5:
+      name: "Install"
+      crew: "installer"
+      gate: "human_approves_production"
+      gate_type: "human"
+    6:
+      name: "Operate"
+      crew: "operator"
+      gate: "telemetry_baseline"
+      gate_type: "artifact"
+    7:
+      name: "Compound"
+      crew: "forge"
+      gate: "human_promotes_proposal"
+      gate_type: "human"

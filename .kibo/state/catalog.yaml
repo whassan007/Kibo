@@ -1,0 +1,50 @@
+modules:
+  - id: "kibo-net"
+    name: "KIBO Net"
+    layer: 2
+    description: "Zero-trust, isolated transport layer using Tailscale mesh & Firewalla filtering."
+    status: "productized"
+    reuse_count: 0
+    eval_score: 5.0
+  - id: "kibo-rag"
+    name: "KIBO Knowledge"
+    layer: 3
+    description: "In-boundary grounding with vector databases, embeddings, and parsers."
+    status: "productized"
+    reuse_count: 0
+    eval_score: 5.0
+  - id: "kibo-gateway"
+    name: "KIBO Gateway"
+    layer: 4
+    description: "Cheapest-capable routing model services via local Ollama and vLLM."
+    status: "productized"
+    reuse_count: 0
+    eval_score: 5.0
+  - id: "kibo-connect"
+    name: "KIBO Connect"
+    layer: 5
+    description: "Protocol & interface connective tissue linking MCP servers safely."
+    status: "productized"
+    reuse_count: 0
+    eval_score: 5.0
+  - id: "kibo-telemetry"
+    name: "KIBO Telemetry"
+    layer: 6
+    description: "Observability and chain-of-custody metrics against baselines."
+    status: "productized"
+    reuse_count: 0
+    eval_score: 5.0
+  - id: "regentic"
+    name: "Regentic"
+    layer: 7
+    description: "Productized vertical orchestration agent."
+    status: "harvested"
+    reuse_count: 0
+    eval_score: 5.0
+  - id: "wfair"
+    name: "WFair"
+    layer: 7
+    description: "Productized vertical compliance orchestration agent."
+    status: "harvested"
+    reuse_count: 0
+    eval_score: 5.0

@@ -1,0 +1,43 @@
+scout_crew:
+  targets:
+    primary_wedge: "healthcare"
+    expansion_targets:
+      - "financial_services"
+      - "legal"
+      - "professional"
+    headcount_filter:
+      min_employees: 50
+      max_employees: 500
+  qualification_rubric:
+    inputs:
+      sector_match:
+        description: "1.0 if primary wedge, 0.5 if expansion, 0.0 otherwise"
+        type: "float"
+        range: [0.0, 1.0]
+      fit_score:
+        description: "1.0 if headcount is in [50, 500], 0.0 otherwise"
+        type: "float"
+        range: [0.0, 1.0]
+      decision_maker_access:
+        description: "1.0 if PE operating partner or target C-suite is accessible, 0.0 otherwise"
+        type: "float"
+        range: [0.0, 1.0]
+    formula: "sector_match * 0.5 + fit_score * 0.3 + decision_maker_access * 0.2"
+    threshold: 0.7
+  pe_channel_rubric:
+    inputs:
+      ebitda_lift:
+        description: "1.0 if expected EBITDA lift >= 0.15, 0.0 otherwise"
+        type: "float"
+        range: [0.0, 1.0]
+      exit_multiple_expansion:
+        description: "1.0 if expected exit multiple expansion >= 0.5 (0.5x), 0.0 otherwise"
+        type: "float"
+        range: [0.0, 1.0]
+      portfolio_synergy:
+        description: "1.0 if portfolio synergy/portability score >= 0.7, 0.0 otherwise"
+        type: "float"
+        range: [0.0, 1.0]
+    formula: "ebitda_lift * 0.4 + exit_multiple_expansion * 0.3 + portfolio_synergy * 0.3"
+    threshold: 0.7
+

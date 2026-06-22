@@ -1,0 +1,5 @@
+version: "5.0.0"
+thesis: "KIBO OS is the operating system we install into mid-tier companies so they run like they're 10x their size — delivered by agents, proven on ourselves"
+deployment_target: "MCP server / always-on service"
+last_updated: "2026-06-21T21:22:11-07:00"
+status: "active"

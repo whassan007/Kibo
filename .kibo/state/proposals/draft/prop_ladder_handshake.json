@@ -1,0 +1,16 @@
+{
+  "id": "prop_01hq9876543210zyxwvutsrq00",
+  "target": "deployability:Initial PE handshake",
+  "rationale": "Automate Initial PE handshake qualification stage utilizing the scout crew. Shift owner from waël-only to agent with manual steward check, lowering manual gates.",
+  "diff": "Change deployability/ladder.json step 'Initial PE handshake' owner from 'waël-only' to 'agent'.",
+  "evidence": [
+    "FB-2026-005 PE qualification success rates match manual baseline."
+  ],
+  "expected_effect": {
+    "cac": "-10%",
+    "gates_per_deployment": "-1",
+    "founder_dependence": "low"
+  },
+  "semver_bump": "minor",
+  "status": "proposed"
+}

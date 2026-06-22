@@ -1,0 +1,44 @@
+{
+  "steps": [
+    {
+      "step": "Identify targets",
+      "owner": "agent"
+    },
+    {
+      "step": "Qualify target details",
+      "owner": "agent"
+    },
+    {
+      "step": "Initial PE handshake",
+      "owner": "waël-only"
+    },
+    {
+      "step": "Run W-Method Audit",
+      "owner": "agent"
+    },
+    {
+      "step": "Design Install Plan",
+      "owner": "agent"
+    },
+    {
+      "step": "Sign Agreement",
+      "owner": "waël-only"
+    },
+    {
+      "step": "Deploy modules to staging",
+      "owner": "agent"
+    },
+    {
+      "step": "Approve production cutover",
+      "owner": "waël-only"
+    },
+    {
+      "step": "Operate and monitor telemetry",
+      "owner": "agent"
+    },
+    {
+      "step": "Autonomy promotions",
+      "owner": "waël-only"
+    }
+  ]
+}
