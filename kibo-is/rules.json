@@ -1,0 +1,12 @@
+[
+  {
+    "rule_id": "rule-999",
+    "condition": {
+      "client": "FinServe LLC",
+      "type": "Vendor",
+      "jurisdiction": "US"
+    },
+    "action": "auto-approve",
+    "human_reasoning": "Standard SCCs present. Governed by prior DPA."
+  }
+]
