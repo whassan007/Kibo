@@ -331,7 +331,7 @@ def validate_schema(workspace_dir):
 
     # 2. States
     state_dir = os.path.join(workspace_dir, '.kibo/state')
-    for relative_path in ['company.yaml', 'brand.yaml', 'catalog.yaml', 'corrections.yaml', 'prompt/active.yaml', 'autonomy/grants.json', 'deployability/ladder.json', 'evals/scores.json', 'growth/pipeline.jsonl']:
+    for relative_path in ['company.yaml', 'brand.yaml', 'catalog.yaml', 'corrections.yaml', 'changelog.md', 'prompt/active.yaml', 'autonomy/grants.json', 'deployability/ladder.json', 'evals/scores.json', 'growth/pipeline.jsonl']:
         file_path = os.path.join(state_dir, relative_path)
         if not os.path.exists(file_path):
             failures.append((relative_path, f"File does not exist: {file_path}"))

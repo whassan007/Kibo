@@ -2,6 +2,10 @@
 
 @layer base {
   body {
-    @apply bg-white text-black font-sans antialiased selection:bg-black selection:text-white;
+    @apply bg-[#FAFAFA] text-[#111827] antialiased selection:bg-blue-600 selection:text-white;
+    font-family: 'Inter', sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
   }
 }

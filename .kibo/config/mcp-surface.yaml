@@ -10,6 +10,7 @@ uri_mappings:
   kibo://autonomy/grants: ".kibo/state/autonomy/grants.json"
   kibo://deployability/ladder: ".kibo/state/deployability/ladder.json"
   kibo://corrections: ".kibo/state/corrections.yaml"
+  kibo://changelog: ".kibo/state/changelog.md"
   kibo://feedback/log: ".kibo/state/feedback/log.md"
   kibo://evals/scores: ".kibo/state/evals/scores.json"
   kibo://prompt/active: ".kibo/state/prompt/active.yaml"

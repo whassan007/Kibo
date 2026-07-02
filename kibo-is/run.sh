@@ -4,16 +4,16 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PID_FILE="$DIR/uvicorn.pid"
 LOG_FILE="$DIR/uvicorn.log"
-PYTHON_BIN="/Users/iceman/Documents/Code/Kibo/.venv/bin/python"
+PYTHON_BIN="$DIR/../.venv/bin/python"
 
 start() {
-    if [ -f "$PID_FILE" ] && kill -0 $(cat "$PID_FILE") 2>/dev/null; then
-        echo "KIBO.IS is already running with PID $(cat $PID_FILE)"
+    if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+        echo "KIBO.IS is already running with PID $(cat "$PID_FILE")"
         return 1
     fi
     echo "Starting KIBO.IS FastAPI backend..."
     cd "$DIR"
-    nohup "$PYTHON_BIN" -m uvicorn agent_gateway:app --host 0.0.0.0 --port 8000 > "$LOG_FILE" 2>&1 &
+    nohup "$PYTHON_BIN" -u -m uvicorn agent_gateway:app --host 0.0.0.0 --port 8000 > "$LOG_FILE" 2>&1 &
     PID=$!
     echo $PID > "$PID_FILE"
     sleep 2
@@ -37,8 +37,8 @@ stop() {
 }
 
 status() {
-    if [ -f "$PID_FILE" ] && kill -0 $(cat "$PID_FILE") 2>/dev/null; then
-        echo "KIBO.IS is RUNNING (PID $(cat $PID_FILE))"
+    if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+        echo "KIBO.IS is RUNNING (PID $(cat "$PID_FILE"))"
         tail -n 10 "$LOG_FILE"
     else
         echo "KIBO.IS is STOPPED"

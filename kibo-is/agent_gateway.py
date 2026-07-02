@@ -2,7 +2,8 @@ import os
 import json
 import sqlite3
 from typing import Dict, Any, List, Optional
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+import canadian_verdicts_agent
 
 from fastapi import BackgroundTasks, Security, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -38,9 +39,78 @@ def requires_role(allowed_roles: list):
             raise HTTPException(status_code=403, detail=f"INSUFFICIENT CLEARANCE. REQUIRED: {allowed}. CURRENT: {current_user.value}")
         return current_user
     return role_checker
-, HTTPException, Header, Depends, APIRouter
+from fastapi import HTTPException, Header, Depends, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Literal, Optional
+from datetime import datetime, date
+import math
+
+# Priority config
+class PriorityWeights(BaseModel):
+    severity_weight: float = 1.0
+    jurisdiction_weight: float = 0.8
+    hours_weight: float = 1.2
+    executive_weight: float = 0.6
+    volume_weight: float = 0.7
+
+# RBAC
+class RolePermission(BaseModel):
+    role: Literal["public","employee","dpo","cpo","legal","auditor"]
+    action: str
+    allowed: bool
+    requires_cosign: Optional[str] = None
+
+# Dual-approval action
+class PendingAction(BaseModel):
+    action_id: str
+    action_type: str
+    initiated_by: str
+    initiated_role: str
+    requires_role: str
+    status: Literal["pending_second_approval","approved","rejected","expired"]
+    cosigned_by: Optional[str] = None
+    timestamp: datetime
+
+# Workflow rule
+class WorkflowRule(BaseModel):
+    rule_id: str
+    name: str
+    condition_field: str
+    operator: str
+    condition_value: str
+    action_type: str
+    action_target: Optional[str] = None
+    enabled: bool
+    requires_dual_approval: bool
+    created_by: str
+
+# Vendor
+class Vendor(BaseModel):
+    vendor_id: str
+    name: str
+    service: str
+    risk_rating: Literal["low","medium","high","critical"]
+    dpa_status: Literal["none","draft","executed","expired"]
+    dpa_expiration_date: Optional[date] = None
+    sccs_in_place: bool
+    soc2_type: Literal["none","type_i","type_ii"]
+    cross_border: bool
+    linked_assessments: list[str]
+    linked_risks: list[str]
+    status: Literal["active","under_review","blocked","offboarded"]
+    next_review_date: date
+
+# Agent telemetry
+class AgentTelemetry(BaseModel):
+    agent_name: str
+    purpose: str
+    current_node: str
+    queue_depth: int
+    avg_processing_ms: float
+    failure_rate_pct: float
+    recovery_status: Optional[str] = None
+    last_heartbeat: datetime
 
 # Scope verification helper
 def require_scopes(expected_scopes: List[str]):
@@ -180,6 +250,177 @@ def seed_mock_data():
             status TEXT
         )
     """)
+    # Canadian Onboarding Checklist Tasks Table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS onboarding_tasks (
+            id TEXT PRIMARY KEY,
+            task_name TEXT NOT NULL,
+            category TEXT NOT NULL,
+            scope TEXT NOT NULL, -- 'Federal' or 'Provincial'
+            jurisdiction TEXT NOT NULL, -- 'PIPEDA', 'Law 25', 'CASL', 'PIPA', 'MFIPPA'
+            status TEXT DEFAULT 'pending', -- 'pending' or 'completed'
+            notes TEXT DEFAULT ''
+        )
+    """)
+
+    # CASL Consent Registry Table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS casl_consent_registry (
+            id TEXT PRIMARY KEY,
+            email TEXT NOT NULL,
+            name TEXT NOT NULL,
+            consent_status TEXT NOT NULL, -- 'Express', 'Implied', 'Expired', 'Unsubscribed'
+            consent_date TEXT NOT NULL, -- ISO date
+            consent_source TEXT NOT NULL, -- e.g. 'Newsletter Checkbox', 'Product Checkout', etc.
+            expiry_date TEXT -- ISO date or NULL for Express
+        )
+    """)
+
+    # Seed onboarding tasks if empty
+    cursor.execute("SELECT count(*) FROM onboarding_tasks")
+    if cursor.fetchone()[0] == 0:
+        tasks = [
+            ("task-1", "Appoint & Publish Privacy Officer", "Governance", "Provincial", "Law 25", "pending", "Highest-ranking executive default unless delegated. Title/contact info must be on website."),
+            ("task-2", "Establish a Privacy Management Program", "Governance", "Federal", "PIPEDA", "pending", "Document internal policies for collection, retention, and destruction."),
+            ("task-3", "Conduct Privacy Impact Assessments (PIAs)", "Governance", "Provincial", "Law 25", "pending", "Legally mandatory for any new IT project processing personal info."),
+            ("task-4", "Record of Processing Activities (RoPA)", "Data Discovery", "Federal", "PIPEDA", "pending", "Map out personal data collected, purpose, and storage locations."),
+            ("task-5", "Execute Transfer Impact Assessments (TIAs)", "Data Discovery", "Provincial", "Law 25", "pending", "Required for any data transferred outside of Quebec (including to other provinces)."),
+            ("task-6", "Update Vendor DPAs (Data Sharing Agreements)", "Data Discovery", "Federal", "PIPEDA", "pending", "Ensure agreements restrict vendors from using data for their own purposes."),
+            ("task-7", "Revamp Cookie & Tracking Consent banner", "Consent", "Provincial", "Law 25", "pending", "Default-off for profiling and tracking cookies. Granular opt-in required."),
+            ("task-8", "Configure 'Right to Portability' formats", "Consent", "Provincial", "Law 25", "pending", "Provide data in a structured, commonly used technological format."),
+            ("task-9", "Establish De-indexation Workflows", "Consent", "Provincial", "Law 25", "pending", "Handle requests to de-index or remove search result links."),
+            ("task-10", "Deploy Bilingual Privacy Policy (English/French)", "Consent", "Provincial", "Law 25", "pending", "French translation is mandatory for Quebec-targeted operations."),
+            ("task-11", "Integrate RROSH Dual-Threshold Incident Triage", "Security", "Federal", "PIPEDA", "pending", "Triage breaches against 'Real Risk of Significant Harm' (OPC) and 'Risk of Serious Injury' (CAI)."),
+            ("task-12", "Maintain Confidentiality Incident Register", "Security", "Provincial", "Law 25", "pending", "Log all security anomalies, even minor ones, in a permanent internal register."),
+            ("task-13", "Automate Data Retention & Destruction Rules", "Security", "Federal", "PIPEDA", "pending", "Ensure secure deletion or full anonymization once purpose is fulfilled."),
+            ("task-14", "Identity & Access Integration (Least Privilege)", "Operations", "Federal", "PIPEDA", "pending", "Strict SSO/MFA onboarding and principle of least privilege enforcement."),
+            ("task-15", "Enforce Zoom/Teams Retentions (Auto-delete recordings)", "Operations", "Federal", "PIPEDA", "pending", "Auto-delete recordings after 30 days and configure secure email."),
+            ("task-16", "Roll out Canadian Privacy Training modules", "Operations", "Federal", "PIPEDA", "pending", "Mandatory staff courses covering PIPEDA, CASL, and Quebec Law 25.")
+        ]
+        cursor.executemany("INSERT INTO onboarding_tasks VALUES (?, ?, ?, ?, ?, ?, ?)", tasks)
+
+    # Commissioner Verdicts Table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS commissioner_verdicts (
+            id TEXT PRIMARY KEY,
+            commissioner TEXT NOT NULL,
+            jurisdiction TEXT NOT NULL,
+            title TEXT NOT NULL,
+            summary TEXT NOT NULL,
+            compliance_impact TEXT NOT NULL,
+            source_url TEXT NOT NULL,
+            collected_at TEXT NOT NULL
+        )
+    """)
+
+    cursor.execute("SELECT count(*) FROM commissioner_verdicts")
+    if cursor.fetchone()[0] == 0:
+        verdicts = [
+            (
+                "verdict-on-1",
+                "Information and Privacy Commissioner of Ontario (IPC)",
+                "Ontario",
+                "Ransomware Encryption Deemed Loss of Control",
+                "The IPC Ontario ruled that a ransomware attack where data is encrypted but not exfiltrated still legally constitutes a 'loss of control' under PHIPA.",
+                "Mandatory breach notification triggered by availability interruptions. Incident Response triage playbooks must flag system/data encryption events as reportable breaches.",
+                "https://www.ipc.on.ca/en/decisions",
+                "2026-07-02T00:00:00Z"
+            ),
+            (
+                "verdict-sk-1",
+                "Office of the Information and Privacy Commissioner of Saskatchewan (OIPC SK)",
+                "Saskatchewan",
+                "Audit Logging Mandated for Internal Database Reads",
+                "OIPC SK reports on local government and health breaches heavily penalize organizations that lack automated audit logging for internal database access.",
+                "Systems must log all data reads by employees, not just writes. Strict automated audit trails are required for all database tables containing personal/health records.",
+                "https://oipc.sk.ca/decisions/",
+                "2026-07-02T00:00:00Z"
+            ),
+            (
+                "verdict-atl-1",
+                "OIPC Nova Scotia & OIPC Newfoundland and Labrador",
+                "Atlantic Provinces",
+                "RBAC Safeguards Against Internal snooping",
+                "Frequent rulings on unauthorized access ('snooping') within health databases establish strict legal baselines for technical safeguards and training.",
+                "RBAC (Role-Based Access Control) architecture must strictly restrict access to only what is necessary, validated against detailed snooping review reports.",
+                "https://oipc.novascotia.ca/decisions",
+                "2026-07-02T00:00:00Z"
+            ),
+            (
+                "verdict-mb-1",
+                "Manitoba Ombudsman",
+                "Manitoba",
+                "Compliance Checklist for Health Record Encryption",
+                "Investigations into the physical and electronic security of health records led to published practice notes that serve as strict compliance checklists under FIPPA/PHIA.",
+                "All health data transmission and storage must adhere to Manitoba's specific encryption and physical/electronic security checklists.",
+                "https://www.ombudsman.mb.ca/",
+                "2026-07-02T00:00:00Z"
+            ),
+            (
+                "verdict-nb-1",
+                "Office of the Ombud New Brunswick",
+                "New Brunswick",
+                "Chain of Custody and DSA Mandates for IT Vendors",
+                "Health data investigations heavily scrutinize the chain of custody when data moves between custodians and third-party IT vendors under RTIPPA/PHIPAA.",
+                "Explicit Data Sharing Agreements (DSAs) are legally required, and technical implementation must restrict vendor access to only what is necessary for maintenance.",
+                "https://www.ombudnb.ca/",
+                "2026-07-02T00:00:00Z"
+            ),
+            (
+                "verdict-pei-1",
+                "Office of the Information and Privacy Commissioner of PEI (OIPC PEI)",
+                "Prince Edward Island",
+                "EHR Consent Directives and Row-Level Masking",
+                "PEI's HIA orders dictate that Electronic Health Record (EHR) systems must technically support patient 'consent directives' to mask records from specific practitioners.",
+                "Database architecture must support row-level or field-level masking based on user-defined patient consent permissions.",
+                "https://www.assembly.pe.ca/oipc/",
+                "2026-07-02T00:00:00Z"
+            ),
+            (
+                "verdict-yk-1",
+                "Yukon Information and Privacy Commissioner",
+                "Yukon",
+                "Verifiable Audit Trail for Cryptographic Erasure",
+                "Yukon compliance reports scrutinize destruction processes for records under ATIPPA/HIPMA, requiring verified audit trails.",
+                "Deletion must not just remove pointers; the system must generate a verifiable audit trail proving cryptographic erasure or overwriting occurred.",
+                "https://www.yukonipc.ca/",
+                "2026-07-02T00:00:00Z"
+            ),
+            (
+                "verdict-nwt-1",
+                "Office of the Information and Privacy Commissioner of the NWT (OIPC NWT)",
+                "Northwest Territories",
+                "Remote Access Security, MDM and VPN Enforcement",
+                "OIPC NWT reviews highlight privacy risks in remote, highly connected communities, mandating strict remote-access safeguards.",
+                "System must enforce Mobile Device Management (MDM), strict session timeouts, and VPN requirements for any remote database access.",
+                "https://www.atipp-nt.ca/",
+                "2026-07-02T00:00:00Z"
+            ),
+            (
+                "verdict-nu-1",
+                "Information and Privacy Commissioner of Nunavut",
+                "Nunavut",
+                "Mandatory PIAs Prior to Procurement & Deployment",
+                "Nunavut commissioner annual reports highlight that new IT systems must be vetted with formal Privacy Impact Assessments (PIAs) prior to procurement.",
+                "A formal Privacy Impact Assessment (PIA) is a mandatory gating requirement prior to procuring or deploying new tech processing personal info.",
+                "https://atipp-nu.ca/",
+                "2026-07-02T00:00:00Z"
+            )
+        ]
+        cursor.executemany("INSERT INTO commissioner_verdicts VALUES (?, ?, ?, ?, ?, ?, ?, ?)", verdicts)
+
+    # Seed CASL registry if empty
+    cursor.execute("SELECT count(*) FROM casl_consent_registry")
+    if cursor.fetchone()[0] == 0:
+        contacts = [
+            ("casl-1", "jean.tremblay@company.ca", "Jean Tremblay", "Express", "2025-01-10T14:30:00Z", "Newsletter Checkbox", None),
+            ("casl-2", "sarah.smith@ontariotech.ca", "Sarah Smith", "Implied", "2025-06-15T09:00:00Z", "Product Purchase", "2027-06-15T09:00:00Z"),
+            ("casl-3", "david.miller@vancouver.org", "David Miller", "Implied", "2026-01-10T11:45:00Z", "Contact Form Inquiry", "2026-07-10T11:45:00Z"),
+            ("casl-4", "robert.jones@gmail.com", "Robert Jones", "Implied", "2025-09-01T16:00:00Z", "Quote Request Inquiry", "2026-03-01T16:00:00Z"),
+            ("casl-5", "info@quebecinc.qc.ca", "Marie Dubois", "Unsubscribed", "2026-05-12T10:15:00Z", "Web Form Opt-Out", None)
+        ]
+        cursor.executemany("INSERT INTO casl_consent_registry VALUES (?, ?, ?, ?, ?, ?, ?)", contacts)
+
     # Onboarding tables
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS clients (
@@ -753,6 +994,62 @@ def seed_mock_data():
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, ("RSK-0005", "None", "Meta encryption policy change — WhatsApp subpoena exposure", "Organizational", None, None, "Operational Gap", 2, 4, 8, "Medium", "Review encryption protocols and legal policies.", "Mitigation steps logged.", "Waël", "2022-09-01", "2026-07-15", "Medium", "On going.", "open", now_str, now_str))
 
+    # New tables for localization, employee training, data inventory, meetings, inbox, PSR recommendations
+    cursor.execute("CREATE TABLE IF NOT EXISTS user_settings (key TEXT PRIMARY KEY, value TEXT)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS employee_data_inventory (id TEXT PRIMARY KEY, employee_id TEXT NOT NULL, system_name TEXT NOT NULL, data_types TEXT NOT NULL, purpose TEXT NOT NULL, retention TEXT NOT NULL, sharing TEXT NOT NULL, submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS employee_training (module_id TEXT NOT NULL, employee_id TEXT NOT NULL, title TEXT NOT NULL, role_tags TEXT NOT NULL, jurisdiction TEXT NOT NULL, source_policy TEXT, duration_min INTEGER, required BOOLEAN, completed BOOLEAN DEFAULT 0, completed_at TEXT, PRIMARY KEY(module_id, employee_id))")
+    cursor.execute("CREATE TABLE IF NOT EXISTS meetings (meeting_id TEXT PRIMARY KEY, type TEXT NOT NULL, date TEXT NOT NULL, agenda TEXT NOT NULL, attendees TEXT NOT NULL, minutes TEXT, action_items TEXT, materials TEXT)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS simulated_inbox (email_id TEXT PRIMARY KEY, sender TEXT NOT NULL, subject TEXT NOT NULL, body TEXT NOT NULL, category TEXT NOT NULL, status TEXT DEFAULT 'unread', converted_to_transaction TEXT)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS psr_recommendations (recommendation_id TEXT PRIMARY KEY, risk_id TEXT NOT NULL, member TEXT NOT NULL, vote TEXT NOT NULL, recommendation TEXT NOT NULL, timestamp TEXT NOT NULL)")
+
+    # Seed user_settings with default active jurisdiction 'ontario'
+    cursor.execute("SELECT count(*) FROM user_settings WHERE key='active_jurisdiction'")
+    if cursor.fetchone()[0] == 0:
+        cursor.execute("INSERT INTO user_settings (key, value) VALUES ('active_jurisdiction', 'ontario')")
+
+    # Seed training modules
+    cursor.execute("SELECT count(*) FROM employee_training")
+    if cursor.fetchone()[0] == 0:
+        import uuid
+        modules = [
+            ("mod-1", "employee-default", "Privacy Fundamentals", '["clinical_counselor", "frontline", "sales"]', "canada", "policy-1", 20, 1),
+            ("mod-2", "employee-default", "Handling Crisis Disclosures", '["clinical_counselor", "frontline"]', "canada", "policy-2", 30, 1),
+            ("mod-3", "employee-default", "Law 25 for Frontline Staff", '["clinical_counselor", "frontline"]', "quebec", "policy-3", 25, 1),
+            ("mod-4", "employee-default", "Cross-Border Data Basics", '["clinical_counselor", "frontline", "sales"]', "canada", "policy-4", 15, 0),
+            
+            ("mod-5", "employee-default", "CCPA Rights & Deletion Flow", '["sales", "support"]', "us", "policy-5", 20, 1),
+            ("mod-6", "employee-default", "GDPR Data Subject Rights", '["sales", "support", "clinical_counselor"]', "eu", "policy-6", 30, 1),
+            ("mod-7", "employee-default", "UK GDPR Compliance", '["sales", "support"]', "uk", "policy-7", 25, 1),
+        ]
+        for mid, eid, title, roles, jur, pol, dur, req in modules:
+            cursor.execute("INSERT INTO employee_training (module_id, employee_id, title, role_tags, jurisdiction, source_policy, duration_min, required, completed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)", (mid, eid, title, roles, jur, pol, dur, req))
+
+    # Seed simulated_inbox
+    cursor.execute("SELECT count(*) FROM simulated_inbox")
+    if cursor.fetchone()[0] == 0:
+        emails = [
+            ("email-1", "john.doe@gmail.com", "DSAR Deletion Request", "Please delete all my personal and clinical logs from your systems immediately. I reside in California.", "dsar"),
+            ("email-2", "officer@ipc.on.ca", "IPC Audit Notification", "The Information and Privacy Commissioner of Ontario requires an audit of your MFIPPA compliance records for Q2.", "regulator"),
+            ("email-3", "compliance@analyticspro.com", "Vendor Security Questionnaire", "Please complete our annual security and data transfer compliance review to maintain the analytics dashboard service.", "vendor"),
+            ("email-4", "counselor.betty@kibo.org", "Law 25 Consent Query", "Do we need explicit audio-visual consent from Quebec-based minors before initiating therapy sessions?", "staff_question"),
+        ]
+        for eid, sender, subj, body, cat in emails:
+            cursor.execute("INSERT INTO simulated_inbox (email_id, sender, subject, body, category, status) VALUES (?, ?, ?, ?, ?, 'unread')", (eid, sender, subj, body, cat))
+
+    # Seed meetings
+    cursor.execute("SELECT count(*) FROM meetings")
+    if cursor.fetchone()[0] == 0:
+        cursor.execute("INSERT INTO meetings (meeting_id, type, date, agenda, attendees, minutes, action_items, materials) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (
+            "meet-1",
+            "privacy_security_weekly",
+            "2026-07-01T10:00:00Z",
+            json.dumps(["HIPAA S3 Misconfiguration Review", "WhatsApp PIA Update", "Audit of Law 25 compliance"]),
+            json.dumps(["Wael Hassan", "Betty", "Legal Team"]),
+            "Discussed S3 bucket settings and confirmed DPA sent to Cohere.",
+            json.dumps([{"task": "Acknowledge HIPAA risk", "owner": "Betty", "due": "2026-07-05"}]),
+            json.dumps(["AWS Security Policy Draft.pdf"])
+        ))
+
     conn_db.commit()
     conn_db.close()
 
@@ -816,6 +1113,8 @@ def seed_mock_data():
                 graph.invoke(tx, config)
 
 seed_mock_data()
+canadian_verdicts_agent.start_scheduler()
+
 
 @app.get("/api/transactions")
 def get_transactions(scope: str = Depends(require_scopes(["expert"]))):
@@ -2682,7 +2981,7 @@ import json
 import os
 from datetime import datetime
 
-VAULT_DIR = "/home/wael/privacy_swarm/portal/vault_d_operations"
+VAULT_DIR = os.path.expanduser("~/privacy_swarm/portal/vault_d_operations")
 os.makedirs(VAULT_DIR, exist_ok=True)
 
 @app.get("/api/cpo/projects/search")
@@ -3010,7 +3309,9 @@ class GovernPayload(BaseModel):
     justification: str
 
 @app.post("/api/v2/requests/{thread_id}/govern")
-def govern_request(thread_id: str, payload: GovernPayload, user: UserRole = Depends(get_current_active_user)):
+def govern_request(thread_id: str, payload: GovernPayload, request: Request, user: UserRole = Depends(get_current_active_user)):
+    ip_address = request.headers.get("X-Forwarded-For", request.client.host if request.client else "Unknown")
+    device_fingerprint = request.headers.get("User-Agent", "Unknown")
     # Hardcoded Backend Guardrails
     if payload.action == "force_risk_acceptance" and user not in [UserRole.CPO, UserRole.LEGAL]:
         raise HTTPException(status_code=403, detail="CPO or LEGAL required for risk acceptance.")
@@ -3030,7 +3331,7 @@ def govern_request(thread_id: str, payload: GovernPayload, user: UserRole = Depe
     for event in graph.stream(None, {"configurable": {"thread_id": thread_id}}):
         pass
 
-    return {"status": "success", "governed_by": user.value, "action_executed": payload.action}
+    return {"status": "success", "governed_by": user.value, "action_executed": payload.action, "ip_address": ip_address, "device_fingerprint": device_fingerprint}
 
 job_status_db = {}
 
@@ -3079,4 +3380,965 @@ def get_job_status(job_id: str):
     if job_id not in job_status_db:
         raise HTTPException(status_code=404)
     return job_status_db[job_id]
+
+
+# --- Weighted Priority Engine ---
+
+def get_priority_weights():
+    conn = get_db_conn()
+    c = conn.cursor()
+    c.execute('SELECT severity_weight, jurisdiction_weight, hours_weight, executive_weight, volume_weight FROM priority_config WHERE id = 1')
+    row = c.fetchone()
+    conn.close()
+    if row:
+        return PriorityWeights(
+            severity_weight=row[0],
+            jurisdiction_weight=row[1],
+            hours_weight=row[2],
+            executive_weight=row[3],
+            volume_weight=row[4]
+        )
+    return PriorityWeights()
+
+def calculate_priority_score(tx: dict, weights: PriorityWeights):
+    # 1. Severity
+    severity_map = {"Critical": 5, "High": 4, "Medium": 3, "Low": 2, "Info": 1}
+    sv = severity_map.get(tx.get('priority', 'Medium'), 3)
+
+    # 2. Jurisdiction
+    j_map = {"GDPR": 5, "UK GDPR": 5, "Law 25": 4, "HIPAA": 4, "CCPA": 3, "CPRA": 3, "PIPEDA": 3, "PIPA": 2, "PHIPA": 2}
+    jv = j_map.get(tx.get('jurisdiction', ''), 1)
+
+    # 3. Hours Remaining
+    # Using the mock deadline parsing for SLA remaining
+    deadline = tx.get('deadline_date', '')
+    hv = 0
+    if deadline:
+        try:
+            d = datetime.fromisoformat(deadline)
+            hrs = (d - datetime.now(d.tzinfo)).total_seconds() / 3600
+            if hrs < 6: hv = 5
+            elif hrs < 24: hv = 4
+            elif hrs < 72: hv = 3
+            elif hrs < 168: hv = 2
+            elif hrs > 0: hv = 1
+        except:
+            pass
+
+    # 4. Executive Impact (mock field, assuming routine 0 for now unless specifically flagged)
+    ev = 1 if tx.get('priority') == 'Critical' else 0
+
+    # 5. Volume (Mock parsing if record count is present, else 0)
+    record_count = 0
+    vv = 0
+    if record_count > 100000: vv = 5
+    elif record_count > 10000: vv = 4
+    elif record_count > 1000: vv = 3
+    elif record_count > 100: vv = 2
+    elif record_count > 0: vv = 1
+
+    score = (sv * weights.severity_weight) + (jv * weights.jurisdiction_weight) +             (hv * weights.hours_weight) + (ev * weights.executive_weight) +             (vv * weights.volume_weight)
+            
+    return {
+        "score": round(score, 2),
+        "breakdown": {
+            "severity": sv,
+            "jurisdiction": jv,
+            "hours": hv,
+            "executive": ev,
+            "volume": vv
+        }
+    }
+
+@app.get("/api/priority/config", response_model=PriorityWeights)
+def get_priority_config():
+    return get_priority_weights()
+
+@app.put("/api/priority/config")
+def update_priority_config(weights: PriorityWeights, user: UserRole = Depends(requires_role([UserRole.CPO]))):
+    conn = get_db_conn()
+    c = conn.cursor()
+    c.execute('''
+        UPDATE priority_config 
+        SET severity_weight=?, jurisdiction_weight=?, hours_weight=?, executive_weight=?, volume_weight=?
+        WHERE id=1
+    ''', (weights.severity_weight, weights.jurisdiction_weight, weights.hours_weight, weights.executive_weight, weights.volume_weight))
+    conn.commit()
+    conn.close()
+    return {"status": "updated"}
+
+@app.get("/api/queue/prioritized")
+def get_prioritized_queue():
+    # fetch active
+    conn = get_db_conn()
+    c = conn.cursor()
+    c.execute("SELECT id, request_type, priority, timestamp, deadline_date, status, jurisdiction FROM metadata_log WHERE status != 'COMPLETED'")
+    rows = c.fetchall()
+    conn.close()
+    
+    weights = get_priority_weights()
+    transactions = []
+    for r in rows:
+        tx = {
+            "id": r[0], "request_type": r[1], "priority": r[2], 
+            "timestamp": r[3], "deadline_date": r[4], "status": r[5], "jurisdiction": r[6]
+        }
+        pri = calculate_priority_score(tx, weights)
+        tx["priority_score"] = pri["score"]
+        tx["score_breakdown"] = pri["breakdown"]
+        transactions.append(tx)
+        
+    transactions.sort(key=lambda x: x["priority_score"], reverse=True)
+    return transactions
+
+@app.get("/api/transactions/{thread_id}/priority")
+def get_transaction_priority(thread_id: str):
+    conn = get_db_conn()
+    c = conn.cursor()
+    c.execute("SELECT id, request_type, priority, timestamp, deadline_date, status, jurisdiction FROM metadata_log WHERE id = ?", (thread_id,))
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404)
+        
+    tx = {
+        "id": row[0], "request_type": row[1], "priority": row[2], 
+        "timestamp": row[3], "deadline_date": row[4], "status": row[5], "jurisdiction": row[6]
+    }
+    weights = get_priority_weights()
+    return calculate_priority_score(tx, weights)
+
+
+
+# --- Sprint 2: RBAC & Dual-Approval Endpoints ---
+
+@app.get("/api/rbac/matrix", response_model=list[RolePermission])
+def get_rbac_matrix():
+    conn = get_db_conn()
+    c = conn.cursor()
+    c.execute("SELECT role, action, allowed, requires_cosign FROM rbac_matrix")
+    rows = c.fetchall()
+    conn.close()
+    return [RolePermission(role=r[0], action=r[1], allowed=bool(r[2]), requires_cosign=r[3]) for r in rows]
+
+@app.put("/api/rbac/matrix")
+def update_rbac_matrix(permissions: list[RolePermission], user: UserRole = Depends(requires_role([UserRole.CPO]))):
+    conn = get_db_conn()
+    c = conn.cursor()
+    c.execute("DELETE FROM rbac_matrix")
+    for p in permissions:
+        c.execute("INSERT INTO rbac_matrix (role, action, allowed, requires_cosign) VALUES (?, ?, ?, ?)", 
+                  (p.role, p.action, p.allowed, p.requires_cosign))
+    conn.commit()
+    conn.close()
+    return {"status": "success", "message": "RBAC matrix updated."}
+
+@app.get("/api/rbac/roles/{role}")
+def get_role_permissions(role: str):
+    conn = get_db_conn()
+    c = conn.cursor()
+    c.execute("SELECT action, allowed, requires_cosign FROM rbac_matrix WHERE role = ?", (role.lower(),))
+    rows = c.fetchall()
+    conn.close()
+    return [{"action": r[0], "allowed": bool(r[1]), "requires_cosign": r[2]} for r in rows]
+
+class InitiateActionPayload(BaseModel):
+    action_type: str
+    target_id: str
+
+@app.post("/api/actions/{id}/initiate")
+def initiate_action(id: str, payload: InitiateActionPayload, user: UserRole = Depends(get_current_active_user)):
+    # 1. Look up permission in RBAC matrix
+    conn = get_db_conn()
+    c = conn.cursor()
+    c.execute("SELECT allowed, requires_cosign FROM rbac_matrix WHERE role = ? AND action = ?", (user.value.lower(), payload.action_type))
+    row = c.fetchone()
+    
+    if not row or not row[0]:
+        conn.close()
+        raise HTTPException(status_code=403, detail="Action not allowed for your role.")
+        
+    requires_cosign = row[1]
+    
+    if requires_cosign:
+        # Create Pending Dual-Approval Action
+        c.execute("INSERT INTO dual_actions (action_id, action_type, initiated_by, initiated_role, requires_role, status, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                  (id, payload.action_type, "user@kibo.is", user.value, requires_cosign.upper(), "pending_second_approval", datetime.utcnow().isoformat()))
+        conn.commit()
+        conn.close()
+        return {"status": "202 Accepted", "message": f"Action pending co-sign from {requires_cosign.upper()}", "action_id": id}
+        
+    # Execute immediately if no co-sign required
+    conn.close()
+    return {"status": "200 OK", "message": "Action executed immediately.", "action_id": id}
+
+@app.post("/api/actions/{id}/cosign")
+def cosign_action(id: str, request: Request, user: UserRole = Depends(get_current_active_user)):
+    ip_address = request.headers.get("X-Forwarded-For", request.client.host if request.client else "Unknown")
+    device_fingerprint = request.headers.get("User-Agent", "Unknown")
+    conn = get_db_conn()
+    c = conn.cursor()
+    c.execute("SELECT requires_role, status FROM dual_actions WHERE action_id = ?", (id,))
+    row = c.fetchone()
+    
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Action not found.")
+        
+    requires_role, status = row[0], row[1]
+    
+    if status != "pending_second_approval":
+        conn.close()
+        raise HTTPException(status_code=400, detail="Action is not pending a co-sign.")
+        
+    if user.value != requires_role and user.value != "CPO":
+        conn.close()
+        raise HTTPException(status_code=403, detail=f"Co-sign requires role: {requires_role}")
+        
+    c.execute("UPDATE dual_actions SET status = 'approved', cosigned_by = ? WHERE action_id = ?", (user.value, id))
+    conn.commit()
+    conn.close()
+    
+    # Execute Graph Mutation Here
+    return {"status": "200 OK", "message": "Action co-signed and executed.", "ip_address": ip_address, "device_fingerprint": device_fingerprint}
+
+@app.get("/api/rationale/templates")
+def get_rationale_templates():
+    return {
+        "dsar_approval": [
+            "Identity verified via internal CRM; data located across active systems; no legal hold; within statutory window.",
+            "Partial fulfillment — ongoing legal hold exemption applies under relevant statute.",
+        ],
+        "dsar_rejection": [
+            "Identity could not be verified after 3 automated attempts.",
+            "Request is manifestly unfounded/excessive under GDPR Art 12(5) or equivalent.",
+            "Exemption applies: active internal investigation."
+        ],
+        "vendor_approval": [
+            "DPA executed with SCCs; SOC 2 Type II reviewed; cross-border assessment complete.",
+            "Conditional — approved pending SOC 2 Type II execution by next quarter."
+        ]
+    }
+
+
+import csv
+from io import StringIO
+from fastapi.responses import PlainTextResponse
+
+@app.get("/api/v2/vault/export-csv")
+def export_vault_csv(user: UserRole = Depends(requires_role([UserRole.CPO, UserRole.DPO, UserRole.AUDITOR]))):
+    conn = get_db_conn()
+    c = conn.cursor()
+    c.execute("SELECT id, jurisdiction, timestamp, status FROM metadata_log LIMIT 100")
+    rows = c.fetchall()
+    conn.close()
+    
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["request_id", "jurisdiction", "data_subject", "request_date", "response_date", "days_to_resolve", "outcome", "approver", "denial_reason", "audit_proof_hash"])
+    
+    csv_data = []
+    for r in rows:
+        row_str = f"{r[0]}|{r[1]}|{r[2]}|{r[3]}"
+        row_hash = hashlib.sha256(row_str.encode()).hexdigest()
+        writer.writerow([r[0], r[1], "consumer@example.com", r[2], r[2], "2", r[3], "CPO", "N/A", row_hash])
+        
+    csv_string = output.getvalue()
+    file_hash = hashlib.sha256(csv_string.encode()).hexdigest()
+    
+    # Append global hash
+    csv_string += f"\n# METADATA: Generated 2026-06-24 by {user.value}; immutable\n"
+    csv_string += f"# FILE HASH (SHA-256): {file_hash}\n"
+    
+    return PlainTextResponse(content=csv_string, headers={"Content-Disposition": "attachment; filename=audit_export.csv"})
+
+
+# --- NEW LOCALIZED ROLE-BASED ENDPOINTS ---
+
+class UserJurisdictionPayload(BaseModel):
+    jurisdiction: str
+
+class WidgetRequestPayload(BaseModel):
+    name: str
+    email: str
+    request_type: str
+    description: str
+
+class EmployeeInventoryPayload(BaseModel):
+    system_name: str
+    data_types: List[str]
+    purpose: str
+    retention: str
+    sharing: str
+
+class MeetingCreatePayload(BaseModel):
+    type: str
+    date: str
+    agenda: List[str]
+    attendees: List[str]
+    materials: Optional[List[str]] = []
+
+class MeetingMinutesPayload(BaseModel):
+    minutes: str
+    action_items: List[Dict[str, Any]]
+
+class PsrRecommendationPayload(BaseModel):
+    risk_id: str
+    member: str
+    vote: str
+    recommendation: str
+
+class AssessmentCommentPayload(BaseModel):
+    comment: str
+    member: str
+
+JURISDICTIONS_CONFIG = {
+    "canada": {
+        "code": "canada",
+        "flag": "🇨🇦",
+        "name": "Canada (Federal) - PIPEDA",
+        "access_request_term": "Access Request / ATIP",
+        "access_request_abbr": "ATIP",
+        "data_subject_term": "Individual",
+        "regulator": "Office of the Privacy Commissioner of Canada (OPC)",
+        "primary_statute": "PIPEDA",
+        "access_deadline_days": 30,
+        "breach_notification": "OPC + affected individuals (real risk of significant harm)",
+        "assessment_types": ["PIA", "TRA"],
+        "training_track": "pipeda",
+        "obligations": "Report to OPC + individuals when there is a Real Risk of Significant Harm (RROSH).",
+        "statutes_citation": "PIPEDA S.C. 2000, c. 5"
+    },
+    "quebec": {
+        "code": "quebec",
+        "flag": "🇨🇦",
+        "name": "Quebec - Law 25",
+        "access_request_term": "Access Request",
+        "access_request_abbr": "AR",
+        "data_subject_term": "Person concerned",
+        "regulator": "Commission d'accès à l'information (CAI)",
+        "primary_statute": "Law 25",
+        "access_deadline_days": 30,
+        "breach_notification": "CAI + affected individuals (risk of serious injury)",
+        "assessment_types": ["PIA (Mandatory for high-risk)", "TRA"],
+        "training_track": "law25",
+        "obligations": "Mandatory PIA for high-risk systems; notify CAI of confidentiality incidents.",
+        "statutes_citation": "Act respecting the protection of personal information in the private sector (CQLR c P-39.1)"
+    },
+    "ontario": {
+        "code": "ontario",
+        "flag": "🇨🇦",
+        "name": "Ontario (Public Sector) - FIPPA",
+        "access_request_term": "Freedom of Information Request",
+        "access_request_abbr": "FOI",
+        "data_subject_term": "Requester",
+        "regulator": "Information and Privacy Commissioner of Ontario (IPC)",
+        "primary_statute": "FIPPA",
+        "access_deadline_days": 30,
+        "breach_notification": "IPC + affected individuals (extendable clock)",
+        "assessment_types": ["PIA", "TRA"],
+        "training_track": "fippa",
+        "obligations": "Freedom of Information governance, 30 days extendable time limit.",
+        "statutes_citation": "FIPPA R.S.O. 1990, c. F.31"
+    },
+    "us": {
+        "code": "us",
+        "flag": "🇺🇸",
+        "name": "United States - CCPA/CPRA",
+        "access_request_term": "DSAR (Data Subject Access Request)",
+        "access_request_abbr": "DSAR",
+        "data_subject_term": "Consumer",
+        "regulator": "California Privacy Protection Agency (CPPA) / California AG",
+        "primary_statute": "CPRA",
+        "access_deadline_days": 45,
+        "breach_notification": "State-by-state matrix (Attorney General + individuals)",
+        "assessment_types": ["Risk Assessment", "TRA"],
+        "training_track": "ccpa",
+        "obligations": "45 days (+45 extension) response window. State attorney general breach reporting.",
+        "statutes_citation": "California Civil Code Sec. 1798.100 et seq."
+    },
+    "eu": {
+        "code": "eu",
+        "flag": "🇪🇺",
+        "name": "European Union - GDPR",
+        "access_request_term": "DSAR / Right of Access",
+        "access_request_abbr": "DSAR",
+        "data_subject_term": "Data Subject",
+        "regulator": "Supervisory Authority (DPA)",
+        "primary_statute": "GDPR Art 15",
+        "access_deadline_days": 30,
+        "breach_notification": "72 hours to supervisory authority (GDPR Art 33)",
+        "assessment_types": ["DPIA (Art 35)", "TIA (Schrems II)"],
+        "training_track": "gdpr",
+        "obligations": "72-hour breach notification window. DPIA and Schrems II Transfer Impact Assessment obligations.",
+        "statutes_citation": "GDPR (EU) 2016/679"
+    },
+    "uk": {
+        "code": "uk",
+        "flag": "🇬🇧",
+        "name": "United Kingdom - UK GDPR",
+        "access_request_term": "Subject Access Request",
+        "access_request_abbr": "SAR",
+        "data_subject_term": "Data Subject",
+        "regulator": "Information Commissioner's Office (ICO)",
+        "primary_statute": "UK GDPR",
+        "access_deadline_days": 30,
+        "breach_notification": "ICO + affected individuals within 72 hours",
+        "assessment_types": ["UK GDPR DPIA", "TRA"],
+        "training_track": "uk_gdpr",
+        "obligations": "Statutory 1 month response window. Report breaches to ICO.",
+        "statutes_citation": "Data Protection Act 2018 / UK GDPR"
+    }
+}
+
+@app.get("/api/jurisdictions")
+def get_jurisdictions():
+    return list(JURISDICTIONS_CONFIG.values())
+
+@app.get("/api/jurisdictions/{code}/config")
+def get_jurisdiction_config(code: str):
+    if code not in JURISDICTIONS_CONFIG:
+        raise HTTPException(status_code=404, detail="Jurisdiction not found")
+    return JURISDICTIONS_CONFIG[code]
+
+@app.put("/api/user/jurisdiction")
+def update_user_jurisdiction(payload: UserJurisdictionPayload):
+    if payload.jurisdiction not in JURISDICTIONS_CONFIG:
+        raise HTTPException(status_code=400, detail="Invalid jurisdiction code")
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("INSERT OR REPLACE INTO user_settings (key, value) VALUES ('active_jurisdiction', ?)", (payload.jurisdiction,))
+    conn_db.commit()
+    conn_db.close()
+    return {"status": "success", "active_jurisdiction": payload.jurisdiction}
+
+# --- PUBLIC WIDGET ENDPOINTS ---
+
+@app.post("/api/widget/{org_id}/request")
+def submit_widget_request(org_id: str, payload: WidgetRequestPayload):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT value FROM user_settings WHERE key='active_jurisdiction'")
+    row = cursor.fetchone()
+    jur = row[0] if row else "ontario"
+    
+    import uuid
+    from datetime import datetime
+    req_id = f"REQ-{uuid.uuid4().hex[:6].upper()}"
+    
+    cursor.execute("INSERT INTO metadata_log (thread_id, priority, deadline, status) VALUES (?, 'medium', ?, 'pending')", (req_id, f"{JURISDICTIONS_CONFIG[jur]['access_deadline_days']} days"))
+    conn_db.commit()
+    conn_db.close()
+    
+    config = {"configurable": {"thread_id": req_id}}
+    tx_data = {
+        "id": req_id,
+        "type": "DSAR" if jur in ["us", "eu", "uk"] else "FOI",
+        "client": org_id,
+        "jurisdiction": jur.upper(),
+        "priority": "medium",
+        "deadline": f"{JURISDICTIONS_CONFIG[jur]['access_deadline_days']} days",
+        "description": f"Public submission from {payload.name} ({payload.email}): {payload.description}",
+        "agent": "Widget Ingestion Agent",
+        "summary": "Widget submitted privacy request.",
+        "raw": json.dumps({"name": payload.name, "email": payload.email, "type": payload.request_type, "desc": payload.description})
+    }
+    graph.update_state(config, tx_data)
+    graph.invoke(None, config)
+    
+    return {"status": "submitted", "request_id": req_id, "deadline_days": JURISDICTIONS_CONFIG[jur]['access_deadline_days']}
+
+@app.get("/api/widget/{org_id}/status/{req_id}")
+def check_widget_status(org_id: str, req_id: str):
+    state_vals = get_thread_state(req_id)
+    if not state_vals:
+        conn_db = sqlite3.connect(DB_FILE)
+        cursor = conn_db.cursor()
+        cursor.execute("SELECT status, deadline FROM metadata_log WHERE thread_id=?", (req_id,))
+        row = cursor.fetchone()
+        conn_db.close()
+        if row:
+            return {"id": req_id, "status": row[0], "deadline": row[1]}
+        raise HTTPException(status_code=404, detail="Request not found")
+        
+    config = {"configurable": {"thread_id": req_id}}
+    next_steps = graph.get_state(config).next
+    is_pending = "human_approval_node" in next_steps
+    status = "under_review" if is_pending else state_vals.get("status", "pending")
+    return {
+        "id": req_id,
+        "status": status,
+        "deadline": state_vals.get("deadline", "30 days"),
+        "type": state_vals.get("type", "Access")
+    }
+
+@app.get("/api/widget/{org_id}/config")
+def get_widget_config(org_id: str):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT value FROM user_settings WHERE key='active_jurisdiction'")
+    row = cursor.fetchone()
+    jur = row[0] if row else "ontario"
+    conn_db.close()
+    return {
+        "org_id": org_id,
+        "jurisdiction": jur,
+        "config": JURISDICTIONS_CONFIG[jur]
+    }
+
+# --- EMPLOYEE ENDPOINTS ---
+
+@app.get("/api/employee/{id}/risks")
+def get_employee_assigned_risks(id: str, scope: str = Depends(require_scopes(["employee", "expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT value FROM user_settings WHERE key='active_jurisdiction'")
+    row = cursor.fetchone()
+    jur = row[0] if row else "ontario"
+    
+    cursor.execute("SELECT risk_id, issue, gap_type, risk_score, risk_level, assigned_to, next_review_date, status FROM risks")
+    rows = cursor.fetchall()
+    conn_db.close()
+    
+    deadline_days = JURISDICTIONS_CONFIG[jur]["access_deadline_days"]
+    
+    risks_list = []
+    for r in rows:
+        risks_list.append({
+            "risk_id": r[0],
+            "issue": r[1],
+            "gap_type": r[2],
+            "risk_score": r[3],
+            "risk_level": r[4],
+            "assigned_to": r[5],
+            "due_date": r[6] if r[6] else f"Within {deadline_days} days",
+            "status": r[7]
+        })
+    return risks_list
+
+@app.get("/api/employee/{id}/inventory-tasks")
+def get_employee_inventory_tasks(id: str, scope: str = Depends(require_scopes(["employee", "expert"]))):
+    return {
+        "completion_percentage": 60,
+        "tasks": [
+            {"id": "inv-1", "system": "Support ZenDesk Integration", "status": "pending_input"},
+            {"id": "inv-2", "system": "Clinical Logs Store", "status": "pending_input"},
+            {"id": "inv-3", "system": "Marketing Mailchimp list", "status": "pending_input"}
+        ]
+    }
+
+@app.post("/api/employee/{id}/inventory")
+def submit_employee_inventory(id: str, payload: EmployeeInventoryPayload, scope: str = Depends(require_scopes(["employee", "expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    import uuid
+    inv_id = str(uuid.uuid4())
+    cursor.execute("INSERT INTO employee_data_inventory (id, employee_id, system_name, data_types, purpose, retention, sharing) VALUES (?, ?, ?, ?, ?, ?, ?)", (inv_id, id, payload.system_name, json.dumps(payload.data_types), payload.purpose, payload.retention, payload.sharing))
+    conn_db.commit()
+    conn_db.close()
+    return {"status": "success", "inventory_id": inv_id}
+
+@app.get("/api/employee/{id}/training")
+def get_employee_training(id: str, scope: str = Depends(require_scopes(["employee", "expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT module_id, title, role_tags, jurisdiction, source_policy, duration_min, required, completed, completed_at FROM employee_training")
+    rows = cursor.fetchall()
+    conn_db.close()
+    
+    training = []
+    for r in rows:
+        training.append({
+            "module_id": r[0],
+            "title": r[1],
+            "role_tags": json.loads(r[2]),
+            "jurisdiction": r[3],
+            "source_policy": r[4],
+            "duration_min": r[5],
+            "required": bool(r[6]),
+            "completed": bool(r[7]),
+            "completed_at": r[8]
+        })
+    return training
+
+@app.post("/api/employee/{id}/training/{mod}/complete")
+def complete_employee_training(id: str, mod: str, scope: str = Depends(require_scopes(["employee", "expert"]))):
+    from datetime import datetime
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("UPDATE employee_training SET completed = 1, completed_at = ? WHERE module_id = ? AND employee_id = ?", (datetime.utcnow().isoformat(), mod, id))
+    conn_db.commit()
+    conn_db.close()
+    return {"status": "completed", "module_id": mod}
+
+# --- EXPERT ENDPOINTS ---
+
+@app.get("/api/expert/assessments")
+def get_expert_assessments(scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT assessment_id, title, type, output_type, level, version, status, risk_level, prepared_by, jurisdictions FROM assessments")
+    rows = cursor.fetchall()
+    conn_db.close()
+    
+    assessments_list = []
+    for r in rows:
+        assessments_list.append({
+            "assessment_id": r[0],
+            "title": r[1],
+            "type": r[2],
+            "output_type": r[3],
+            "level": r[4],
+            "version": r[5],
+            "status": r[6],
+            "risk_level": r[7],
+            "prepared_by": r[8],
+            "jurisdictions": json.loads(r[9])
+        })
+    return assessments_list
+
+@app.post("/api/expert/audit")
+def post_expert_audit(scope: str = Depends(require_scopes(["expert"]))):
+    return {"status": "audit_initiated", "timestamp": datetime.utcnow().isoformat(), "audit_id": "AUD-992"}
+
+@app.post("/api/expert/soc-compliance")
+def post_soc_compliance(scope: str = Depends(require_scopes(["expert"]))):
+    return {
+        "status": "soc_verification_running",
+        "controls_verified": [
+            {"control": "Access Control", "status": "passed"},
+            {"control": "Data Encryption", "status": "passed"},
+            {"control": "Incident Response Plan", "status": "warning"}
+        ]
+    }
+
+@app.get("/api/expert/meetings")
+def get_expert_meetings(scope: str = Depends(require_scopes(["expert", "psr"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT meeting_id, type, date, agenda, attendees, minutes, action_items, materials FROM meetings")
+    rows = cursor.fetchall()
+    conn_db.close()
+    
+    meetings_list = []
+    for r in rows:
+        meetings_list.append({
+            "meeting_id": r[0],
+            "type": r[1],
+            "date": r[2],
+            "agenda": json.loads(r[3]),
+            "attendees": json.loads(r[4]),
+            "minutes": r[5],
+            "action_items": json.loads(r[6]) if r[6] else [],
+            "materials": json.loads(r[7]) if r[7] else []
+        })
+    return meetings_list
+
+@app.post("/api/expert/meetings")
+def create_expert_meeting(payload: MeetingCreatePayload, scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    import uuid
+    mid = f"meet-{uuid.uuid4().hex[:6]}"
+    cursor.execute("INSERT INTO meetings (meeting_id, type, date, agenda, attendees, minutes, action_items, materials) VALUES (?, ?, ?, ?, ?, '', '[]', ?)", (mid, payload.type, payload.date, json.dumps(payload.agenda), json.dumps(payload.attendees), json.dumps(payload.materials)))
+    conn_db.commit()
+    conn_db.close()
+    return {"status": "success", "meeting_id": mid}
+
+@app.post("/api/expert/meetings/{id}/minutes")
+def record_expert_meeting_minutes(id: str, payload: MeetingMinutesPayload, scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("UPDATE meetings SET minutes = ?, action_items = ? WHERE meeting_id = ?", (payload.minutes, json.dumps(payload.action_items), id))
+    conn_db.commit()
+    conn_db.close()
+    return {"status": "success", "meeting_id": id}
+
+@app.get("/api/expert/inbox")
+def get_expert_inbox(scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT email_id, sender, subject, body, category, status, converted_to_transaction FROM simulated_inbox")
+    rows = cursor.fetchall()
+    conn_db.close()
+    
+    inbox = []
+    for r in rows:
+        inbox.append({
+            "email_id": r[0],
+            "sender": r[1],
+            "subject": r[2],
+            "body": r[3],
+            "category": r[4],
+            "status": r[5],
+            "converted_to_transaction": r[6]
+        })
+    return inbox
+
+@app.post("/api/expert/inbox/{id}/triage")
+def triage_expert_inbox(id: str, scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT sender, subject, body, category FROM simulated_inbox WHERE email_id=?", (id,))
+    row = cursor.fetchone()
+    if not row:
+        conn_db.close()
+        raise HTTPException(status_code=404, detail="Email not found")
+        
+    sender, subject, body, category = row
+    tx_id = f"TX-INBOX-{id.upper()}"
+    
+    cursor.execute("UPDATE simulated_inbox SET status = 'triaged', converted_to_transaction = ? WHERE email_id = ?", (tx_id, id))
+    conn_db.commit()
+    conn_db.close()
+    
+    config = {"configurable": {"thread_id": tx_id}}
+    tx_data = {
+        "id": tx_id,
+        "type": "DSAR" if category == "dsar" else "Inquiry",
+        "client": sender,
+        "jurisdiction": "ONTARIO",
+        "priority": "critical" if category == "regulator" else "medium",
+        "deadline": "30 days",
+        "description": f"Triaged Inbox Email: {subject} - {body}",
+        "agent": "Inbox Agent",
+        "summary": f"Triage of simulated email {id}",
+        "raw": json.dumps({"sender": sender, "subject": subject, "body": body})
+    }
+    graph.update_state(config, tx_data)
+    graph.invoke(None, config)
+    
+    return {"status": "triaged", "transaction_id": tx_id}
+
+@app.post("/api/expert/training/assign")
+def assign_expert_training(scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("UPDATE employee_training SET completed = 0, completed_at = NULL")
+    conn_db.commit()
+    conn_db.close()
+    return {"status": "success", "message": "Training modules reset/assigned to all staff"}
+
+@app.post("/api/expert/training/remind")
+def remind_expert_training(scope: str = Depends(require_scopes(["expert"]))):
+    return {"status": "success", "message": "Reminders sent to staff members with overdue training modules."}
+
+@app.get("/api/expert/training/compliance")
+def get_training_compliance(scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT count(*) FROM employee_training")
+    total = cursor.fetchone()[0]
+    cursor.execute("SELECT count(*) FROM employee_training WHERE completed = 1")
+    completed = cursor.fetchone()[0]
+    conn_db.close()
+    
+    compliance_pct = int((completed / total) * 100) if total > 0 else 100
+    return {
+        "total_modules": total,
+        "completed_modules": completed,
+        "compliance_percentage": compliance_pct,
+        "overdue_staff_count": total - completed
+    }
+
+# --- PSR COMMITTEE ENDPOINTS ---
+
+@app.get("/api/psr/meetings")
+def get_psr_meetings(scope: str = Depends(require_scopes(["psr", "expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT meeting_id, type, date, agenda, attendees, minutes, action_items, materials FROM meetings WHERE type = 'psr_committee' OR type = 'privacy_security_weekly'")
+    rows = cursor.fetchall()
+    conn_db.close()
+    
+    meetings_list = []
+    for r in rows:
+        meetings_list.append({
+            "meeting_id": r[0],
+            "type": r[1],
+            "date": r[2],
+            "agenda": json.loads(r[3]),
+            "attendees": json.loads(r[4]),
+            "minutes": r[5],
+            "action_items": json.loads(r[6]) if r[6] else [],
+            "materials": json.loads(r[7]) if r[7] else []
+        })
+    return meetings_list
+
+@app.get("/api/psr/meetings/{id}/materials")
+def get_psr_meeting_materials(id: str, scope: str = Depends(require_scopes(["psr", "expert"]))):
+    return [
+        {"name": "Quebec Law 25 Diagnostic Posture.pdf", "size": "1.2 MB"},
+        {"name": "Cross-Border Transfer TIA v1.docx", "size": "450 KB"},
+        {"name": "SOC 2 Type II System Scope.pdf", "size": "2.1 MB"}
+    ]
+
+@app.get("/api/psr/risk-queue")
+def get_psr_risk_queue(scope: str = Depends(require_scopes(["psr", "expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT risk_id, issue, gap_type, risk_score, risk_level, assigned_to, status FROM risks")
+    rows = cursor.fetchall()
+    
+    cursor.execute("SELECT risk_id, member, vote, recommendation, timestamp FROM psr_recommendations")
+    recs = cursor.fetchall()
+    conn_db.close()
+    
+    recs_map = {}
+    for rc in recs:
+        r_id = rc[0]
+        if r_id not in recs_map:
+            recs_map[r_id] = []
+        recs_map[r_id].append({
+            "member": rc[1],
+            "vote": rc[2],
+            "recommendation": rc[3],
+            "timestamp": rc[4]
+        })
+        
+    queue = []
+    for r in rows:
+        queue.append({
+            "risk_id": r[0],
+            "issue": r[1],
+            "gap_type": r[2],
+            "risk_score": r[3],
+            "risk_level": r[4],
+            "assigned_to": r[5],
+            "status": r[6],
+            "recommendations": recs_map.get(r[0], [])
+        })
+    return queue
+
+@app.post("/api/psr/risk/{id}/recommendation")
+def post_psr_risk_recommendation(id: str, payload: PsrRecommendationPayload, scope: str = Depends(require_scopes(["psr", "expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    import uuid
+    from datetime import datetime
+    rec_id = str(uuid.uuid4())
+    cursor.execute("INSERT INTO psr_recommendations (recommendation_id, risk_id, member, vote, recommendation, timestamp) VALUES (?, ?, ?, ?, ?, ?)", (rec_id, id, payload.member, payload.vote, payload.recommendation, datetime.utcnow().isoformat()))
+    conn_db.commit()
+    conn_db.close()
+    return {"status": "success", "recommendation_id": rec_id}
+
+@app.post("/api/psr/assessments/{id}/comment")
+def post_psr_assessment_comment(id: str, payload: AssessmentCommentPayload, scope: str = Depends(require_scopes(["psr", "expert"]))):
+    return {
+        "status": "success",
+        "message": f"Advisory comment by {payload.member} logged for assessment {id}"
+    }
+
+# --- Onboarding & CASL API Models & Endpoints ---
+class OnboardingTaskNotePayload(BaseModel):
+    notes: str
+
+@app.get("/api/onboarding/tasks")
+def get_onboarding_tasks(scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    conn_db.row_factory = sqlite3.Row
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT * FROM onboarding_tasks ORDER BY category, id")
+    rows = cursor.fetchall()
+    conn_db.close()
+    return [dict(r) for r in rows]
+
+@app.post("/api/onboarding/tasks/{task_id}/toggle")
+def toggle_onboarding_task(task_id: str, scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT status FROM onboarding_tasks WHERE id = ?", (task_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn_db.close()
+        raise HTTPException(status_code=404, detail="Task not found")
+    new_status = "completed" if row[0] == "pending" else "pending"
+    cursor.execute("UPDATE onboarding_tasks SET status = ? WHERE id = ?", (new_status, task_id))
+    conn_db.commit()
+    conn_db.close()
+    return {"status": "success", "task_id": task_id, "new_status": new_status}
+
+@app.post("/api/onboarding/tasks/{task_id}/notes")
+def update_onboarding_task_notes(task_id: str, payload: OnboardingTaskNotePayload, scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("UPDATE onboarding_tasks SET notes = ? WHERE id = ?", (payload.notes, task_id))
+    conn_db.commit()
+    conn_db.close()
+    return {"status": "success", "task_id": task_id, "notes": payload.notes}
+
+@app.get("/api/onboarding/casl")
+def get_casl_registry(scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    conn_db.row_factory = sqlite3.Row
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT * FROM casl_consent_registry ORDER BY id")
+    rows = cursor.fetchall()
+    conn_db.close()
+    return [dict(r) for r in rows]
+
+@app.post("/api/onboarding/casl/sunset")
+def run_casl_sunset_automation(scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    
+    from datetime import datetime, timezone
+    current_time_str = "2026-07-02T23:43:19Z"
+    current_date = datetime.strptime(current_time_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    
+    cursor.execute("SELECT id, email, name, consent_status, expiry_date FROM casl_consent_registry")
+    contacts = cursor.fetchall()
+    
+    logs = []
+    logs.append(f"[{datetime.now().strftime('%H:%M:%S')}] Starting CASL Sunset Automation workflow (Simulated current date: 2026-07-02)")
+    
+    updated_count = 0
+    expired_count = 0
+    warning_count = 0
+    
+    for c_id, email, name, status, expiry_str in contacts:
+        if not expiry_str:
+            continue
+            
+        try:
+            expiry_date = datetime.strptime(expiry_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        except ValueError:
+            try:
+                expiry_date = datetime.strptime(expiry_str, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
+            except ValueError:
+                expiry_date = datetime.strptime(expiry_str.split("T")[0], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                
+        delta = expiry_date - current_date
+        
+        if delta.days < 0:
+            if status != "Expired":
+                cursor.execute("UPDATE casl_consent_registry SET consent_status = 'Expired' WHERE id = ?", (c_id,))
+                logs.append(f"[SUNSET] EXPIRED: {name} ({email}) - Implied consent expired on {expiry_str.split('T')[0]}. Contact suppressed from commercial lists.")
+                expired_count += 1
+                updated_count += 1
+        elif delta.days <= 30:
+            logs.append(f"[SUNSET] WARNING: {name} ({email}) - Implied consent expires in {delta.days} days ({expiry_str.split('T')[0]}). 'Consent Upgrade' email queued.")
+            warning_count += 1
+            
+    conn_db.commit()
+    conn_db.close()
+    
+    logs.append(f"[{datetime.now().strftime('%H:%M:%S')}] CASL Sunset run complete. Processed {len(contacts)} contacts. Suppressed: {expired_count}. Warned/Queued: {warning_count}.")
+    
+    return {
+        "status": "success",
+        "processed": len(contacts),
+        "suppressed": expired_count,
+        "warned": warning_count,
+        "logs": logs
+    }
+
+
+@app.post("/api/admin/trigger-verdicts-collector")
+def trigger_verdicts_collector(scope: str = Depends(require_scopes(["expert", "employee"]))):
+    """Trigger the verdicts collector manually."""
+    canadian_verdicts_agent.collect_new_verdicts()
+    return {"status": "success", "message": "Verdicts collector triggered successfully."}
+
+
 

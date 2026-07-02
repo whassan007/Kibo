@@ -1,6 +1,6 @@
 architecture:
   name: "KIBO OS"
-  version: "5.0.0"
+  version: "5.1.0"
   method: "W-Method"
   layers:
     - layer: 1

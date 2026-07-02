@@ -1,0 +1,27 @@
+{
+  "id": "prop_01hqsplitmonitor1234567890",
+  "target": "autonomy:herald",
+  "rationale": "Align configurations with spec/kibo-os-v5.md §10.5. Separates the brand-focused Herald crew (designed to lower CAC through positioning) from the telemetry drift layer (Monitor daemon), removing mixed concerns and enforcing sovereign boundaries.",
+  "diff": {
+    "herald.yaml": {
+      "before": "Contains alert daemon triggers: degraded_evals, safety_drift, high_cac.",
+      "after": "Contains brand_voice guardrails, category_content, and claim_library to drive authority and lower CAC."
+    },
+    "monitor.yaml": {
+      "before": "File did not exist.",
+      "after": "Contains the §10.5 drift layer triggers: degraded_evals (eval_score < 4.0 -> escalate_to_human), safety_drift (boundary_violation == true -> halt_autonomy), and high_cac (cac_metric > budget_cac -> alert_marketing)."
+    }
+  },
+  "evidence": [
+    "kibo-os-v5.md §10.5 (Drift Layer specification)",
+    "brief-weekly-2026-06-22.md baseline metric registration"
+  ],
+  "regression_test": "test_suite.py::test_monitor_yaml_schema && test_suite.py::test_herald_split_integrity",
+  "expected_effect": {
+    "CAC": "-10% vs baseline $5,000",
+    "gates_per_deployment": "0",
+    "founder_dependence": "0 steps"
+  },
+  "semver_bump": "minor",
+  "status": "promoted"
+}
