@@ -1003,6 +1003,16 @@ def seed_mock_data():
     cursor.execute("CREATE TABLE IF NOT EXISTS simulated_inbox_replies (reply_id TEXT PRIMARY KEY, email_id TEXT NOT NULL, body TEXT NOT NULL, sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
     cursor.execute("CREATE TABLE IF NOT EXISTS psr_recommendations (recommendation_id TEXT PRIMARY KEY, risk_id TEXT NOT NULL, member TEXT NOT NULL, vote TEXT NOT NULL, recommendation TEXT NOT NULL, timestamp TEXT NOT NULL)")
     cursor.execute("CREATE TABLE IF NOT EXISTS agent_lessons_learned (lesson_id TEXT PRIMARY KEY, domain TEXT NOT NULL, feedback_notes TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS legal_ground_truth (clause_id TEXT PRIMARY KEY, legislation TEXT NOT NULL, clause_text TEXT NOT NULL, keywords TEXT NOT NULL)")
+    
+    cursor.execute("SELECT count(*) FROM legal_ground_truth")
+    if cursor.fetchone()[0] == 0:
+        cursor.execute("INSERT INTO legal_ground_truth (clause_id, legislation, clause_text, keywords) VALUES (?, ?, ?, ?)",
+                       ("LAW25-SEC14", "quebec_law_25", "Quebec Law 25: Consent must be clear, free, informed, and given for specific purposes. Any targeted campaigns in French jurisdiction require bilingual opt-in terms and accessible French policy documentation.", "bilingual, campaigns, Law 25, French"))
+        cursor.execute("INSERT INTO legal_ground_truth (clause_id, legislation, clause_text, keywords) VALUES (?, ?, ?, ?)",
+                       ("PIPEDA-SCH1-4.7", "pipeda", "PIPEDA Schedule 1 Section 4.7: Personal information must be protected by security safeguards appropriate to the sensitivity of the information, including revoking stale credentials and encryption.", "safeguards, security, credentials, encryption"))
+        cursor.execute("INSERT INTO legal_ground_truth (clause_id, legislation, clause_text, keywords) VALUES (?, ?, ?, ?)",
+                       ("GDPR-ART28", "gdpr", "GDPR Article 28: Data processing by a processor shall be governed by a contract or other legal act (Data Protection Agreement - DPA) binding the processor to the controller.", "DPA, contract, processor, vendor"))
     
     # Seed initial memories/lessons
     cursor.execute("SELECT count(*) FROM agent_lessons_learned")
@@ -4285,6 +4295,23 @@ def trigger_improvement(payload: ImprovementPayload, scope: str = Depends(requir
         "evaluation_score": result["evaluation_score"],
         "is_approved": result["is_approved"]
     }
+
+@app.get("/api/expert/lessons/legal_library")
+def get_legal_library(scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT clause_id, legislation, clause_text, keywords FROM legal_ground_truth")
+    rows = cursor.fetchall()
+    conn_db.close()
+    clauses = []
+    for r in rows:
+        clauses.append({
+            "clause_id": r[0],
+            "legislation": r[1],
+            "clause_text": r[2],
+            "keywords": r[3]
+        })
+    return clauses
 
 @app.get("/api/expert/lessons")
 def get_expert_lessons(scope: str = Depends(require_scopes(["expert"]))):

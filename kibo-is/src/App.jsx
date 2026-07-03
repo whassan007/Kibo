@@ -25,6 +25,7 @@ const App = () => {
   const [simTriggerData, setSimTriggerData] = useState('EDPB draft guidelines require Quebec Law 25 Consent matching.');
   const [simLogs, setSimLogs] = useState([]);
   const [simIsRunning, setSimIsRunning] = useState(false);
+  const [legalLibrary, setLegalLibrary] = useState([]);
   const [activeLegislations, setActiveLegislations] = useState(['canada', 'quebec', 'phipa', 'cyfsa']);
   const [activeJurisdiction, setActiveJurisdiction] = useState('canada');
   const [jurConfig, setJurConfig] = useState({
@@ -387,6 +388,7 @@ const App = () => {
       fetchOnboardingData();
       fetchAgenticData();
       fetchLessons();
+      fetchLegalLibrary();
     } catch (e) {
       console.error(e);
       setIsSystemOnline(false);
@@ -660,6 +662,17 @@ const App = () => {
       const res = await kiboFetch(`${API_BASE}/api/expert/lessons`);
       if (res.ok) {
         setAgentLessons(await res.json());
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchLegalLibrary = async () => {
+    try {
+      const res = await kiboFetch(`${API_BASE}/api/expert/lessons/legal_library`);
+      if (res.ok) {
+        setLegalLibrary(await res.json());
       }
     } catch (err) {
       console.error(err);
@@ -2289,6 +2302,34 @@ const App = () => {
                                   <div className="text-gray-500 italic">LangGraph self-improvement state logs will appear here. Click 'Invoke LangGraph Loop' to simulate.</div>
                                 )}
                               </div>
+                            </div>
+                          </div>
+
+                          {/* Ground Truth Legal Library Panel */}
+                          <div className="bg-gray-50/20 border border-[#E5E7EB] rounded-xl p-4 space-y-3 mt-4">
+                            <div className="flex justify-between items-center border-b border-gray-200 pb-2">
+                              <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wider flex items-center space-x-1.5">
+                                <BookOpen size={12} className="text-blue-600" />
+                                <span>Definitive Legal Library (RAG Grounding DB)</span>
+                              </span>
+                              <span className="text-[9px] text-gray-400 font-mono">SQLite: kibo_state.db -&gt; legal_ground_truth</span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              {legalLibrary.map(clause => (
+                                <div key={clause.clause_id} className="bg-white border border-gray-200 p-3 rounded-lg space-y-1.5 text-xs shadow-2xs">
+                                  <div className="flex justify-between font-bold text-[10px]">
+                                    <span className="text-blue-800 font-mono">{clause.clause_id}</span>
+                                    <span className="uppercase text-gray-500 font-mono">{clause.legislation.replace('_', ' ')}</span>
+                                  </div>
+                                  <p className="text-[11px] text-gray-650 leading-relaxed italic">"{clause.clause_text}"</p>
+                                  <div className="text-[9px] text-gray-400">
+                                    Keywords: <code className="bg-gray-50 px-1 py-0.5 rounded border border-gray-150">{clause.keywords}</code>
+                                  </div>
+                                </div>
+                              ))}
+                              {legalLibrary.length === 0 && (
+                                <div className="text-gray-400 text-center italic text-xs py-4 col-span-3">No legal reference clauses loaded in RAG database.</div>
+                              )}
                             </div>
                           </div>
                         </div>
