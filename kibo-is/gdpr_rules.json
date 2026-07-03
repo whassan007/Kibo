@@ -1,0 +1,11 @@
+{
+  "jurisdiction": "EU/GDPR",
+  "primary_statutes": ["GDPR"],
+  "breach_notification_timeframe": "72 hours",
+  "dsar_countdown_days": 30,
+  "required_assessments": ["Data Protection Impact Assessment (DPIA)", "Legitimate Interest Assessment (LIA)"],
+  "lawful_basis_mandatory": true,
+  "opt_out_sale_required": false,
+  "transfer_restrictions": "Standard Contractual Clauses (SCCs) + Adequacy Decisions",
+  "dashboard_priorities": ["Lawful Basis Mapping", "Article 28 DPA Status", "72-Hour Breach Notification"]
+}

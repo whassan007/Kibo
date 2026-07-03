@@ -1,0 +1,11 @@
+{
+  "jurisdiction": "US/CPRA",
+  "primary_statutes": ["CPRA"],
+  "breach_notification_timeframe": "reasonable delay",
+  "dsar_countdown_days": 45,
+  "required_assessments": ["Risk Assessment", "Cybersecurity Audit"],
+  "lawful_basis_mandatory": false,
+  "opt_out_sale_required": true,
+  "transfer_restrictions": "None (State level constraints apply to sale/sharing)",
+  "dashboard_priorities": ["Opt-Out of Sale/Sharing", "Sensitive Data (SPI) Discovery", "45-Day DSAR Countdowns"]
+}

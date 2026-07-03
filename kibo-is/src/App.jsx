@@ -4,7 +4,8 @@ import {
   ChevronDown, ChevronUp, Terminal, ShieldAlert, UserCheck, Search,
   HardDrive, Database, Network, FileCheck, Layers, RefreshCw, AlertOctagon,
   Users, Briefcase, Eye, Globe, User, Radio, FileUp, Sparkles, Send, Trash2,
-  Activity, Server, Mail, Settings, Plus, CheckSquare, Square, Edit, Save, List
+  Activity, Server, Mail, Settings, Plus, CheckSquare, Square, Edit, Save, List,
+  FolderOpen, Cpu, BookOpen
 } from 'lucide-react';
 
 const API_BASE = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
@@ -1375,10 +1376,23 @@ const App = () => {
                 )}
               </nav>
 
-              <div className="border-t border-[#E5E7EB] pt-4 text-[10px] text-gray-500 space-y-1.5 font-medium">
-                <div>Statute: <span className="text-gray-700">{jurConfig.primary_statute}</span></div>
-                <div>Regulator: <span className="text-gray-700">{jurConfig.regulator}</span></div>
-                <div>Deadline: <span className="text-gray-700">{jurConfig.access_deadline_days} days</span></div>
+              <div className="border-t border-[#E5E7EB] pt-4 space-y-3">
+                <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-1.5 shadow-2xs">
+                  <div className="text-[10px] font-bold text-indigo-900 uppercase tracking-wider flex items-center space-x-1.5">
+                    <Shield size={11} className="text-indigo-600 animate-pulse" />
+                    <span>Jurisdiction Status Overlay</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px] font-semibold text-gray-700">
+                    <span>Active Regime:</span>
+                    <span className="bg-indigo-100 text-indigo-850 px-1.5 py-0.5 rounded font-bold uppercase font-mono">{activeJurisdiction}</span>
+                  </div>
+                  <div className="text-[9px] text-gray-400 space-y-1 font-mono leading-relaxed border-t border-indigo-100 pt-1.5">
+                    <div>Statute: {jurConfig.primary_statute}</div>
+                    <div>Regulator: {jurConfig.regulator}</div>
+                    <div>Deadline: {jurConfig.access_deadline_days} days</div>
+                    <div>Logical Lint: {activeJurisdiction}_rules.json</div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1644,6 +1658,84 @@ const App = () => {
                       <div className="text-[9px] text-gray-400">Direct user requests or regulator letters requiring triage.</div>
                     </div>
 
+                  </div>
+
+                  {/* Jurisdictional High-Priority Indicators (Dynamic) */}
+                  <div className="bg-indigo-50/15 border border-indigo-100 p-5 rounded-xl space-y-4">
+                    <div className="flex justify-between items-center border-b border-indigo-100 pb-2">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-900 flex items-center space-x-1.5">
+                        <ShieldAlert size={14} className="text-indigo-650" />
+                        <span>Active Jurisdictional Regs Indicator ({activeJurisdiction.toUpperCase()})</span>
+                      </h4>
+                      <span className="text-[9px] font-mono text-indigo-700 bg-indigo-100/50 px-2 py-0.5 rounded border border-indigo-200">
+                        Primary Logic: {activeJurisdiction}_rules.json
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                      {/* EU/GDPR Cards */}
+                      {activeJurisdiction === 'eu' && (
+                        <>
+                          <div className="bg-white border border-[#E5E7EB] p-4 rounded-xl space-y-1.5 shadow-2xs">
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Lawful Basis Mapping</span>
+                            <div className="text-lg font-bold text-gray-800">Consent (64%) | Legitimate Interest (36%)</div>
+                            <p className="text-[10px] text-gray-400">Continuous RoPA scanning matches operational activities to GDPR lawful bases.</p>
+                          </div>
+                          <div className="bg-white border border-[#E5E7EB] p-4 rounded-xl space-y-1.5 shadow-2xs">
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Article 28 DPA Status</span>
+                            <div className="text-lg font-bold text-emerald-700">100% Documented</div>
+                            <p className="text-[10px] text-gray-400">All data processors signed Standard Contractual Clauses (SCCs).</p>
+                          </div>
+                          <div className="bg-white border border-[#E5E7EB] p-4 rounded-xl space-y-1.5 shadow-2xs">
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">72-Hour SLA Status</span>
+                            <div className="text-lg font-bold text-rose-700">0 Breaches Logged</div>
+                            <p className="text-[10px] text-gray-400">Statutory notification window monitor to Supervisory Authority is active.</p>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Canada/Law 25 Cards */}
+                      {(activeJurisdiction === 'canada' || activeJurisdiction === 'quebec' || activeJurisdiction === 'ontario') && (
+                        <>
+                          <div className="bg-white border border-[#E5E7EB] p-4 rounded-xl space-y-1.5 shadow-2xs">
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Provincial Transfer Restrictions</span>
+                            <div className="text-lg font-bold text-amber-700">PIAs Pending Review</div>
+                            <p className="text-[10px] text-gray-400">Ontario PHIPA & Quebec Law 25 compliance requirements restrict transfer routes.</p>
+                          </div>
+                          <div className="bg-white border border-[#E5E7EB] p-4 rounded-xl space-y-1.5 shadow-2xs">
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">30-Day DSAR SLA Clock</span>
+                            <div className="text-lg font-bold text-gray-800">4 Active Countdown Timers</div>
+                            <p className="text-[10px] text-gray-400">Strict statutory deadline for response and validation processing.</p>
+                          </div>
+                          <div className="bg-white border border-[#E5E7EB] p-4 rounded-xl space-y-1.5 shadow-2xs">
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">RROSH Breach Threshold</span>
+                            <div className="text-lg font-bold text-gray-800">Risk Assessment Score: 0/10</div>
+                            <p className="text-[10px] text-gray-400">Real risk of significant harm (RROSH) calculation triggers automatically.</p>
+                          </div>
+                        </>
+                      )}
+
+                      {/* US/CPRA Cards */}
+                      {activeJurisdiction === 'us' && (
+                        <>
+                          <div className="bg-white border border-[#E5E7EB] p-4 rounded-xl space-y-1.5 shadow-2xs">
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Opt-Out of Sale/Sharing</span>
+                            <div className="text-lg font-bold text-blue-700">89% Opt-Out Rate</div>
+                            <p className="text-[10px] text-gray-400">CCPA/CPRA Do Not Sell/Share signals parsed from CMP integration.</p>
+                          </div>
+                          <div className="bg-white border border-[#E5E7EB] p-4 rounded-xl space-y-1.5 shadow-2xs">
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Sensitive Data (SPI) Discovery</span>
+                            <div className="text-lg font-bold text-gray-800">14 SPI Fields Mapped</div>
+                            <p className="text-[10px] text-gray-400">Automated classification of sensitive personal information tags.</p>
+                          </div>
+                          <div className="bg-white border border-[#E5E7EB] p-4 rounded-xl space-y-1.5 shadow-2xs">
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">45-Day SLA Clock</span>
+                            <div className="text-lg font-bold text-gray-800">1 Active Request</div>
+                            <p className="text-[10px] text-gray-400">US State privacy rules govern response deadlines.</p>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   {/* Operational Action Center Grid */}

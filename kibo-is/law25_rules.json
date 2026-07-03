@@ -1,0 +1,11 @@
+{
+  "jurisdiction": "CA/PIPEDA+Law25",
+  "primary_statutes": ["PIPEDA", "Quebec Law 25", "PHIPA"],
+  "breach_notification_timeframe": "first reasonable opportunity",
+  "dsar_countdown_days": 30,
+  "required_assessments": ["Privacy Impact Assessment (PIA)", "RROSH Breach Screening"],
+  "lawful_basis_mandatory": false,
+  "opt_out_sale_required": false,
+  "transfer_restrictions": "provincial + cross-border assessments required",
+  "dashboard_priorities": ["Provincial Transfer Restrictions", "30-Day DSAR Countdown", "Quebec Law 25 PIAs"]
+}
