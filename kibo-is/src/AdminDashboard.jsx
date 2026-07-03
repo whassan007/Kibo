@@ -44,9 +44,42 @@ export default function AdminDashboard({
   ]);
 
   const [audits, setAudits] = useState([
-    { timestamp: '2026-07-03 01:16', user: 'Waël Hassan', agent: 'Deployment Controller', llm: 'qwen2.5-coder:32b', action: 'Deploy UI adaptation template', hash: 'SHA256:d9b2089f', status: 'success' },
-    { timestamp: '2026-07-03 01:15', user: 'LangGraph Engine', agent: 'Self-Critique Auditor', llm: 'qwen3.6:latest', action: 'Grounded RAG critique scoring (9/10)', hash: 'SHA256:b8c983ea', status: 'approved' },
-    { timestamp: '2026-07-03 01:12', user: 'LangGraph Engine', agent: 'Self-Critique Auditor', llm: 'qwen3.6:latest', action: 'Grounded RAG critique scoring (5/10)', hash: 'SHA256:c0901e9d', status: 'rejected' }
+    {
+      audit_id: 'AUDIT-2026-07-03-8892',
+      timestamp: '2026-07-03 01:16 UTC',
+      target_domain: 'GDPR',
+      authoritative_source: 'EDPB Guidelines 03/2022 on Dark Patterns',
+      citation_id: 'Section 3.1 - Obstructive UI',
+      retrieval_hash: 'SHA256:d9b2089f21f1e29ad30e8c0901e9dbe88812c983ea0e932cdbe90cfdbea08a0e',
+      kibo_rationale: "Current cookie banner utilizes a 'confirm-all' color scheme that violates EDPB accessibility standards.",
+      decision_status: 'MANUAL_APPROVAL_REQUIRED',
+      admin_user_id: 'Waël Hassan',
+      approval_status: 'APPROVED',
+      human_notes: 'Design team override color thresholds to pass AA contrast check.',
+      deployment_version: 'UI Schema v4.2.1',
+      pre_baseline: 'Average consent verification drop-off: 18.5%',
+      post_verification: 'Completion rate improved by 12%',
+      risk_category: 'Medium (UI/UX Compliance)',
+      status: 'approved'
+    },
+    {
+      audit_id: 'AUDIT-2026-07-03-8893',
+      timestamp: '2026-07-03 01:12 UTC',
+      target_domain: 'Law 25',
+      authoritative_source: 'Quebec Law 25 (Act to modernize legislative provisions)',
+      citation_id: 'Section 14 - Consent Campaigns',
+      retrieval_hash: 'SHA256:b8c983ea9012a938be9cd828ff7208da01e2c983ea0e932cdbe90cfdbea08a0d',
+      kibo_rationale: 'Quebec Law 25 enforces strict bilingual campaign consent parameters.',
+      decision_status: 'AUTOMATIC_APPROVAL_SUCCESS',
+      admin_user_id: 'System Agent',
+      approval_status: 'APPROVED',
+      human_notes: 'Fully auto-validated via RAG checks (Score: 9/10).',
+      deployment_version: 'API Schema v2.8.4',
+      pre_baseline: 'Manual consent validation delay: 4 hours',
+      post_verification: 'Automated validation executed in 150ms',
+      risk_category: 'Low (Code Automation)',
+      status: 'success'
+    }
   ]);
 
   const [clients, setClients] = useState([
@@ -678,21 +711,76 @@ export default function AdminDashboard({
                 </div>
               </div>
 
-              <div className="space-y-4 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#1E294B]">
+              <div className="space-y-4">
                 {audits
                   .filter(a => selectedAuditFilter === 'all' || a.status === selectedAuditFilter)
                   .map((a, idx) => (
-                    <div key={idx} className="relative pl-8 text-xs space-y-1">
-                      <div className="absolute left-1.5 top-1.5 w-3.5 h-3.5 rounded-full bg-[#0E1325] border-2 border-blue-500 flex items-center justify-center">
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                    <div key={idx} className="bg-[#151C33] border border-[#1E294B] rounded-xl p-5 space-y-4 text-xs shadow-md">
+                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-[#1E294B] pb-3 gap-2">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-extrabold text-white text-sm font-mono">{a.audit_id}</span>
+                          <span className="bg-blue-500/15 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold">{a.target_domain}</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${a.risk_category.includes('High') ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>{a.risk_category}</span>
+                        </div>
+                        <span className="text-[10px] text-gray-400 font-mono">{a.timestamp}</span>
                       </div>
-                      <div className="flex justify-between items-center text-gray-400">
-                        <span className="font-semibold text-[10px]">{a.timestamp}</span>
-                        <code className="text-[9px] text-gray-500 font-mono">{a.hash}</code>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Column 1: Compliance Provenance */}
+                        <div className="space-y-2">
+                          <h4 className="text-[10px] font-bold uppercase text-blue-400 tracking-wider">Compliance Provenance</h4>
+                          <div>
+                            <span className="text-gray-400 font-semibold block text-[10px]">Source Document:</span>
+                            <span className="text-white font-medium">{a.authoritative_source}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 font-semibold block text-[10px]">Citation ID:</span>
+                            <span className="text-gray-300 font-mono text-[11px]">{a.citation_id}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 font-semibold block text-[10px]">Retrieval Hash:</span>
+                            <code className="text-gray-400 font-mono text-[10px] bg-[#090C15] px-1.5 py-0.5 rounded block truncate">{a.retrieval_hash}</code>
+                          </div>
+                        </div>
+
+                        {/* Column 2: Administrative Decision */}
+                        <div className="space-y-2">
+                          <h4 className="text-[10px] font-bold uppercase text-blue-400 tracking-wider">Administrative Decision</h4>
+                          <div>
+                            <span className="text-gray-400 font-semibold block text-[10px]">Decision / Authority User:</span>
+                            <span className="text-white font-medium">{a.decision_status} ({a.admin_user_id})</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 font-semibold block text-[10px]">Deployment Tag:</span>
+                            <span className="text-emerald-400 font-mono font-bold">{a.deployment_version}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 font-semibold block text-[10px]">Human Override Notes:</span>
+                            <p className="text-gray-300 italic">"{a.human_notes}"</p>
+                          </div>
+                        </div>
+
+                        {/* Column 3: Impact & Telemetry */}
+                        <div className="space-y-2">
+                          <h4 className="text-[10px] font-bold uppercase text-blue-400 tracking-wider">Impact & Telemetry</h4>
+                          <div>
+                            <span className="text-gray-400 font-semibold block text-[10px]">Pre-Deployment Baseline:</span>
+                            <span className="text-rose-400 font-semibold">{a.pre_baseline}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 font-semibold block text-[10px]">Post-Deployment Verification:</span>
+                            <span className="text-emerald-400 font-semibold">{a.post_verification}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 font-semibold block text-[10px]">Audit Status:</span>
+                            <span className="text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded font-bold uppercase text-[9px] inline-block mt-0.5">{a.approval_status}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-white font-bold leading-snug">{a.action}</div>
-                      <div className="text-[10px] text-gray-500">
-                        Triggered by: {a.user} | Agent: {a.agent} | LLM Model: <span className="text-blue-400">{a.llm}</span>
+
+                      <div className="border-t border-[#1E294B]/50 pt-3">
+                        <span className="text-gray-450 font-semibold block text-[10px]">Agent Rationale (The "Why"):</span>
+                        <p className="text-gray-300 mt-1 leading-relaxed">"{a.kibo_rationale}"</p>
                       </div>
                     </div>
                   ))}
