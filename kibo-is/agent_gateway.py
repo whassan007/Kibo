@@ -4269,6 +4269,23 @@ def add_expert_lesson(payload: LessonPayload, scope: str = Depends(require_scope
     conn_db.close()
     return {"status": "success", "lesson_id": lesson_id}
 
+class ImprovementPayload(BaseModel):
+    trigger_type: str
+    trigger_data: str
+
+@app.post("/api/expert/lessons/trigger_improvement")
+def trigger_improvement(payload: ImprovementPayload, scope: str = Depends(require_scopes(["expert"]))):
+    from self_improvement import run_self_improvement
+    result = run_self_improvement(payload.trigger_type, payload.trigger_data)
+    return {
+        "status": "success",
+        "logs": result["logs"],
+        "proposed_logic_update": result["proposed_logic_update"],
+        "proposed_ui_schema": result["proposed_ui_schema"],
+        "evaluation_score": result["evaluation_score"],
+        "is_approved": result["is_approved"]
+    }
+
 @app.get("/api/expert/lessons")
 def get_expert_lessons(scope: str = Depends(require_scopes(["expert"]))):
     conn_db = sqlite3.connect(DB_FILE)

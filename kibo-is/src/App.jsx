@@ -21,6 +21,10 @@ const App = () => {
   const [newLessonNotes, setNewLessonNotes] = useState('');
   const [newLessonDomain, setNewLessonDomain] = useState('onboarding');
   const [lessonsIsExpanded, setLessonsIsExpanded] = useState(true); // for Expert mode
+  const [simTriggerType, setSimTriggerType] = useState('Regulatory_Update');
+  const [simTriggerData, setSimTriggerData] = useState('EDPB draft guidelines require Quebec Law 25 Consent matching.');
+  const [simLogs, setSimLogs] = useState([]);
+  const [simIsRunning, setSimIsRunning] = useState(false);
   const [activeLegislations, setActiveLegislations] = useState(['canada', 'quebec', 'phipa', 'cyfsa']);
   const [activeJurisdiction, setActiveJurisdiction] = useState('canada');
   const [jurConfig, setJurConfig] = useState({
@@ -676,6 +680,32 @@ const App = () => {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleTriggerSelfImprovement = async () => {
+    setSimIsRunning(true);
+    setSimLogs(["[System] Dispatching trigger payload to LangGraph engine..."]);
+    try {
+      const res = await kiboFetch(`${API_BASE}/api/expert/lessons/trigger_improvement`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trigger_type: simTriggerType,
+          trigger_data: simTriggerData
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSimLogs(data.logs);
+        fetchLessons(); // Refresh memory list
+      } else {
+        setSimLogs(prev => [...prev, "[Error] Failed to execute self-critique loop on host gateway."]);
+      }
+    } catch (err) {
+      setSimLogs(prev => [...prev, `[Error] ${err.toString()}`]);
+    } finally {
+      setSimIsRunning(false);
     }
   };
 
@@ -2195,6 +2225,72 @@ const App = () => {
                             </div>
                           </div>
 
+                        </div>
+
+                        {/* Self-Improvement Simulator Block */}
+                        <div className="border-t border-[#E5E7EB] pt-6 space-y-4">
+                          <h4 className="text-xs font-bold uppercase text-gray-700 tracking-wider flex items-center space-x-1.5">
+                            <Sparkles size={13} className="text-indigo-650 animate-pulse" />
+                            <span>Simulate Self-Improvement Cycle (LangGraph Execution)</span>
+                          </h4>
+                          <p className="text-[11px] text-gray-550 leading-relaxed">
+                            Simulate incoming regulatory frameworks or user friction telemetry to trigger the 3-stage cyclical LangGraph self-critique adaptation loop.
+                          </p>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* Input Form */}
+                            <div className="bg-gray-50/30 border border-gray-200 p-4 rounded-xl space-y-3.5 md:col-span-1">
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase">Trigger Event Type</label>
+                                <select 
+                                  value={simTriggerType}
+                                  onChange={(e) => setSimTriggerType(e.target.value)}
+                                  className="w-full bg-white border border-gray-300 rounded-lg p-2 text-xs text-gray-750 font-semibold focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
+                                >
+                                  <option value="Regulatory_Update">Regulatory Update (New Legislation)</option>
+                                  <option value="User_Friction">User Friction Telemetry (Workflows)</option>
+                                </select>
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase">Trigger Source / Telemetry Data</label>
+                                <textarea
+                                  value={simTriggerData}
+                                  onChange={(e) => setSimTriggerData(e.target.value)}
+                                  rows={3}
+                                  className="w-full border border-gray-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-hidden font-mono bg-white resize-none"
+                                />
+                              </div>
+                              <button 
+                                onClick={handleTriggerSelfImprovement}
+                                disabled={simIsRunning}
+                                className="w-full bg-indigo-650 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+                              >
+                                {simIsRunning ? (
+                                  <>
+                                    <span className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                                    <span>Running critique...</span>
+                                  </>
+                                ) : (
+                                  <span>Invoke LangGraph Loop</span>
+                                )}
+                              </button>
+                            </div>
+
+                            {/* Logs Display */}
+                            <div className="md:col-span-2 space-y-2">
+                              <label className="text-[10px] font-bold text-gray-550 uppercase">LangGraph Cyclic Output Log</label>
+                              <div className="bg-gray-950 border border-gray-900 rounded-xl p-4 font-mono text-[11px] text-emerald-400 min-h-[160px] max-h-[220px] overflow-y-auto space-y-1.5 shadow-inner">
+                                {simLogs.map((log, idx) => (
+                                  <div key={idx} className={log.includes("REJECTED") ? "text-rose-455" : log.includes("APPROVED") ? "text-amber-400 font-bold" : "text-emerald-400"}>
+                                    {log}
+                                  </div>
+                                ))}
+                                {simLogs.length === 0 && (
+                                  <div className="text-gray-500 italic">LangGraph self-improvement state logs will appear here. Click 'Invoke LangGraph Loop' to simulate.</div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                         </div>
 
                       </div>
