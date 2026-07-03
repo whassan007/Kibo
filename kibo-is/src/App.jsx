@@ -128,6 +128,8 @@ const App = () => {
   const [meetingActionItems, setMeetingActionItems] = useState([]);
   const [inboxEmails, setInboxEmails] = useState([]);
   const [selectedEmail, setSelectedEmail] = useState(null);
+  const [inboxReplies, setInboxReplies] = useState([]);
+  const [replyBody, setReplyBody] = useState('');
   const [trainingCompliance, setTrainingCompliance] = useState(null);
 
   // --- Corporate Governance Registers State ---
@@ -612,6 +614,35 @@ const App = () => {
       });
       if (res.ok) {
         setSelectedEmail(null);
+        fetchExpertData();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchEmailReplies = async (emailId) => {
+    try {
+      const res = await kiboFetch(`${API_BASE}/api/expert/inbox/${emailId}/replies`);
+      if (res.ok) {
+        setInboxReplies(await res.json());
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSendReply = async (emailId) => {
+    if (!replyBody.trim()) return;
+    try {
+      const res = await kiboFetch(`${API_BASE}/api/expert/inbox/${emailId}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: replyBody })
+      });
+      if (res.ok) {
+        setReplyBody('');
+        await fetchEmailReplies(emailId);
         fetchExpertData();
       }
     } catch (err) {
@@ -2049,7 +2080,10 @@ const App = () => {
                       {inboxEmails.map(email => (
                         <div
                           key={email.email_id}
-                          onClick={() => setSelectedEmail(email)}
+                          onClick={async () => {
+                            setSelectedEmail(email);
+                            await fetchEmailReplies(email.email_id);
+                          }}
                           className={`p-4 rounded-xl border text-[12px] cursor-pointer space-y-1.5 transition-all ${
                             selectedEmail?.email_id === email.email_id
                               ? 'bg-blue-50/50 border-blue-500 shadow-xs'
@@ -2073,39 +2107,106 @@ const App = () => {
                   </div>
 
                   {/* Email Detail Panel */}
-                  <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl min-h-[300px] shadow-xs">
+                  <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl min-h-[400px] shadow-xs space-y-6">
                     {selectedEmail ? (
-                      <div className="space-y-4 text-xs">
-                        <div className="border-b border-[#E5E7EB] pb-3 space-y-1.5">
+                      <div className="space-y-6 text-xs">
+                        
+                        {/* Headers */}
+                        <div className="border-b border-[#E5E7EB] pb-3.5 space-y-2">
                           <div className="flex justify-between">
-                            <span className="text-gray-500 uppercase font-semibold">From:</span>
-                            <span className="text-[#111827] font-medium">{selectedEmail.sender}</span>
+                            <span className="text-gray-400 uppercase font-bold tracking-wider text-[9px]">Sender</span>
+                            <span className="text-[#111827] font-semibold">{selectedEmail.sender}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-500 uppercase font-semibold">Subject:</span>
-                            <span className="text-[#111827] font-medium">{selectedEmail.subject}</span>
+                            <span className="text-gray-400 uppercase font-bold tracking-wider text-[9px]">Subject</span>
+                            <span className="text-[#111827] font-semibold">{selectedEmail.subject}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400 uppercase font-bold tracking-wider text-[9px]">Status</span>
+                            <span className="uppercase text-blue-600 font-bold font-mono text-[10px]">{selectedEmail.status}</span>
                           </div>
                         </div>
 
-                        <div className="text-gray-800 whitespace-pre-wrap leading-relaxed py-2 bg-gray-50 p-3.5 rounded-lg border border-[#E5E7EB] font-mono text-[12px]">
-                          {selectedEmail.body}
+                        {/* Incoming Body */}
+                        <div className="space-y-1.5">
+                          <span className="text-gray-400 uppercase font-bold tracking-wider text-[9px]">Incoming Message Body</span>
+                          <div className="text-gray-800 whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-xl border border-[#E5E7EB] font-mono text-[12px] shadow-inner">
+                            {selectedEmail.body}
+                          </div>
                         </div>
 
-                        <div className="flex space-x-3 pt-2">
-                          {selectedEmail.status === 'unread' ? (
+                        {/* List of Actions */}
+                        <div className="space-y-2 pt-2 border-t border-[#E5E7EB]">
+                          <span className="text-gray-400 uppercase font-bold tracking-wider text-[9px] block">List of Triage Actions</span>
+                          <div className="flex flex-wrap gap-2.5">
+                            {selectedEmail.status !== 'triaged' ? (
+                              <button
+                                onClick={() => handleTriageEmail(selectedEmail.email_id)}
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg uppercase text-[9px] tracking-wider shadow-sm transition-all cursor-pointer"
+                              >
+                                Triage into Transaction
+                              </button>
+                            ) : (
+                              <span className="text-emerald-700 font-bold bg-emerald-50 border border-emerald-250 px-3 py-1.5 rounded-lg text-[9px] uppercase tracking-wider flex items-center space-x-1">
+                                <Check size={10} />
+                                <span>Triaged</span>
+                              </span>
+                            )}
                             <button
-                              onClick={() => handleTriageEmail(selectedEmail.email_id)}
-                              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg uppercase text-[10px] tracking-wide shadow-sm transition-all cursor-pointer"
+                              onClick={() => alert(`Escalated email thread ${selectedEmail.email_id} to Legal counsel.`)}
+                              className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold px-3 py-1.5 rounded-lg uppercase text-[9px] tracking-wider transition-all cursor-pointer"
                             >
-                              Triage into Transaction
+                              Escalate to Legal
                             </button>
-                          ) : (
-                            <div className="text-emerald-750 font-bold flex items-center space-x-1.5">
-                              <Check size={14} />
-                              <span>Triaged and converted to thread</span>
-                            </div>
-                          )}
+                            <button
+                              onClick={() => alert(`Flagged email thread ${selectedEmail.email_id} as Spam/Safe-Ignore.`)}
+                              className="bg-white border border-rose-200 hover:bg-rose-50 text-rose-700 font-bold px-3 py-1.5 rounded-lg uppercase text-[9px] tracking-wider transition-all cursor-pointer"
+                            >
+                              Flag as Spam
+                            </button>
+                          </div>
                         </div>
+
+                        {/* Outgoing Message Reply Composer */}
+                        <div className="space-y-2 pt-4 border-t border-[#E5E7EB]">
+                          <span className="text-gray-400 uppercase font-bold tracking-wider text-[9px] block">Compose Outgoing Reply</span>
+                          <div className="space-y-2">
+                            <textarea
+                              value={replyBody}
+                              onChange={(e) => setReplyBody(e.target.value)}
+                              placeholder="Type your official response to send to the privacy sender..."
+                              rows={4}
+                              className="w-full border border-gray-300 rounded-xl p-3 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-hidden font-mono bg-white shadow-xs resize-none"
+                            />
+                            <div className="flex justify-end">
+                              <button
+                                onClick={() => handleSendReply(selectedEmail.email_id)}
+                                className="bg-emerald-650 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg uppercase text-[9px] tracking-wider shadow-sm transition-all cursor-pointer"
+                              >
+                                Send Outgoing Reply
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Outgoing Messages Thread Log */}
+                        {inboxReplies.length > 0 && (
+                          <div className="space-y-3.5 pt-4 border-t border-[#E5E7EB]">
+                            <span className="text-gray-400 uppercase font-bold tracking-wider text-[9px] block">Outgoing Message History Log</span>
+                            <div className="space-y-2.5">
+                              {inboxReplies.map(reply => (
+                                <div key={reply.reply_id} className="p-3 bg-emerald-50/20 border border-emerald-250/30 rounded-xl text-xs space-y-1 shadow-xs">
+                                  <div className="flex justify-between text-[10px] font-bold text-emerald-800">
+                                    <span>From: KIBO Compliance Office</span>
+                                    <span>{reply.sent_at}</span>
+                                  </div>
+                                  <div className="text-gray-700 whitespace-pre-wrap font-mono">{reply.body}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
                       </div>
                     ) : (
                       <div className="flex items-center justify-center h-full text-gray-400 text-xs py-12 italic">

@@ -1000,6 +1000,7 @@ def seed_mock_data():
     cursor.execute("CREATE TABLE IF NOT EXISTS employee_training (module_id TEXT NOT NULL, employee_id TEXT NOT NULL, title TEXT NOT NULL, role_tags TEXT NOT NULL, jurisdiction TEXT NOT NULL, source_policy TEXT, duration_min INTEGER, required BOOLEAN, completed BOOLEAN DEFAULT 0, completed_at TEXT, PRIMARY KEY(module_id, employee_id))")
     cursor.execute("CREATE TABLE IF NOT EXISTS meetings (meeting_id TEXT PRIMARY KEY, type TEXT NOT NULL, date TEXT NOT NULL, agenda TEXT NOT NULL, attendees TEXT NOT NULL, minutes TEXT, action_items TEXT, materials TEXT)")
     cursor.execute("CREATE TABLE IF NOT EXISTS simulated_inbox (email_id TEXT PRIMARY KEY, sender TEXT NOT NULL, subject TEXT NOT NULL, body TEXT NOT NULL, category TEXT NOT NULL, status TEXT DEFAULT 'unread', converted_to_transaction TEXT)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS simulated_inbox_replies (reply_id TEXT PRIMARY KEY, email_id TEXT NOT NULL, body TEXT NOT NULL, sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
     cursor.execute("CREATE TABLE IF NOT EXISTS psr_recommendations (recommendation_id TEXT PRIMARY KEY, risk_id TEXT NOT NULL, member TEXT NOT NULL, vote TEXT NOT NULL, recommendation TEXT NOT NULL, timestamp TEXT NOT NULL)")
 
     # Agentic CPO Intelligence Architecture Tables
@@ -1044,6 +1045,32 @@ def seed_mock_data():
             cross_border_vectors TEXT,
             risk_rating TEXT NOT NULL,
             last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS onboarding_sessions (
+            session_id TEXT PRIMARY KEY,
+            client_id TEXT NOT NULL,
+            status TEXT NOT NULL,
+            progress REAL NOT NULL,
+            profile_json TEXT NOT NULL,
+            logs_json TEXT NOT NULL,
+            urls_json TEXT NOT NULL,
+            files_json TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS onboarding_gaps (
+            gap_id TEXT PRIMARY KEY,
+            session_id TEXT NOT NULL,
+            type TEXT NOT NULL,
+            title TEXT NOT NULL,
+            details TEXT NOT NULL,
+            priority TEXT NOT NULL,
+            status TEXT DEFAULT 'pending'
         )
     """)
 
@@ -4178,6 +4205,48 @@ def triage_expert_inbox(id: str, scope: str = Depends(require_scopes(["expert"])
     
     return {"status": "triaged", "transaction_id": tx_id}
 
+class EmailReplyPayload(BaseModel):
+    body: str
+
+@app.post("/api/expert/inbox/{id}/reply")
+def reply_expert_inbox(id: str, payload: EmailReplyPayload, scope: str = Depends(require_scopes(["expert"]))):
+    import uuid
+    reply_id = f"REP-{uuid.uuid4().hex[:6].upper()}"
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    
+    # Verify email exists
+    cursor.execute("SELECT sender FROM simulated_inbox WHERE email_id=?", (id,))
+    if not cursor.fetchone():
+        conn_db.close()
+        raise HTTPException(status_code=404, detail="Email not found")
+        
+    # Insert reply
+    cursor.execute("INSERT INTO simulated_inbox_replies (reply_id, email_id, body) VALUES (?, ?, ?)", (reply_id, id, payload.body))
+    # Update email status
+    cursor.execute("UPDATE simulated_inbox SET status = 'replied' WHERE email_id = ?", (id,))
+    
+    conn_db.commit()
+    conn_db.close()
+    return {"status": "success", "reply_id": reply_id}
+
+@app.get("/api/expert/inbox/{id}/replies")
+def get_inbox_replies(id: str, scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT reply_id, body, sent_at FROM simulated_inbox_replies WHERE email_id = ? ORDER BY sent_at DESC", (id,))
+    rows = cursor.fetchall()
+    conn_db.close()
+    
+    replies = []
+    for r in rows:
+        replies.append({
+            "reply_id": r[0],
+            "body": r[1],
+            "sent_at": r[2]
+        })
+    return replies
+
 @app.post("/api/expert/training/assign")
 def assign_expert_training(scope: str = Depends(require_scopes(["expert"]))):
     conn_db = sqlite3.connect(DB_FILE)
@@ -4635,6 +4704,239 @@ def get_flagged_evaluations(scope: str = Depends(require_scopes(["expert"]))):
             "flagged_at": r[4]
         })
     return flagged
+
+
+# --- AI ONBOARDING ENDPOINTS ---
+
+from onboarding_agents import onboarding_flow, OnboardingState, OrganizationalProfile
+
+class OnboardingStartPayload(BaseModel):
+    client_id: str
+    urls: List[str] = []
+    files: List[str] = []
+
+class GapResolvePayload(BaseModel):
+    decision: Literal["accept", "correct", "answer"]
+    value: str
+
+@app.post("/api/onboarding/start")
+def onboarding_start(payload: OnboardingStartPayload, scope: str = Depends(require_scopes(["expert"]))):
+    session_id = f"ONB-{uuid.uuid4().hex[:6].upper()}"
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    
+    empty_profile = OrganizationalProfile().model_dump()
+    initial_logs = ["[System Orchestrator] Initializing AI Onboarding Agent session..."]
+    
+    cursor.execute("""
+        INSERT INTO onboarding_sessions (session_id, client_id, status, progress, profile_json, logs_json, urls_json, files_json)
+        VALUES (?, ?, 'ingesting', 0.0, ?, ?, ?, ?)
+    """, (session_id, payload.client_id, json.dumps(empty_profile), json.dumps(initial_logs), json.dumps(payload.urls), json.dumps(payload.files)))
+    
+    conn_db.commit()
+    conn_db.close()
+    
+    return {"status": "success", "session_id": session_id}
+
+@app.post("/api/onboarding/{session_id}/website")
+def onboarding_website(session_id: str, scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT client_id, urls_json, files_json, logs_json FROM onboarding_sessions WHERE session_id = ?", (session_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn_db.close()
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    client_id, urls_str, files_str, logs_str = row
+    state = OnboardingState(
+        session_id=session_id,
+        client_id=client_id,
+        urls=json.loads(urls_str),
+        files=json.loads(files_str),
+        logs=json.loads(logs_str)
+    )
+    
+    from onboarding_agents import ingest_website
+    res = ingest_website(state)
+    
+    cursor.execute("""
+        UPDATE onboarding_sessions
+        SET progress = ?, status = ?, logs_json = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE session_id = ?
+    """, (res["progress"], res["status"], json.dumps(res["logs"]), session_id))
+    
+    conn_db.commit()
+    conn_db.close()
+    return {"status": "success", "logs": res["logs"]}
+
+@app.post("/api/onboarding/{session_id}/documents")
+def onboarding_documents(session_id: str, scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT client_id, urls_json, files_json, logs_json, progress, status FROM onboarding_sessions WHERE session_id = ?", (session_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn_db.close()
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    client_id, urls_str, files_str, logs_str, progress, status = row
+    
+    state = OnboardingState(
+        session_id=session_id,
+        client_id=client_id,
+        urls=json.loads(urls_str),
+        files=json.loads(files_str),
+        logs=json.loads(logs_str),
+        progress=progress,
+        status=status
+    )
+    
+    from onboarding_agents import ingest_documents, normalize_profile, detect_gaps
+    
+    res_docs = ingest_documents(state)
+    state.logs = res_docs["logs"]
+    state.progress = res_docs["progress"]
+    state.status = res_docs["status"]
+    
+    res_norm = normalize_profile(state)
+    state.logs = res_norm["logs"]
+    state.progress = res_norm["progress"]
+    state.status = res_norm["status"]
+    state.profile = res_norm["profile"]
+    
+    res_gaps = detect_gaps(state)
+    
+    for g in res_gaps["gaps"]:
+        cursor.execute("""
+            INSERT OR REPLACE INTO onboarding_gaps (gap_id, session_id, type, title, details, priority, status)
+            VALUES (?, ?, ?, ?, ?, ?, 'pending')
+        """, (g["id"], session_id, g["type"], g["title"], g["details"], g["priority"]))
+        
+    cursor.execute("""
+        UPDATE onboarding_sessions
+        SET progress = ?, status = ?, logs_json = ?, profile_json = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE session_id = ?
+    """, (res_gaps["progress"], res_gaps["status"], json.dumps(res_gaps["logs"]), json.dumps(state.profile), session_id))
+    
+    conn_db.commit()
+    conn_db.close()
+    return {"status": "success", "logs": res_gaps["logs"], "gaps_count": len(res_gaps["gaps"])}
+
+@app.get("/api/onboarding/{session_id}/profile")
+def onboarding_get_profile(session_id: str, scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT profile_json FROM onboarding_sessions WHERE session_id = ?", (session_id,))
+    row = cursor.fetchone()
+    conn_db.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return json.loads(row[0])
+
+@app.get("/api/onboarding/{session_id}/gaps")
+def onboarding_get_gaps(session_id: str, scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT gap_id, type, title, details, priority, status FROM onboarding_gaps WHERE session_id = ?", (session_id,))
+    rows = cursor.fetchall()
+    conn_db.close()
+    
+    gaps = []
+    for r in rows:
+        gaps.append({
+            "id": r[0],
+            "type": r[1],
+            "title": r[2],
+            "details": r[3],
+            "priority": r[4],
+            "status": r[5]
+        })
+    return gaps
+
+@app.post("/api/onboarding/{session_id}/gaps/{gap_id}")
+def onboarding_resolve_gap(session_id: str, gap_id: str, payload: GapResolvePayload, scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    
+    cursor.execute("UPDATE onboarding_gaps SET status = ? WHERE gap_id = ? AND session_id = ?", (payload.decision, gap_id, session_id))
+    
+    cursor.execute("SELECT logs_json, profile_json FROM onboarding_sessions WHERE session_id = ?", (session_id,))
+    row = cursor.fetchone()
+    if row:
+        logs = json.loads(row[0])
+        profile = json.loads(row[1])
+        logs.append(f"[Orchestrator] Gap resolved by human: {gap_id} resolved as '{payload.decision}'. User input: '{payload.value}'")
+        
+        if gap_id == "gap-1" and payload.value:
+            for v in profile.get("vendors", []):
+                if v["name"] == "Aselo/Twilio":
+                    v["retention"] = payload.value
+            for d in profile.get("data_inventory", []):
+                if d["asset"] == "Clinical Transcripts":
+                    d["retention"] = payload.value
+        elif gap_id == "gap-2" and payload.value:
+            for v in profile.get("vendors", []):
+                if v["name"] == "Blackbaud":
+                    v["dpa_status"] = f"Validated: {payload.value}"
+                    
+        cursor.execute("UPDATE onboarding_sessions SET logs_json = ?, profile_json = ?, updated_at = CURRENT_TIMESTAMP WHERE session_id = ?", (json.dumps(logs), json.dumps(profile), session_id))
+        
+    conn_db.commit()
+    conn_db.close()
+    return {"status": "success"}
+
+@app.post("/api/onboarding/{session_id}/finalize")
+def onboarding_finalize(session_id: str, scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    
+    cursor.execute("SELECT client_id, logs_json, profile_json FROM onboarding_sessions WHERE session_id = ?", (session_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn_db.close()
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    client_id, logs_str, profile_str = row
+    logs = json.loads(logs_str)
+    
+    from onboarding_agents import finalize_profile, OnboardingState
+    state = OnboardingState(
+        session_id=session_id,
+        client_id=client_id,
+        logs=logs,
+        profile=json.loads(profile_str),
+        progress=0.85,
+        status="gap_review"
+    )
+    
+    res = finalize_profile(state)
+    
+    cursor.execute("""
+        UPDATE onboarding_sessions
+        SET progress = 1.0, status = 'validated', logs_json = ?, profile_json = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE session_id = ?
+    """, (json.dumps(res["logs"]), json.dumps(res["profile"]), session_id))
+    
+    conn_db.commit()
+    conn_db.close()
+    return {"status": "success", "profile": res["profile"]}
+
+@app.get("/api/onboarding/{session_id}/status")
+def onboarding_get_status(session_id: str, scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT status, progress, logs_json FROM onboarding_sessions WHERE session_id = ?", (session_id,))
+    row = cursor.fetchone()
+    conn_db.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    return {
+        "status": row[0],
+        "progress": row[1],
+        "logs": json.loads(row[2])
+    }
 
 
 
