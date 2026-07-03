@@ -1426,10 +1426,14 @@ const App = () => {
                     <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl shadow-xs space-y-1.5">
                       <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Statutory SLA Clock</div>
                       <div className="flex items-center space-x-2">
-                        <Clock size={16} className="text-blue-600 animate-pulse" />
-                        <span className="text-lg font-extrabold text-[#111827]">{jurConfig.access_deadline_days} Days</span>
+                        <Clock size={16} className={`animate-pulse ${jurConfig.code === 'eu' ? 'text-rose-600' : 'text-blue-600'}`} />
+                        <span className="text-lg font-extrabold text-[#111827]">
+                          {jurConfig.code === 'eu' ? '72 Hours' : `${jurConfig.access_deadline_days} Days`}
+                        </span>
                       </div>
-                      <div className="text-[9px] text-gray-400">Response deadline for active {jurConfig.access_request_abbr} requests.</div>
+                      <div className="text-[9px] text-gray-400">
+                        {jurConfig.code === 'eu' ? 'Supervisory Authority Notification Window' : `Response deadline for active ${jurConfig.access_request_abbr} requests.`}
+                      </div>
                     </div>
 
                     <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl shadow-xs space-y-1.5">
@@ -1482,11 +1486,11 @@ const App = () => {
                                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                                   <span>{g.title}</span>
                                 </div>
-                                <div className="text-[10px] text-gray-500 leading-relaxed">{g.details}</div>
+                                <div className="text-[10px] text-gray-550 leading-relaxed">{g.details}</div>
                               </div>
                               <button
                                 onClick={() => setActiveTab('onboarding')}
-                                className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-[10px] font-bold px-3 py-1.5 rounded-md cursor-pointer transition-all"
+                                className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-550 text-[10px] font-bold px-3 py-1.5 rounded-md cursor-pointer transition-all shadow-xs"
                               >
                                 Resolve
                               </button>
@@ -1500,11 +1504,11 @@ const App = () => {
                                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
                                   <span>{h.title}</span>
                                 </div>
-                                <div className="text-[10px] text-gray-500 leading-relaxed">{h.details}</div>
+                                <div className="text-[10px] text-gray-550 leading-relaxed">{h.details}</div>
                               </div>
                               <button
                                 onClick={() => setActiveTab('cpo_agents')}
-                                className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-[10px] font-bold px-3 py-1.5 rounded-md cursor-pointer transition-all"
+                                className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-550 text-[10px] font-bold px-3 py-1.5 rounded-md cursor-pointer transition-all shadow-xs"
                               >
                                 Approve
                               </button>
@@ -1518,6 +1522,212 @@ const App = () => {
                           )}
                         </div>
                       </div>
+
+                      {/* LOCALIZED JURISDICTION DASHBOARD MODULES */}
+                      {(jurConfig.code === 'canada' || jurConfig.code === 'quebec' || jurConfig.code === 'ontario') && (
+                        <div className="space-y-6">
+                          
+                          {/* RROSH Assessment Tool */}
+                          <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl space-y-4 shadow-xs">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                              <ShieldAlert size={14} className="text-blue-650" />
+                              <span>Canada Breach Triage: RROSH Assessment Builder</span>
+                            </h3>
+                            <p className="text-xs text-gray-500">
+                              Assess if a security incident creates a <strong>"Real Risk of Significant Harm"</strong> (RROSH) under PIPEDA or Quebec Law 25.
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50/50 p-4 rounded-xl border border-gray-200">
+                              <div className="space-y-1">
+                                <span className="text-[10px] uppercase font-bold text-gray-400">Harm Sensitivity</span>
+                                <div className="text-xs font-semibold text-gray-800">High (Crisis Chat Logs, Medical)</div>
+                              </div>
+                              <div className="space-y-1 border-t md:border-t-0 md:border-l border-gray-200 pt-2.5 md:pt-0 md:pl-4">
+                                <span className="text-[10px] uppercase font-bold text-gray-400">Misuse Likelihood</span>
+                                <div className="text-xs font-semibold text-amber-600">Possible (Unauthorized Access)</div>
+                              </div>
+                              <div className="space-y-1 border-t md:border-t-0 md:border-l border-gray-200 pt-2.5 md:pt-0 md:pl-4">
+                                <span className="text-[10px] uppercase font-bold text-gray-400">RROSH Verdict</span>
+                                <span className="px-2 py-0.5 rounded bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200 inline-block mt-0.5">
+                                  MANDATORY OPC REPORTING
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Data Transfers and Consent Trackers */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-3 shadow-xs">
+                              <h4 className="text-[11px] font-bold uppercase tracking-wider text-gray-700 flex items-center space-x-1">
+                                <Globe size={12} className="text-purple-650" />
+                                <span>Quebec/Canada Data Flow Restrictions</span>
+                              </h4>
+                              <div className="space-y-2 text-xs">
+                                <div className="flex justify-between border-b border-gray-150 pb-1.5">
+                                  <span className="text-gray-600 font-medium">Aselo/Twilio Chat Route</span>
+                                  <span className="text-[10px] font-bold text-rose-600 font-mono">Leaves Quebec (AWS US-East)</span>
+                                </div>
+                                <div className="flex justify-between border-b border-gray-150 pb-1.5">
+                                  <span className="text-gray-600 font-medium">Blackbaud CRM Database</span>
+                                  <span className="text-[10px] font-bold text-emerald-600 font-mono">In-Country (Canada East)</span>
+                                </div>
+                                <div className="text-[10px] text-gray-400 italic">Quebec Law 25 requires a Transfer Impact Assessment (TIA) for out-of-province storage.</div>
+                              </div>
+                            </div>
+
+                            <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-3 shadow-xs">
+                              <h4 className="text-[11px] font-bold uppercase tracking-wider text-gray-700">Clear Consent Opt-In Track</h4>
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="text-gray-500 font-semibold">Express Sensitive Opt-In</span>
+                                  <span className="font-extrabold text-blue-600">89.4%</span>
+                                </div>
+                                <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                                  <div className="bg-blue-600 h-full w-[89.4%]" />
+                                </div>
+                                <div className="flex justify-between items-center text-xs pt-1">
+                                  <span className="text-gray-500 font-semibold">Implied Marketing Opt-Out</span>
+                                  <span className="font-extrabold text-amber-600">12.1%</span>
+                                </div>
+                              </div>
+                            </div>
+
+                          </div>
+                        </div>
+                      )}
+
+                      {jurConfig.code === 'us' && (
+                        <div className="space-y-6">
+                          
+                          {/* Multi-State Compliance Scorecard */}
+                          <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl space-y-4 shadow-xs">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                              <Globe size={14} className="text-blue-650" />
+                              <span>Multi-State Privacy Matrix (US State Legislation)</span>
+                            </h3>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              {['California (CPRA)', 'Virginia (VCDPA)', 'Colorado (CPA)', 'Utah (UCPA)'].map((st, idx) => (
+                                <div key={st} className="p-3 bg-gray-50/50 rounded-lg border border-gray-200 text-center">
+                                  <div className="text-[11px] font-semibold text-gray-800">{st}</div>
+                                  <div className={`text-[10px] font-bold mt-1.5 ${idx === 0 ? 'text-blue-600' : 'text-emerald-600'}`}>
+                                    {idx === 0 ? 'DPA Under Review' : '✓ Compliant'}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* US Opt-Out & Sensitive Data Widgets */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-3.5 shadow-xs">
+                              <h4 className="text-[11px] font-bold uppercase tracking-wider text-gray-700 flex items-center space-x-1.5">
+                                <Activity size={12} className="text-rose-500" />
+                                <span>CRR Opt-Out Request Logs</span>
+                              </h4>
+                              <div className="space-y-3 text-xs">
+                                <div className="flex justify-between border-b border-gray-150 pb-2">
+                                  <span className="text-gray-600 font-medium">Do Not Sell or Share My Info</span>
+                                  <span className="font-bold font-mono text-[#111827]">214 active requests</span>
+                                </div>
+                                <div className="flex justify-between border-b border-gray-150 pb-2">
+                                  <span className="text-gray-600 font-medium">Limit Sensitive Data Usage</span>
+                                  <span className="font-bold font-mono text-[#111827]">45 active requests</span>
+                                </div>
+                                <div className="text-[9px] text-gray-400">California residents have a statutory right to limit the use of Sensitive Personal Information (SPI).</div>
+                              </div>
+                            </div>
+
+                            <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-3 shadow-xs">
+                              <h4 className="text-[11px] font-bold uppercase tracking-wider text-gray-700">Sensitive Personal Info (SPI) Scans</h4>
+                              <div className="space-y-2 text-xs">
+                                <div className="flex justify-between items-center bg-rose-50/50 border border-rose-100 p-2 rounded-lg">
+                                  <span className="text-gray-700 font-semibold font-mono text-[10px]">Precise Geolocation Data</span>
+                                  <span className="text-[9px] uppercase bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded">Opt-In Enforced</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-gray-50 border border-gray-200 p-2 rounded-lg">
+                                  <span className="text-gray-700 font-semibold font-mono text-[10px]">Race & Ethnic Classifiers</span>
+                                  <span className="text-[9px] uppercase bg-gray-250 text-gray-600 font-bold px-2 py-0.5 rounded">None Monitored</span>
+                                </div>
+                              </div>
+                            </div>
+
+                          </div>
+                        </div>
+                      )}
+
+                      {(jurConfig.code === 'eu' || jurConfig.code === 'uk') && (
+                        <div className="space-y-6">
+                          
+                          {/* EU Breach reporting timer */}
+                          <div className="bg-rose-50/20 border border-rose-200 p-6 rounded-xl space-y-3.5 shadow-xs">
+                            <div className="flex justify-between items-start">
+                              <div className="space-y-1">
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-rose-800 flex items-center space-x-2">
+                                  <ShieldAlert size={14} className="text-rose-600 animate-pulse" />
+                                  <span>GDPR Article 33: 72-Hour Breach Clock</span>
+                                </h3>
+                                <p className="text-xs text-rose-700 leading-relaxed max-w-xl">
+                                  GDPR mandates notification to the Supervisory Authority within 72 hours of becoming aware of a personal data breach unless the breach is unlikely to result in a risk.
+                                </p>
+                              </div>
+                              <span className="bg-rose-100 border border-rose-250 text-rose-800 text-[10px] font-mono font-extrabold px-3 py-1 rounded">
+                                ACTIVE WINDOW
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* RoPA Completion Bar & Lawful Basis Mappers */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-4 shadow-xs">
+                              <h4 className="text-[11px] font-bold uppercase tracking-wider text-gray-700 flex items-center space-x-1.5">
+                                <BookOpen size={12} className="text-blue-650" />
+                                <span>Article 30 Record of Processing (RoPA)</span>
+                              </h4>
+                              <div className="space-y-3 text-xs">
+                                <div>
+                                  <div className="flex justify-between text-[11px] mb-1 font-semibold text-gray-600">
+                                    <span>Clinical Operations RoPA Status</span>
+                                    <span className="text-blue-600 font-bold">100%</span>
+                                  </div>
+                                  <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                                    <div className="bg-blue-600 h-full w-[100%]" />
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="flex justify-between text-[11px] mb-1 font-semibold text-gray-600">
+                                    <span>Donor & Fundraising RoPA Status</span>
+                                    <span className="text-blue-600 font-bold">45%</span>
+                                  </div>
+                                  <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                                    <div className="bg-blue-600 h-full w-[45%]" />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-4 shadow-xs">
+                              <h4 className="text-[11px] font-bold uppercase tracking-wider text-gray-700">Legal Basis of Processing Mapped</h4>
+                              <div className="space-y-2 text-xs">
+                                <div className="flex justify-between border-b border-gray-150 pb-1.5">
+                                  <span className="text-gray-600 font-medium">Legitimate Interest (LI)</span>
+                                  <span className="font-extrabold text-blue-600">62% of activities</span>
+                                </div>
+                                <div className="flex justify-between border-b border-gray-150 pb-1.5">
+                                  <span className="text-gray-600 font-medium">Explicit Consent (Art. 6.1a)</span>
+                                  <span className="font-extrabold text-blue-600">28% of activities</span>
+                                </div>
+                                <div className="flex justify-between pb-1">
+                                  <span className="text-gray-600 font-medium">Performance of Contract</span>
+                                  <span className="font-extrabold text-blue-600">10% of activities</span>
+                                </div>
+                              </div>
+                            </div>
+
+                          </div>
+                        </div>
+                      )}
 
                       {/* Active Assessments List */}
                       <div className="space-y-3.5">
@@ -1556,7 +1766,7 @@ const App = () => {
                               const res = await kiboFetch(`${API_BASE}/api/expert/audit`, { method: 'POST' });
                               if (res.ok) alert("Audit session initialized on the blockchain ledger.");
                             }}
-                            className="w-full text-left bg-white hover:bg-gray-50 text-gray-700 border border-[#E5E7EB] px-4 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-xs flex justify-between items-center"
+                            className="w-full text-left bg-white hover:bg-gray-550 text-gray-755 border border-[#E5E7EB] px-4 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-xs flex justify-between items-center"
                           >
                             <span>Run Blockchain Activities Audit</span>
                             <span className="text-[9px] text-gray-400 font-mono">POST /audit</span>
@@ -1570,7 +1780,7 @@ const App = () => {
                                 alert(`SOC Compliance Scan Status: ${data.status}`);
                               }
                             }}
-                            className="w-full text-left bg-white hover:bg-gray-550 text-gray-750 border border-[#E5E7EB] px-4 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-xs flex justify-between items-center"
+                            className="w-full text-left bg-white hover:bg-gray-550 text-gray-755 border border-[#E5E7EB] px-4 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-xs flex justify-between items-center"
                           >
                             <span>Evaluate SOC 1/SOC 2 Matrix</span>
                             <span className="text-[9px] text-gray-400 font-mono">POST /soc-scan</span>
