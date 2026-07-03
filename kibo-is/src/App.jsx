@@ -9,7 +9,7 @@ import {
 
 const API_BASE = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
   ? 'http://localhost:8000'
-  : 'http://100.113.62.112:8000';
+  : window.location.origin;
 
 const App = () => {
   // --- Core State ---
@@ -31,7 +31,50 @@ const App = () => {
     training_track: "fippa"
   });
 
-  const [jurisdictionsList, setJurisdictionsList] = useState([]);
+  const [jurisdictionsList, setJurisdictionsList] = useState([
+    {
+      code: "ontario",
+      flag: "🇨🇦",
+      name: "Ontario (Public Sector) - FIPPA",
+      primary_statute: "FIPPA",
+      access_request_abbr: "FOI"
+    },
+    {
+      code: "canada",
+      flag: "🇨🇦",
+      name: "Canada - PIPEDA",
+      primary_statute: "PIPEDA",
+      access_request_abbr: "ATIP"
+    },
+    {
+      code: "quebec",
+      flag: "🇨🇦",
+      name: "Quebec - Law 25",
+      primary_statute: "Law 25",
+      access_request_abbr: "AR"
+    },
+    {
+      code: "us",
+      flag: "🇺🇸",
+      name: "United States - CCPA/CPRA",
+      primary_statute: "CPRA",
+      access_request_abbr: "DSAR"
+    },
+    {
+      code: "eu",
+      flag: "🇪🇺",
+      name: "European Union - GDPR",
+      primary_statute: "GDPR",
+      access_request_abbr: "DSAR"
+    },
+    {
+      code: "uk",
+      flag: "🇬🇧",
+      name: "United Kingdom - UK GDPR",
+      primary_statute: "UK GDPR",
+      access_request_abbr: "SAR"
+    }
+  ]);
   const [transactions, setTransactions] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [rules, setRules] = useState([]);
@@ -97,7 +140,14 @@ const App = () => {
       'X-Kibo-Scope': securityMode,
       'Content-Type': 'application/json'
     };
-    return fetch(url, { ...options, headers });
+    try {
+      const res = await fetch(url, { ...options, headers });
+      setIsSystemOnline(true);
+      return res;
+    } catch (e) {
+      setIsSystemOnline(false);
+      throw e;
+    }
   };
 
   const fetchJurisdictions = async () => {
@@ -106,9 +156,13 @@ const App = () => {
       if (res.ok) {
         const data = await res.json();
         setJurisdictionsList(data);
+        setIsSystemOnline(true);
+      } else {
+        setIsSystemOnline(false);
       }
     } catch (e) {
       console.error(e);
+      setIsSystemOnline(false);
     }
   };
 
@@ -118,9 +172,13 @@ const App = () => {
       if (res.ok) {
         const data = await res.json();
         setJurConfig(data);
+        setIsSystemOnline(true);
+      } else {
+        setIsSystemOnline(false);
       }
     } catch (e) {
       console.error(e);
+      setIsSystemOnline(false);
     }
   };
 
@@ -128,17 +186,23 @@ const App = () => {
     setActiveJurisdiction(code);
     await fetchActiveJurisdictionConfig(code);
     try {
-      await fetch(`${API_BASE}/api/user/jurisdiction`, {
+      const res = await fetch(`${API_BASE}/api/user/jurisdiction`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jurisdiction: code })
       });
+      if (res.ok) {
+        setIsSystemOnline(true);
+      } else {
+        setIsSystemOnline(false);
+      }
       // Refresh data
       fetchEmployeeData();
       fetchExpertData();
       fetchPsrData();
     } catch (e) {
       console.error(e);
+      setIsSystemOnline(false);
     }
   };
 
@@ -151,6 +215,7 @@ const App = () => {
       if (trainingRes.ok) setEmployeeTraining(await trainingRes.json());
     } catch (e) {
       console.error(e);
+      setIsSystemOnline(false);
     }
   };
 
@@ -172,6 +237,7 @@ const App = () => {
       fetchOnboardingData();
     } catch (e) {
       console.error(e);
+      setIsSystemOnline(false);
     }
   };
 
@@ -184,6 +250,7 @@ const App = () => {
       if (queueRes.ok) setPsrRiskQueue(await queueRes.json());
     } catch (e) {
       console.error(e);
+      setIsSystemOnline(false);
     }
   };
 
@@ -196,6 +263,7 @@ const App = () => {
       if (caslRes.ok) setCaslRegistry(await caslRes.json());
     } catch (e) {
       console.error("Error fetching onboarding data:", e);
+      setIsSystemOnline(false);
     }
   };
 
@@ -207,6 +275,7 @@ const App = () => {
       }
     } catch (e) {
       console.error(e);
+      setIsSystemOnline(false);
     }
   };
 
@@ -222,6 +291,7 @@ const App = () => {
       }
     } catch (e) {
       console.error(e);
+      setIsSystemOnline(false);
     }
   };
 
@@ -239,6 +309,7 @@ const App = () => {
       }
     } catch (e) {
       setCaslLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] [ERROR] Connection error: ${e.message}`]);
+      setIsSystemOnline(false);
     } finally {
       setIsSunsetting(false);
     }
@@ -502,6 +573,28 @@ const App = () => {
         </div>
       </header>
 
+      {/* OFFLINE BANNER */}
+      {!isSystemOnline && (
+        <div className="bg-rose-50 border-b border-rose-200 text-rose-800 px-6 py-2.5 text-xs flex justify-between items-center font-medium transition-all duration-300">
+          <div className="flex items-center space-x-2">
+            <AlertTriangle size={14} className="text-rose-600 animate-pulse" />
+            <span>GATEWAY OFFLINE: PIPELINE SUSPENDED (SLA countdowns paused)</span>
+          </div>
+          <button 
+            onClick={async () => {
+              await fetchJurisdictions();
+              await fetchActiveJurisdictionConfig(activeJurisdiction);
+              if (securityMode === 'employee') fetchEmployeeData();
+              else if (securityMode === 'expert') fetchExpertData();
+              else if (securityMode === 'psr') fetchPsrData();
+            }}
+            className="bg-white hover:bg-rose-100 border border-rose-300 text-rose-800 px-3 py-1 rounded shadow-xs text-[10px] transition-all cursor-pointer font-semibold"
+          >
+            Retry Connection
+          </button>
+        </div>
+      )}
+
       {/* BODY CONTENT */}
       <div className="flex-1 flex overflow-hidden">
 
@@ -574,9 +667,10 @@ const App = () => {
                     </div>
                     <button 
                       type="submit" 
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 text-xs tracking-wide rounded-lg shadow-sm transition-all cursor-pointer"
+                      disabled={!isSystemOnline}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 text-xs tracking-wide rounded-lg shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Submit {jurConfig.access_request_abbr}
+                      {isSystemOnline ? `Submit ${jurConfig.access_request_abbr}` : "Offline - Submission Blocked"}
                     </button>
                   </form>
 
@@ -608,7 +702,7 @@ const App = () => {
                       placeholder="e.g. REQ-A12B34" 
                       className="flex-1 bg-white border border-[#E5E7EB] focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 px-3 py-2 text-xs text-[#111827] rounded-lg transition-all shadow-xs"
                     />
-                    <button type="submit" className="bg-white hover:bg-gray-550 text-gray-700 border border-[#E5E7EB] px-4 py-2 text-xs rounded-lg transition-all cursor-pointer shadow-xs">
+                    <button type="submit" disabled={!isSystemOnline} className="bg-white hover:bg-gray-100 text-gray-700 border border-[#E5E7EB] px-4 py-2 text-xs rounded-lg transition-all cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed">
                       Track
                     </button>
                   </form>
@@ -1311,71 +1405,81 @@ const App = () => {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[#E5E7EB]">
-                          {onboardingTasks.map(t => (
-                            <tr key={t.id} className="hover:bg-gray-50/50 transition-all">
-                              <td className="p-3.5 text-center">
-                                <button 
-                                  onClick={() => handleToggleOnboardingTask(t.id)}
-                                  className={`p-1 rounded-md border transition-all cursor-pointer ${
-                                    t.status === 'completed' 
-                                      ? 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100' 
-                                      : 'bg-white border-[#E5E7EB] text-gray-400 hover:border-gray-300'
-                                  }`}
-                                >
-                                  <Check size={12} />
-                                </button>
-                              </td>
-                              <td className="p-3.5 font-semibold">
-                                <span className={t.status === 'completed' ? 'line-through text-gray-400 font-normal' : 'text-[#111827]'}>
-                                  {t.task_name}
-                                </span>
-                              </td>
-                              <td className="p-3.5">
-                                <span className="px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-gray-650 text-[10px] uppercase font-bold">
-                                  {t.category}
-                                </span>
-                              </td>
-                              <td className="p-3.5 space-y-0.5">
-                                <div className={`text-[10px] font-bold ${t.scope === 'Federal' ? 'text-blue-600' : 'text-purple-650'}`}>
-                                  {t.scope.toUpperCase()}
-                                </div>
-                                <div className="text-[10px] text-gray-500">{t.jurisdiction}</div>
-                              </td>
-                              <td className="p-3.5">
-                                {editingNotesTaskId === t.id ? (
-                                  <div className="flex space-x-2">
-                                    <input 
-                                      type="text" 
-                                      value={editingNotesText}
-                                      onChange={(e) => setEditingNotesText(e.target.value)}
-                                      className="flex-1 bg-white border border-[#E5E7EB] focus:border-blue-600 focus:ring-1 focus:ring-blue-500/20 p-1 rounded text-xs text-[#111827] font-mono"
-                                    />
-                                    <button 
-                                      onClick={() => handleUpdateTaskNotes(t.id, editingNotesText)}
-                                      className="bg-emerald-650 text-white px-3 py-1 rounded text-[10px] font-bold cursor-pointer shadow-xs"
-                                    >
-                                      Save
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <div className="text-gray-650 text-[11px] leading-relaxed">
-                                    {t.notes || <span className="italic text-gray-400">No guidelines provided.</span>}
-                                  </div>
-                                )}
-                              </td>
-                              <td className="p-3.5 text-right">
-                                <button 
-                                  onClick={() => {
-                                    setEditingNotesTaskId(t.id);
-                                    setEditingNotesText(t.notes || '');
-                                  }}
-                                  className="text-blue-600 hover:text-blue-700 font-semibold hover:underline text-xs cursor-pointer"
-                                >
-                                  Edit Info
-                                </button>
+                          {onboardingTasks.length === 0 ? (
+                            <tr>
+                              <td colSpan="6" className="p-8 text-center text-gray-500 italic">
+                                {isSystemOnline 
+                                  ? "No onboarding tasks loaded. Select a Canadian jurisdiction to view checklist." 
+                                  : "System Offline - Unable to load compliance checklist."}
                               </td>
                             </tr>
-                          ))}
+                          ) : (
+                            onboardingTasks.map(t => (
+                              <tr key={t.id} className="hover:bg-gray-550/50 transition-all">
+                                <td className="p-3.5 text-center">
+                                  <button 
+                                    onClick={() => handleToggleOnboardingTask(t.id)}
+                                    className={`p-1 rounded-md border transition-all cursor-pointer ${
+                                      t.status === 'completed' 
+                                        ? 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100' 
+                                        : 'bg-white border-[#E5E7EB] text-gray-400 hover:border-gray-300'
+                                    }`}
+                                  >
+                                    <Check size={12} />
+                                  </button>
+                                </td>
+                                <td className="p-3.5 font-semibold">
+                                  <span className={t.status === 'completed' ? 'line-through text-gray-400 font-normal' : 'text-[#111827]'}>
+                                    {t.task_name}
+                                  </span>
+                                </td>
+                                <td className="p-3.5">
+                                  <span className="px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-gray-650 text-[10px] uppercase font-bold">
+                                    {t.category}
+                                  </span>
+                                </td>
+                                <td className="p-3.5 space-y-0.5">
+                                  <div className={`text-[10px] font-bold ${t.scope === 'Federal' ? 'text-blue-600' : 'text-purple-650'}`}>
+                                    {t.scope.toUpperCase()}
+                                  </div>
+                                  <div className="text-[10px] text-gray-500">{t.jurisdiction}</div>
+                                </td>
+                                <td className="p-3.5">
+                                  {editingNotesTaskId === t.id ? (
+                                    <div className="flex space-x-2">
+                                      <input 
+                                        type="text" 
+                                        value={editingNotesText}
+                                        onChange={(e) => setEditingNotesText(e.target.value)}
+                                        className="flex-1 bg-white border border-[#E5E7EB] focus:border-blue-600 focus:ring-1 focus:ring-blue-500/20 p-1 rounded text-xs text-[#111827] font-mono"
+                                      />
+                                      <button 
+                                        onClick={() => handleUpdateTaskNotes(t.id, editingNotesText)}
+                                        className="bg-emerald-650 text-white px-3 py-1 rounded text-[10px] font-bold cursor-pointer shadow-xs"
+                                      >
+                                        Save
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="text-gray-650 text-[11px] leading-relaxed">
+                                      {t.notes || <span className="italic text-gray-400">No guidelines provided.</span>}
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="p-3.5 text-right">
+                                  <button 
+                                    onClick={() => {
+                                      setEditingNotesTaskId(t.id);
+                                      setEditingNotesText(t.notes || '');
+                                    }}
+                                    className="text-blue-600 hover:text-blue-700 font-semibold hover:underline text-xs cursor-pointer"
+                                  >
+                                    Edit Info
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          )}
                         </tbody>
                       </table>
                     </div>
