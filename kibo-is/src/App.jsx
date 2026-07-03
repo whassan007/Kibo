@@ -163,6 +163,17 @@ const App = () => {
   const [psrSelectedRisk, setPsrSelectedRisk] = useState(null);
   const [psrVote, setPsrVote] = useState('approve');
   const [psrRecommendation, setPsrRecommendation] = useState('');
+  
+  // --- PSR Notes-derived State ---
+  const [psrCopilotQuery, setPsrCopilotQuery] = useState('');
+  const [psrCopilotAnswer, setPsrCopilotAnswer] = useState('');
+  const [psrTransitionTasks, setPsrTransitionTasks] = useState([
+    { id: 'T1', title: 'Revoke Nascent Access (IP/Data)', owner: 'Bryan / Neil', status: 'pending', notes: 'Confirm in writing that no IP or data remains with previous vendor.' },
+    { id: 'T2', title: 'June 8 OpenText Demo LOI & NDA', owner: 'Betty', status: 'completed', notes: 'Outlining intent to collaborate with mutual NDA clauses.' },
+    { id: 'T3', title: 'OpenText MOU Build Plan & PIA', owner: 'Betty / Bryan', status: 'pending', notes: 'Draft MOU and initiate Quebec Law 25 PIA after build plan received.' },
+    { id: 'T4', title: 'Update Foundation Terms of Service', owner: 'Sofiya', status: 'pending', notes: 'Add KHP + Foundation privacy policy links; correct contact details.' },
+    { id: 'T5', title: 'Onboard Danny (Finance/Privacy)', owner: 'Sofiya / Neil', status: 'pending', notes: 'Deliver onboarding package, brief on transition risks, & SharePoint.' }
+  ]);
 
   // --- Canadian Onboarding & CASL State ---
   const [onboardingTasks, setOnboardingTasks] = useState([]);
@@ -3359,174 +3370,270 @@ const App = () => {
               )}
 
             </div>
-
           </div>
         )}
 
         {/* PSR COMMITTEE MODE */}
         {securityMode === 'psr' && (
-          <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 overflow-y-auto bg-gray-50/50 p-6 space-y-6">
             
-            {/* Left Column: Meetings & Materials */}
-            <div className="w-1/2 border-r border-[#E5E7EB] p-6 space-y-6 overflow-y-auto bg-[#FAFAFA]">
+            {/* Top row: Side-by-side panels */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
               
-              <div className="space-y-3">
-                <div className="text-xs font-bold uppercase tracking-wider text-gray-800">PSR Committee Meetings</div>
-                <div className="space-y-2.5">
-                  {psrMeetings.map(m => (
-                    <div key={m.meeting_id} className="bg-white border border-[#E5E7EB] p-4 rounded-xl text-xs space-y-2 shadow-xs">
-                      <div className="flex justify-between font-semibold">
-                        <span>Meeting ID: {m.meeting_id}</span>
-                        <span className="text-blue-600 uppercase text-[10px] font-bold">{m.type.replace('_', ' ')}</span>
-                      </div>
-                      <div className="text-gray-700 leading-relaxed">Agenda: {m.agenda.join(' | ')}</div>
-                      {m.minutes ? (
-                        <div className="text-gray-700 bg-gray-50 border border-[#E5E7EB] p-3 rounded-lg mt-1 font-mono text-[11px]">
-                          Minutes: {m.minutes}
+              {/* Left Column: Meetings & Materials */}
+              <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-6 shadow-xs">
+                
+                <div className="space-y-3">
+                  <div className="text-xs font-bold uppercase tracking-wider text-gray-800">PSR Committee Meetings</div>
+                  <div className="space-y-2.5">
+                    {psrMeetings.map(m => (
+                      <div key={m.meeting_id} className="bg-white border border-[#E5E7EB] p-4 rounded-xl text-xs space-y-2 shadow-xs">
+                        <div className="flex justify-between font-semibold">
+                          <span>Meeting ID: {m.meeting_id}</span>
+                          <span className="text-blue-600 uppercase text-[10px] font-bold">{m.type.replace('_', ' ')}</span>
                         </div>
-                      ) : (
-                        <div className="text-gray-400 italic text-[10px]">Minutes pending recording by CPO</div>
-                      )}
+                        <div className="text-gray-700 leading-relaxed">Agenda: {m.agenda.join(' | ')}</div>
+                        {m.minutes ? (
+                          <div className="text-gray-700 bg-gray-50 p-3.5 rounded-lg border border-[#E5E7EB] mt-1 font-mono text-[11px]">
+                            Minutes: {m.minutes}
+                          </div>
+                        ) : (
+                          <div className="text-gray-400 italic text-[10px]">Minutes pending recording by CPO</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Materials */}
+                <div className="space-y-3 pt-4 border-t border-[#E5E7EB]">
+                  <div className="text-xs font-bold uppercase tracking-wider text-gray-550">Advisory Review Materials</div>
+                  <div className="grid grid-cols-1 gap-2.5">
+                    <div className="bg-white border border-[#E5E7EB] p-3.5 rounded-xl text-xs flex justify-between items-center shadow-xs">
+                      <span className="font-semibold text-[#111827]">Quebec Law 25 Diagnostic Posture.pdf</span>
+                      <button className="text-blue-600 text-[10px] font-bold uppercase border border-[#E5E7EB] hover:bg-gray-550 px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs">Download</button>
                     </div>
-                  ))}
+                    <div className="bg-white border border-[#E5E7EB] p-3.5 rounded-xl text-xs flex justify-between items-center shadow-xs">
+                      <span className="font-semibold text-[#111827]">Cross-Border Transfer TIA v1.docx</span>
+                      <button className="text-blue-600 text-[10px] font-bold uppercase border border-[#E5E7EB] hover:bg-gray-550 px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs">Download</button>
+                    </div>
+                    <div className="bg-white border border-[#E5E7EB] p-3.5 rounded-xl text-xs flex justify-between items-center shadow-xs">
+                      <span className="font-semibold text-[#111827]">Privacy Commissioner Rulings (July 2026).md</span>
+                      <a href="/canadian_privacy_newsletter.md" target="_blank" rel="noopener noreferrer" className="text-blue-600 text-[10px] font-bold uppercase border border-[#E5E7EB] hover:bg-gray-550 px-3 py-1.5 rounded-lg text-center transition-all shadow-xs">View</a>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Research & Regulatory Libraries */}
+                <div className="space-y-3 pt-4 border-t border-[#E5E7EB]">
+                  <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Commissioner Research Libraries</div>
+                  <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+                    <a href="https://www.priv.gc.ca/en/opc-actions-and-decisions/" target="_blank" rel="noopener noreferrer" className="bg-white border border-[#E5E7EB] p-2.5 rounded-lg hover:bg-gray-550 hover:border-gray-350 flex justify-between items-center text-gray-700 transition-all shadow-xs">
+                      <span>Federal (OPC) Actions</span>
+                      <Globe size={11} className="text-blue-600" />
+                    </a>
+                    <a href="https://www.cai.gouv.qc.ca/" target="_blank" rel="noopener noreferrer" className="bg-white border border-[#E5E7EB] p-2.5 rounded-lg hover:bg-gray-550 hover:border-gray-350 flex justify-between items-center text-gray-700 transition-all shadow-xs">
+                      <span>Québec (CAI) Sanctions</span>
+                      <Globe size={11} className="text-blue-600" />
+                    </a>
+                    <a href="https://www.oipc.bc.ca/rulings/" target="_blank" rel="noopener noreferrer" className="bg-white border border-[#E5E7EB] p-2.5 rounded-lg hover:bg-gray-550 hover:border-gray-350 flex justify-between items-center text-gray-700 transition-all shadow-xs">
+                      <span>BC (OIPC) Rulings</span>
+                      <Globe size={11} className="text-blue-600" />
+                    </a>
+                    <a href="https://oipc.ab.ca/decisions/" target="_blank" rel="noopener noreferrer" className="bg-white border border-[#E5E7EB] p-2.5 rounded-lg hover:bg-gray-550 hover:border-gray-350 flex justify-between items-center text-gray-700 transition-all shadow-xs">
+                      <span>Alberta (OIPC) Decisions</span>
+                      <Globe size={11} className="text-blue-600" />
+                    </a>
+                  </div>
+                </div>
+
               </div>
 
-              {/* Materials */}
-              <div className="space-y-3">
-                <div className="text-xs font-bold uppercase tracking-wider text-gray-550">Advisory Review Materials</div>
-                <div className="grid grid-cols-1 gap-2.5">
-                  <div className="bg-white border border-[#E5E7EB] p-3.5 rounded-xl text-xs flex justify-between items-center shadow-xs">
-                    <span className="font-semibold text-[#111827]">Quebec Law 25 Diagnostic Posture.pdf</span>
-                    <button className="text-blue-600 text-[10px] font-bold uppercase border border-[#E5E7EB] hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs">Download</button>
-                  </div>
-                  <div className="bg-white border border-[#E5E7EB] p-3.5 rounded-xl text-xs flex justify-between items-center shadow-xs">
-                    <span className="font-semibold text-[#111827]">Cross-Border Transfer TIA v1.docx</span>
-                    <button className="text-blue-600 text-[10px] font-bold uppercase border border-[#E5E7EB] hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs">Download</button>
-                  </div>
-                  <div className="bg-white border border-[#E5E7EB] p-3.5 rounded-xl text-xs flex justify-between items-center shadow-xs">
-                    <span className="font-semibold text-[#111827]">Canadian Privacy Commissioner Rulings Newsletter (July 2026).md</span>
-                    <a href="/canadian_privacy_newsletter.md" target="_blank" rel="noopener noreferrer" className="text-blue-600 text-[10px] font-bold uppercase border border-[#E5E7EB] hover:bg-gray-550 px-3 py-1.5 rounded-lg text-center transition-all shadow-xs">View</a>
+              {/* Right Column: Risk Advisory Queue */}
+              <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-6 shadow-xs">
+                
+                <div className="space-y-3">
+                  <div className="text-xs font-bold uppercase tracking-wider text-gray-800">Risk Advisory Queue</div>
+                  <div className="space-y-2.5">
+                    {psrRiskQueue.map(risk => (
+                      <div
+                        key={risk.risk_id}
+                        onClick={() => setPsrSelectedRisk(risk)}
+                        className={`p-4 rounded-xl border text-xs cursor-pointer space-y-2.5 transition-all bg-white border-[#E5E7EB] hover:border-gray-300 shadow-xs ${
+                          psrSelectedRisk?.risk_id === risk.risk_id ? 'bg-blue-50/50 border-blue-500' : ''
+                        }`}
+                      >
+                        <div className="flex justify-between font-semibold">
+                          <span className="text-blue-600 font-bold font-mono">{risk.risk_id}</span>
+                          <span className="uppercase text-gray-500 text-[10px]">{risk.status}</span>
+                        </div>
+                        <div className="text-[#111827] leading-relaxed">{risk.issue}</div>
+                        
+                        {risk.recommendations && risk.recommendations.length > 0 && (
+                          <div className="border-t border-[#E5E7EB] pt-2.5 space-y-1.5">
+                            <div className="text-[10px] font-semibold text-gray-500 uppercase">PSR Recommendations:</div>
+                            {risk.recommendations.map((r, i) => (
+                              <div key={i} className="text-[10px] text-blue-700 leading-relaxed font-mono">
+                                • {r.member} ({r.vote.toUpperCase()}): "{r.recommendation}"
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
 
-              {/* Research & Regulatory Libraries */}
-              <div className="space-y-3 pt-4 border-t border-[#E5E7EB]">
-                <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Commissioner Research Libraries</div>
-                <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
-                  <a href="https://www.priv.gc.ca/en/opc-actions-and-decisions/" target="_blank" rel="noopener noreferrer" className="bg-white border border-[#E5E7EB] p-2.5 rounded-lg hover:bg-gray-50 hover:border-gray-350 flex justify-between items-center text-gray-700 transition-all shadow-xs">
-                    <span>Federal (OPC) Actions</span>
-                    <Globe size={11} className="text-blue-600" />
-                  </a>
-                  <a href="https://www.cai.gouv.qc.ca/" target="_blank" rel="noopener noreferrer" className="bg-white border border-[#E5E7EB] p-2.5 rounded-lg hover:bg-gray-50 hover:border-gray-350 flex justify-between items-center text-gray-700 transition-all shadow-xs">
-                    <span>Québec (CAI) Sanctions</span>
-                    <Globe size={11} className="text-blue-600" />
-                  </a>
-                  <a href="https://www.oipc.bc.ca/rulings/" target="_blank" rel="noopener noreferrer" className="bg-white border border-[#E5E7EB] p-2.5 rounded-lg hover:bg-gray-550 hover:border-gray-350 flex justify-between items-center text-gray-700 transition-all shadow-xs">
-                    <span>BC (OIPC) Rulings</span>
-                    <Globe size={11} className="text-blue-600" />
-                  </a>
-                  <a href="https://oipc.ab.ca/decisions/" target="_blank" rel="noopener noreferrer" className="bg-white border border-[#E5E7EB] p-2.5 rounded-lg hover:bg-gray-550 hover:border-gray-350 flex justify-between items-center text-gray-700 transition-all shadow-xs">
-                    <span>Alberta (OIPC) Decisions</span>
-                    <Globe size={11} className="text-blue-600" />
-                  </a>
-                  <a href="https://www.ipc.on.ca/en/decisions" target="_blank" rel="noopener noreferrer" className="bg-white border border-[#E5E7EB] p-2.5 rounded-lg hover:bg-gray-550 hover:border-gray-350 flex justify-between items-center text-gray-700 transition-all shadow-xs">
-                    <span>Ontario (IPC) Orders</span>
-                    <Globe size={11} className="text-blue-600" />
-                  </a>
-                  <a href="https://oipc.sk.ca/decisions/" target="_blank" rel="noopener noreferrer" className="bg-white border border-[#E5E7EB] p-2.5 rounded-lg hover:bg-gray-555 hover:border-gray-350 flex justify-between items-center text-gray-700 transition-all shadow-xs">
-                    <span>Saskatchewan (OIPC)</span>
-                    <Globe size={11} className="text-blue-600" />
-                  </a>
-                  <a href="https://oipc.novascotia.ca/decisions" target="_blank" rel="noopener noreferrer" className="bg-white border border-[#E5E7EB] p-2.5 rounded-lg hover:bg-gray-555 hover:border-gray-350 flex justify-between items-center text-gray-700 transition-all shadow-xs">
-                    <span>Nova Scotia (OIPC)</span>
-                    <Globe size={11} className="text-blue-600" />
-                  </a>
-                  <a href="https://www.oipc.nl.ca/reports/" target="_blank" rel="noopener noreferrer" className="bg-white border border-[#E5E7EB] p-2.5 rounded-lg hover:bg-gray-555 hover:border-gray-350 flex justify-between items-center text-gray-700 transition-all shadow-xs">
-                    <span>Newfoundland (OIPC)</span>
-                    <Globe size={11} className="text-blue-600" />
-                  </a>
-                  <a href="https://www.ombudsman.mb.ca/" target="_blank" rel="noopener noreferrer" className="bg-white border border-[#E5E7EB] p-2.5 rounded-lg hover:bg-gray-555 hover:border-gray-350 flex justify-between items-center text-gray-700 col-span-2 transition-all shadow-xs">
-                    <span>Manitoba Ombudsman Reports</span>
-                    <Globe size={11} className="text-blue-600" />
-                  </a>
-                </div>
+                {/* Advisory recommendation submittal */}
+                {psrSelectedRisk && (
+                  <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-4 shadow-xs">
+                    <div className="text-xs font-bold uppercase tracking-wider text-[#111827]">Submit Recommendation ({psrSelectedRisk.risk_id})</div>
+                    
+                    <form onSubmit={handlePsrRecommendationSubmit} className="space-y-4 text-xs">
+                      <div>
+                        <label className="block text-[10px] text-gray-550 font-semibold uppercase mb-1">Advisory Vote</label>
+                        <select 
+                          value={psrVote}
+                          onChange={(e) => setPsrVote(e.target.value)}
+                          className="w-full bg-white border border-[#E5E7EB] focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 p-2 text-xs text-[#111827] rounded-lg cursor-pointer transition-all shadow-xs"
+                        >
+                          <option value="approve">Approve (Operational clearance)</option>
+                          <option value="conditional">Conditional Approval (Mitigation required)</option>
+                          <option value="reject">Reject (Action needed)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] text-gray-550 font-semibold uppercase mb-1">Detailed Recommendation Notes</label>
+                        <textarea 
+                          required
+                          value={psrRecommendation}
+                          onChange={(e) => setPsrRecommendation(e.target.value)}
+                          placeholder="Provide detailed compliance guidance for the CPO..."
+                          className="w-full bg-white border border-[#E5E7EB] focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 p-2.5 text-xs text-[#111827] rounded-lg h-20 resize-none transition-all shadow-xs"
+                        />
+                      </div>
+
+                      <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 text-xs tracking-wide rounded-lg shadow-sm transition-all cursor-pointer">
+                        Submit Recommendation
+                      </button>
+                    </form>
+                  </div>
+                )}
+
               </div>
 
             </div>
 
-            {/* Right Column: Risk Advisory Queue */}
-            <div className="w-1/2 p-6 overflow-y-auto space-y-6 bg-[#FAFAFA]">
+            {/* Bottom Row: Dynamic Notes-derived Tracker Cockpit (Full Width) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
-              <div className="space-y-3">
-                <div className="text-xs font-bold uppercase tracking-wider text-gray-800">Risk Advisory Queue</div>
-                <div className="space-y-2.5">
-                  {psrRiskQueue.map(risk => (
-                    <div
-                      key={risk.risk_id}
-                      onClick={() => setPsrSelectedRisk(risk)}
-                      className={`p-4 rounded-xl border text-xs cursor-pointer space-y-2.5 transition-all bg-white border-[#E5E7EB] hover:border-gray-300 shadow-xs ${
-                        psrSelectedRisk?.risk_id === risk.risk_id ? 'bg-blue-50/50 border-blue-500' : ''
-                      }`}
-                    >
-                      <div className="flex justify-between font-semibold">
-                        <span className="text-blue-600 font-bold font-mono">{risk.risk_id}</span>
-                        <span className="uppercase text-gray-500 text-[10px]">{risk.status}</span>
+              {/* Gen AI Procurement Gateways & Revocation */}
+              <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-4 shadow-xs lg:col-span-1">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-1.5">
+                  <ShieldAlert size={14} className="text-indigo-650" />
+                  <span>Gen AI Procurement & IP Security Gates</span>
+                </h3>
+                <p className="text-[11px] text-gray-550 leading-relaxed">
+                  Innovative Procurement Model (Ontario approved): Sequential gates mapping the transition from Nascent to OpenText/Cohere technical builds.
+                </p>
+                <div className="space-y-3">
+                  <div className="p-3 bg-indigo-50/15 border border-indigo-200 rounded-xl space-y-2">
+                    <div className="flex justify-between items-center text-[10px] font-bold">
+                      <span className="text-indigo-900 uppercase">Nascent Access Revocation</span>
+                      <span className="text-emerald-700 bg-emerald-50 border border-emerald-250 px-2 py-0.5 rounded">Verified</span>
+                    </div>
+                    <p className="text-[10px] text-gray-600">Neil & Bryan confirmed in writing that all IP, keys, and database credentials have been fully revoked from the previous developer.</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs font-semibold text-gray-655">
+                      <span>Innovative Procurement Progression</span>
+                      <span className="text-blue-655 font-bold">Stage 1 of 3</span>
+                    </div>
+                    <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden border border-gray-200">
+                      <div className="bg-blue-600 h-full w-[33.3%]" />
+                    </div>
+                    <div className="grid grid-cols-3 text-[9px] text-gray-400 font-bold uppercase pt-1 text-center">
+                      <span className="text-blue-700">LOI (June 8)</span>
+                      <span>MOU (Build Plan)</span>
+                      <span>DPA (Contract)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* PSR Advisory Tasks List */}
+              <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-4 shadow-xs lg:col-span-1">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-1.5">
+                  <BookOpen size={14} className="text-blue-650" />
+                  <span>PSR Advisory Action Registry</span>
+                </h3>
+                <p className="text-[11px] text-gray-550">Action items assigned during May 27 & Oct 8 committee meetings.</p>
+                <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+                  {psrTransitionTasks.map(t => (
+                    <div key={t.id} className="p-3 bg-gray-50 border border-gray-200 rounded-xl space-y-1.5 text-xs">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-gray-800">{t.title}</span>
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
+                          t.status === 'completed' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
+                        }`}>
+                          {t.status}
+                        </span>
                       </div>
-                      <div className="text-[#111827] leading-relaxed">{risk.issue}</div>
-                      
-                      {risk.recommendations && risk.recommendations.length > 0 && (
-                        <div className="border-t border-[#E5E7EB] pt-2.5 space-y-1.5">
-                          <div className="text-[10px] font-semibold text-gray-500 uppercase">PSR Recommendations:</div>
-                          {risk.recommendations.map((r, i) => (
-                            <div key={i} className="text-[10px] text-blue-700 leading-relaxed font-mono">
-                              • {r.member} ({r.vote.toUpperCase()}): "{r.recommendation}"
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <p className="text-[11px] text-gray-550 leading-relaxed">{t.notes}</p>
+                      <div className="flex justify-between items-center text-[9px] text-gray-400 pt-1 border-t border-gray-150">
+                        <span>Owner: <code className="font-mono">{t.owner}</code></span>
+                        <span>ID: {t.id}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Advisory recommendation submittal */}
-              {psrSelectedRisk && (
-                <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-4 shadow-xs">
-                  <div className="text-xs font-bold uppercase tracking-wider text-[#111827]">Submit Recommendation ({psrSelectedRisk.risk_id})</div>
-                  
-                  <form onSubmit={handlePsrRecommendationSubmit} className="space-y-4 text-xs">
-                    <div>
-                      <label className="block text-[10px] text-gray-550 font-semibold uppercase mb-1">Advisory Vote</label>
-                      <select 
-                        value={psrVote}
-                        onChange={(e) => setPsrVote(e.target.value)}
-                        className="w-full bg-white border border-[#E5E7EB] focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 p-2 text-xs text-[#111827] rounded-lg cursor-pointer transition-all shadow-xs"
-                      >
-                        <option value="approve">Approve (Operational clearance)</option>
-                        <option value="conditional">Conditional Approval (Mitigation required)</option>
-                        <option value="reject">Reject (Action needed)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] text-gray-550 font-semibold uppercase mb-1">Detailed Recommendation Notes</label>
-                      <textarea 
-                        required
-                        value={psrRecommendation}
-                        onChange={(e) => setPsrRecommendation(e.target.value)}
-                        placeholder="Provide detailed compliance guidance for the CPO..."
-                        className="w-full bg-white border border-[#E5E7EB] focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 p-2.5 text-xs text-[#111827] rounded-lg h-20 resize-none transition-all shadow-xs"
-                      />
-                    </div>
-
-                    <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 text-xs tracking-wide rounded-lg shadow-sm transition-all cursor-pointer">
-                      Submit Recommendation
+              {/* Copilot FAQ Audit Tool */}
+              <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-4 shadow-xs lg:col-span-1">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-1.5">
+                  <Terminal size={14} className="text-indigo-650" />
+                  <span>SharePoint Copilot FAQ Auditer</span>
+                </h3>
+                <p className="text-[11px] text-gray-550">
+                  Audit AI responses to secure SharePoint directories before wide staff rollout.
+                </p>
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      placeholder="Ask PSR Copilot (e.g. when to contact PSR...)"
+                      value={psrCopilotQuery}
+                      onChange={(e) => setPsrCopilotQuery(e.target.value)}
+                      className="flex-1 bg-white border border-gray-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
+                    />
+                    <button 
+                      onClick={() => {
+                        if (psrCopilotQuery.toLowerCase().includes('when')) {
+                          setPsrCopilotAnswer("PSR Copilot: Staff should contact the PSR Committee when starting any new technical project processing personal info, initiating SaaS vendor onboarding, or if a potential confidentiality incident or PHI breach is suspected.");
+                        } else if (psrCopilotQuery.toLowerCase().includes('breach')) {
+                          setPsrCopilotAnswer("PSR Copilot: SUSPECTED BREACH PROTOCOL: Revoke credentials immediately to contain access. Conduct RROSH risk screening. Log details in the internal confidentiality incident register. Alert the OPC/IPC and affected individuals at first reasonable opportunity.");
+                        } else {
+                          setPsrCopilotAnswer("PSR Copilot: Request parsed. Response generated from verified SharePoint compliance directory (ver. 1.04).");
+                        }
+                      }}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer shadow-xs"
+                    >
+                      Audit
                     </button>
-                  </form>
+                  </div>
+                  {psrCopilotAnswer && (
+                    <div className="p-3 bg-gray-950 text-gray-300 font-mono text-[10px] rounded-lg border border-gray-900 leading-normal max-h-[100px] overflow-y-auto">
+                      {psrCopilotAnswer}
+                    </div>
+                  )}
+                  <div className="text-[9px] text-gray-400 italic">
+                    Note: A strict disclaimer message will accompany all staff-facing Copilot interfaces.
+                  </div>
                 </div>
-              )}
+              </div>
 
             </div>
 
