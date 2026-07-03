@@ -15,20 +15,21 @@ const App = () => {
   // --- Core State ---
   const [securityMode, setSecurityMode] = useState('expert'); // public, employee, expert, psr
   const [activeTab, setActiveTab] = useState('dashboard'); // for Expert mode
-  const [activeJurisdiction, setActiveJurisdiction] = useState('ontario');
+  const [activeLegislations, setActiveLegislations] = useState(['canada', 'quebec', 'phipa', 'cyfsa']);
+  const [activeJurisdiction, setActiveJurisdiction] = useState('canada');
   const [jurConfig, setJurConfig] = useState({
-    code: "ontario",
+    code: "canada",
     flag: "🇨🇦",
-    name: "Ontario (Public Sector) - FIPPA",
-    access_request_term: "Freedom of Information Request",
-    access_request_abbr: "FOI",
-    data_subject_term: "Requester",
-    regulator: "Information and Privacy Commissioner of Ontario (IPC)",
-    primary_statute: "FIPPA",
+    name: "Canada - PIPEDA",
+    access_request_term: "Access to Information Request",
+    access_request_abbr: "ATIP",
+    data_subject_term: "Individual",
+    regulator: "Office of the Privacy Commissioner of Canada (OPC)",
+    primary_statute: "PIPEDA",
     access_deadline_days: 30,
-    breach_notification: "IPC + affected individuals (extendable clock)",
-    assessment_types: ["PIA", "TRA"],
-    training_track: "fippa"
+    breach_notification: "OPC + affected individuals (RROSH)",
+    assessment_types: ["PIA"],
+    training_track: "pipeda"
   });
 
   const [jurisdictionsList, setJurisdictionsList] = useState([
@@ -52,6 +53,20 @@ const App = () => {
       name: "Quebec - Law 25",
       primary_statute: "Law 25",
       access_request_abbr: "AR"
+    },
+    {
+      code: "phipa",
+      flag: "🇨🇦",
+      name: "Ontario Health - PHIPA",
+      primary_statute: "PHIPA",
+      access_request_abbr: "PHR"
+    },
+    {
+      code: "cyfsa",
+      flag: "🇨🇦",
+      name: "Ontario Child/Youth - CYFSA",
+      primary_statute: "CYFSA",
+      access_request_abbr: "YAR"
     },
     {
       code: "us",
@@ -791,19 +806,45 @@ const App = () => {
 
         {/* Global Selectors */}
         <div className="flex items-center space-x-6">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 relative group">
             <Globe size={14} className="text-blue-600" />
-            <select
-              value={activeJurisdiction}
-              onChange={(e) => handleJurisdictionChange(e.target.value)}
-              className="bg-white border border-[#E5E7EB] text-xs text-[#111827] px-3 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all cursor-pointer shadow-xs"
-            >
-              {jurisdictionsList.map(j => (
-                <option key={j.code} value={j.code}>
-                  {j.flag} {j.name} ({j.primary_statute})
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <button className="bg-white border border-[#E5E7EB] text-xs text-[#111827] px-3 py-1.5 rounded-lg focus:outline-none transition-all cursor-pointer shadow-xs flex items-center space-x-2">
+                <span className="font-semibold text-gray-800">Active Regs ({activeLegislations.length})</span>
+                <span className="text-[10px] text-gray-400">▼</span>
+              </button>
+              
+              <div className="absolute right-0 mt-1 w-64 bg-white border border-[#E5E7EB] rounded-xl shadow-xl p-3 z-50 hidden group-hover:block hover:block">
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Scope Active Legislations</div>
+                <div className="space-y-2">
+                  {jurisdictionsList.map(j => {
+                    const isChecked = activeLegislations.includes(j.code);
+                    return (
+                      <label key={j.code} className="flex items-center space-x-2.5 text-xs text-gray-700 cursor-pointer hover:text-[#111827] select-none">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {
+                            let next;
+                            if (isChecked) {
+                              next = activeLegislations.filter(x => x !== j.code);
+                            } else {
+                              next = [...activeLegislations, j.code];
+                            }
+                            if (next.length === 0) return; // keep at least one
+                            setActiveLegislations(next);
+                            setActiveJurisdiction(next[0]);
+                            handleJurisdictionChange(next[0]);
+                          }}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="font-medium">{j.flag} {j.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -1522,9 +1563,9 @@ const App = () => {
                           )}
                         </div>
                       </div>
-
+                      
                       {/* LOCALIZED JURISDICTION DASHBOARD MODULES */}
-                      {(jurConfig.code === 'canada' || jurConfig.code === 'quebec' || jurConfig.code === 'ontario') && (
+                      {activeLegislations.some(x => ['canada', 'quebec', 'ontario'].includes(x)) && (
                         <div className="space-y-6">
                           
                           {/* RROSH Assessment Tool */}
@@ -1596,7 +1637,52 @@ const App = () => {
                         </div>
                       )}
 
-                      {jurConfig.code === 'us' && (
+                      {/* PHIPA Specific Health Custodian Panel */}
+                      {activeLegislations.includes('phipa') && (
+                        <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl space-y-4 shadow-xs">
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                            <Activity size={14} className="text-emerald-600" />
+                            <span>Ontario PHIPA: Health Information Custodian (HIC) Registry</span>
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            Ensures strict Circle of Care limits are maintained when clinical therapists handle personal health information (PHI).
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-3.5 bg-emerald-50/20 border border-emerald-250 rounded-lg">
+                              <div className="text-[10px] font-bold text-emerald-800 uppercase">Circle of Care Disclosures</div>
+                              <div className="text-xs text-gray-700 font-semibold mt-1">Limited to authorized clinical supervisors</div>
+                            </div>
+                            <div className="p-3.5 bg-gray-50 border border-gray-200 rounded-lg">
+                              <div className="text-[10px] font-bold text-gray-500 uppercase">HIC Safety Audits</div>
+                              <div className="text-xs text-gray-700 font-semibold mt-1">Passed (Transcripts fully encrypted at rest)</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* CYFSA Specific Youth Consent Panel */}
+                      {activeLegislations.includes('cyfsa') && (
+                        <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl space-y-4 shadow-xs">
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                            <UserCheck size={14} className="text-purple-600" />
+                            <span>Ontario CYFSA: Child & Youth Capacity Boundaries</span>
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            Under the Child, Youth and Family Services Act, service users under the age of 16 possess explicit self-consent capacity for mental health assistance.
+                          </p>
+                          <div className="p-4 bg-purple-50/20 border border-purple-200 rounded-lg flex justify-between items-center">
+                            <div>
+                              <div className="text-xs font-bold text-purple-950">Youth Self-Consent Capacity</div>
+                              <div className="text-[10px] text-purple-750">Self-consent capacity boundary: 16 years of age</div>
+                            </div>
+                            <span className="bg-purple-100 text-purple-800 border border-purple-250 text-[10px] font-bold px-2 py-0.5 rounded">
+                              ENFORCED AT GATEWAY
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {activeLegislations.includes('us') && (
                         <div className="space-y-6">
                           
                           {/* Multi-State Compliance Scorecard */}
@@ -1656,7 +1742,7 @@ const App = () => {
                         </div>
                       )}
 
-                      {(jurConfig.code === 'eu' || jurConfig.code === 'uk') && (
+                      {activeLegislations.some(x => ['eu', 'uk'].includes(x)) && (
                         <div className="space-y-6">
                           
                           {/* EU Breach reporting timer */}
