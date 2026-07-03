@@ -182,6 +182,7 @@ const App = () => {
 
   // --- AI Onboarding Agent State ---
   const [onboardingSubMode, setOnboardingSubMode] = useState('checklist'); // 'checklist' or 'ai_agent'
+  const [onbSectorVariant, setOnbSectorVariant] = useState('commercial'); // 'commercial', 'healthcare', 'tech_media'
   const [onbSessionId, setOnbSessionId] = useState(null);
   const [onbWebsiteUrl, setOnbWebsiteUrl] = useState('https://kidshelphone.ca');
   const [onbUploadedFiles, setOnbUploadedFiles] = useState([]);
@@ -2823,6 +2824,27 @@ const App = () => {
 
                             <div className="space-y-3">
                               <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-gray-600 uppercase">Onboarding Sector Flow</label>
+                                <select
+                                  value={onbSectorVariant}
+                                  onChange={(e) => {
+                                    setOnbSectorVariant(e.target.value);
+                                    setOnbLogs(prev => [...prev, `[System] Switched onboarding sector focus to: ${
+                                      e.target.value === 'commercial' ? 'Bank / Commercial Institution' : 
+                                      e.target.value === 'healthcare' ? 'Physiotherapy Clinic / Healthcare' : 
+                                      'IT Company / Publishing House'
+                                    }`]);
+                                  }}
+                                  className="w-full bg-white border border-gray-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-hidden font-semibold text-gray-700"
+                                >
+                                  <option value="commercial">Bank / Commercial (Client DSAR Workflow)</option>
+                                  <option value="healthcare">Physiotherapy / Healthcare (Patient PHI & Breach Flow)</option>
+                                  <option value="tech_media">IT / Publishing (Client Consent & Tracker Audit)</option>
+                                </select>
+                                <div className="text-[9px] text-gray-400">customizes the ingestion parser and active privacy workflows.</div>
+                              </div>
+
+                              <div className="space-y-1.5">
                                 <label className="text-[10px] font-bold text-gray-600 uppercase">Authorized Site URL</label>
                                 <div className="flex gap-2">
                                   <input
@@ -2896,6 +2918,120 @@ const App = () => {
 
                         {/* Right column: profile review & gap solver */}
                         <div className="lg:col-span-2 space-y-6">
+                          
+                          {/* Active Onboarding Privacy Process Flow */}
+                          <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl space-y-5 shadow-xs">
+                            <div className="flex justify-between items-center border-b border-[#E5E7EB] pb-3.5">
+                              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                                <Network size={14} className="text-blue-650" />
+                                <span>Active Privacy Process Flow (DOT Variant)</span>
+                              </h3>
+                              <span className="text-[10px] font-mono font-bold bg-blue-50 border border-blue-200 text-blue-800 px-2.5 py-0.5 rounded-md">
+                                {onbSectorVariant.toUpperCase()}
+                              </span>
+                            </div>
+
+                            {/* Flowchart Rendering */}
+                            {onbSectorVariant === 'commercial' && (
+                              <div className="space-y-4">
+                                <p className="text-xs text-gray-500">
+                                  <strong>Variant 1: Bank / Commercial Institution (Client DSAR Workflow)</strong>. Maps a client's request through core banking discovery, sub-processor checks, PII redactions, and encrypted delivery.
+                                </p>
+                                <div className="flex flex-wrap items-center gap-3 p-4 bg-gray-50/50 rounded-xl border border-gray-200 justify-center">
+                                  <div className="px-3 py-1.5 rounded-full bg-indigo-100 border border-indigo-300 text-indigo-800 text-[10px] font-bold">Bank Client</div>
+                                  <span className="text-gray-400 font-bold">→</span>
+                                  <div className="p-2 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-900 text-[10px] font-semibold text-center leading-tight">DSAR Intake<br/><span className="text-[9px] text-gray-450 font-normal">(Portal/App)</span></div>
+                                  <span className="text-gray-400 font-bold">→</span>
+                                  <div className="p-2 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-900 text-[10px] font-semibold text-center leading-tight">Identity Verify<br/><span className="text-[9px] text-gray-450 font-normal">(MFA/Crypto)</span></div>
+                                  <span className="text-gray-400 font-bold">→</span>
+                                  <div className="p-2 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-900 text-[10px] font-semibold text-center leading-tight">Core Discovery<br/><span className="text-[9px] text-gray-450 font-normal">(Structured DB)</span></div>
+                                  <span className="text-gray-400 font-bold">→</span>
+                                  <div className="p-2 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-900 text-[10px] font-semibold text-center leading-tight">Vendor Audit<br/><span className="text-[9px] text-gray-450 font-normal">(Contract Check)</span></div>
+                                  <span className="text-gray-400 font-bold">→</span>
+                                  <div className="p-2 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-900 text-[10px] font-semibold text-center leading-tight">Redaction<br/><span className="text-[9px] text-gray-450 font-normal">(PII Strip)</span></div>
+                                  <span className="text-gray-400 font-bold">→</span>
+                                  <div className="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-800 text-[10px] font-bold">Encrypted Delivery</div>
+                                </div>
+                              </div>
+                            )}
+
+                            {onbSectorVariant === 'healthcare' && (
+                              <div className="space-y-4">
+                                <p className="text-xs text-gray-500">
+                                  <strong>Variant 2: Physiotherapy Clinic / Healthcare (Patient PHI Lifecycle & Breach)</strong>. Logs access and containment triggers under PHIPA Health Custodian regulations.
+                                </p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {/* Normal Flow */}
+                                  <div className="flex flex-col items-center gap-2.5 p-4 bg-teal-50/20 border border-teal-200 rounded-xl">
+                                    <span className="text-[9px] uppercase font-bold text-teal-800 tracking-wider">Patient Data Lifecycle</span>
+                                    <div className="px-3 py-1 bg-teal-100 border border-teal-300 rounded-full text-[10px] font-bold text-teal-900">Physio Patient</div>
+                                    <span className="text-teal-500 font-bold">↓</span>
+                                    <div className="p-2 rounded-lg bg-white border border-teal-200 text-center text-[10px] font-semibold w-full leading-tight">PHI Intake & Consent<br/><span className="text-[9px] text-gray-450 font-normal">(Treatment Purposes)</span></div>
+                                    <span className="text-teal-500 font-bold">↓</span>
+                                    <div className="p-2 rounded-lg bg-white border border-teal-200 text-center text-[10px] font-semibold w-full leading-tight">EMR Storage<br/><span className="text-[9px] text-gray-450 font-normal">(Encryption at Rest)</span></div>
+                                    <span className="text-teal-500 font-bold">↓</span>
+                                    <div className="p-2 rounded-lg bg-white border border-teal-200 text-center text-[10px] font-semibold w-full leading-tight">Continuous Access Logging<br/><span className="text-[9px] text-gray-450 font-normal">(Audit Trails)</span></div>
+                                  </div>
+                                  {/* Incident Loop */}
+                                  <div className="flex flex-col items-center gap-2.5 p-4 bg-rose-50/20 border border-rose-200 rounded-xl">
+                                    <span className="text-[9px] uppercase font-bold text-rose-800 tracking-wider">Suspected PHI Breach Loop</span>
+                                    <div className="p-2 rounded-lg bg-rose-100 border border-rose-350 text-center text-[10px] font-bold text-rose-900 w-full animate-pulse leading-tight">Anomaly Detection<br/><span className="text-[9px] text-rose-750 font-semibold">(Suspected PHI Breach)</span></div>
+                                    <span className="text-rose-500 font-bold">↓</span>
+                                    <div className="p-2 rounded-lg bg-white border border-rose-200 text-center text-[10px] font-semibold w-full leading-tight">Containment<br/><span className="text-[9px] text-gray-455 font-normal">(Access Revocation)</span></div>
+                                    <span className="text-rose-500 font-bold">↓</span>
+                                    <div className="grid grid-cols-2 gap-2 w-full">
+                                      <div className="p-2 rounded bg-white border border-rose-200 text-center text-[9px] font-bold text-rose-850">Patient Alert</div>
+                                      <div className="p-2 rounded bg-white border border-rose-200 text-center text-[9px] font-bold text-rose-850">IPC Breach Log</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {onbSectorVariant === 'tech_media' && (
+                              <div className="space-y-4">
+                                <p className="text-xs text-gray-500">
+                                  <strong>Variant 3: IT Company / Publishing (Client Consent & Tracking)</strong>. Captures user preferences and crawls backend repositories to find new trackers.
+                                </p>
+                                <div className="space-y-3 bg-orange-50/20 border border-orange-200 p-4 rounded-xl">
+                                  <div className="flex flex-wrap justify-center items-center gap-2.5">
+                                    <div className="px-3 py-1 bg-orange-100 border border-orange-300 rounded-full text-[10px] font-bold text-orange-900">Digital Reader</div>
+                                    <span className="text-orange-400 font-bold">→</span>
+                                    <div className="p-2 bg-white border border-orange-200 rounded text-[10px] font-semibold leading-tight">Platform Interaction</div>
+                                    <span className="text-orange-400 font-bold">→</span>
+                                    <div className="p-2 bg-white border border-orange-200 rounded text-[10px] font-semibold leading-tight">Consent Platform (CMP)</div>
+                                  </div>
+                                  <div className="flex justify-center"><span className="text-orange-400 font-bold">↓</span></div>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="p-3 bg-white border border-orange-200 rounded-xl space-y-1 text-center">
+                                      <div className="text-[10px] font-bold text-orange-850 uppercase">Continuous Code Audit</div>
+                                      <div className="text-[9px] text-gray-550 leading-normal">Crawl codebase to detect new trackers & cookies dynamically.</div>
+                                    </div>
+                                    <div className="p-3 bg-white border border-rose-200 rounded-xl space-y-1 text-center">
+                                      <div className="text-[10px] font-bold text-rose-800 uppercase">Enforce Opt-Outs</div>
+                                      <div className="text-[9px] text-gray-550 leading-normal">Block unauthorized pixels and update compliance records.</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* DOT Specification Accordion */}
+                            <div className="border border-[#E5E7EB] rounded-lg overflow-hidden">
+                              <details className="group">
+                                <summary className="p-3 bg-gray-50 text-[10px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer list-none flex justify-between items-center select-none hover:bg-gray-100 transition-all">
+                                  <span>View Graphviz DOT Specification</span>
+                                  <span className="text-[9px] text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+                                </summary>
+                                <div className="p-4 bg-gray-950 text-gray-300 font-mono text-[9px] overflow-x-auto whitespace-pre-wrap border-t border-[#E5E7EB]">
+                                  {onbSectorVariant === 'commercial' && `digraph Bank_Client_Privacy {\n    rankdir=LR;\n    node [shape=box, style=filled, fillcolor="#E8EAF6", fontname="Helvetica"];\n    edge [color="#283593", penwidth=1.5];\n\n    Client [shape=ellipse, fillcolor="#C5CAE9", label="Bank Client"];\n    DSAR_Intake [label="DSAR Intake\\n(Portal/App)"];\n    ID_Verify [label="Strict Identity Verification\\n(MFA/Cryptographic)"];\n    Internal_Discover [label="Core Banking Discovery\\n(Structured Data)"];\n    Vendor_Audit [label="Vendor Supply-Chain Check\\n(Sub-processors)"];\n    Redact [label="Algorithmic Redaction\\n(Third-Party PII)"];\n    Fulfill [label="Encrypted Delivery\\nto Client"];\n\n    Client -> DSAR_Intake;\n    DSAR_Intake -> ID_Verify -> Internal_Discover;\n    Internal_Discover -> Vendor_Audit -> Redact -> Fulfill;\n}`}
+                                  {onbSectorVariant === 'healthcare' && `digraph Healthcare_Patient_Privacy {\n    rankdir=TB;\n    node [shape=Mrecord, style=filled, fillcolor="#E0F2F1", fontname="Helvetica"];\n    edge [color="#00695C", penwidth=1.5];\n\n    Patient [shape=ellipse, fillcolor="#B2DFDB", label="Physiotherapy Patient"];\n    Intake [label="PHI Intake & Consent\\n(Treatment Purposes)"];\n    EMR_Storage [label="Secure EMR Storage\\n(Encryption at Rest)"];\n    Audit_Log [label="Continuous Access Logging\\n(User, Time, Date)"];\n    \n    node [fillcolor="#FFEBEE", color="#C62828"]\n    Breach_Detect [label="Anomaly Detection\\n(Suspected PHI Breach)"];\n    Containment [label="Automated Containment\\n(Revoke Access)"];\n    Notify_Patient [label="Patient Notification\\n(First Reasonable Opportunity)"];\n    IPC_Report [label="Authority Log\\n(IPC Breach Protocol)"];\n\n    Patient -> Intake -> EMR_Storage -> Audit_Log;\n    Audit_Log -> Breach_Detect [style=dashed, label="If anomaly detected"];\n    Breach_Detect -> Containment -> Notify_Patient;\n    Containment -> IPC_Report;\n}`}
+                                  {onbSectorVariant === 'tech_media' && `digraph IT_Publisher_Privacy {\n    rankdir=LR;\n    node [shape=note, style=filled, fillcolor="#FFF3E0", fontname="Helvetica"];\n    edge [color="#E65100", penwidth=1.5];\n\n    Client [shape=ellipse, fillcolor="#FFE0B2", label="Digital Client / Reader"];\n    Platform [label="Platform Interaction\\n(Web/App)"];\n    CMP [label="Consent Management\\n(Opt-in / CCPA Opt-out)"];\n    Code_Scan [label="Continuous Code Auditing\\n(Detect New Trackers)"];\n    Enforce_OptOut [label="Enforce Opt-Outs\\n(Across Ad-Tech Stack)"];\n    Dynamic_RoPA [label="Dynamic RoPA Update\\n& Policy Generation"];\n\n    Client -> Platform -> CMP;\n    CMP -> Enforce_OptOut;\n    Platform -> Code_Scan [style=dashed, label="Background monitoring"];\n    Code_Scan -> Dynamic_RoPA;\n    Code_Scan -> Enforce_OptOut [color="#D32F2F", label="Block unauthorized trackers"];\n}`}
+                                </div>
+                              </details>
+                            </div>
+                          </div>
+
                           {/* Gaps card stack */}
                           {onbGaps.length > 0 && (
                             <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl space-y-4 shadow-xs">
