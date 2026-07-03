@@ -130,6 +130,25 @@ const App = () => {
   const [selectedEmail, setSelectedEmail] = useState(null);
   const [trainingCompliance, setTrainingCompliance] = useState(null);
 
+  // --- Corporate Governance Registers State ---
+  const [govSelectedTab, setGovSelectedTab] = useState('inventory');
+  const [govIsExpanded, setGovIsExpanded] = useState(true);
+  const [govDataInventory, setGovDataInventory] = useState([
+    { system: 'Aselo Console', element: 'Chat Transcripts', population: 'Youth Chat Callers', retention: '90-day purge / indefinitely if local download', control: 'TLS 1.3, AES-256' },
+    { system: 'Blackbaud CRM', element: 'Billing Details & Emails', population: 'Financial Donors', retention: '7 Years (Financial audit limit)', control: 'PCI-DSS Compliant Gateway' },
+    { system: 'HR SharePoint', element: 'Police Vulnerable Screens', population: 'Volunteer Counselors', retention: 'Preserved during term of service + 1 year', control: 'Role-based access group (HR Only)' }
+  ]);
+  const [govSubProcessors, setGovSubProcessors] = useState([
+    { name: 'Twilio Inc.', role: 'SMS Gateway Carrier', dpa: 'DPA Annex Signed', storage: 'AWS US-East', jurisdiction: 'United States (Cross-Border Transfer TIA approved)' },
+    { name: 'Salesforce.com', role: 'Intake Support Routing CRM', dpa: 'Standard Contractual Clauses (SCC)', storage: 'Salesforce Canada East', jurisdiction: 'Canada (In-Country Local Storage)' },
+    { name: 'Blackbaud Inc.', role: 'Donor Relationship DB', dpa: 'DPA Under Review', storage: 'Blackbaud Cloud', jurisdiction: 'Canada / US' }
+  ]);
+  const [govRoleHierarchy, setGovRoleHierarchy] = useState([
+    { department: 'Clinical Operations', roles: ['Director of Counseling', 'Clinical Supervisor', 'Crisis Counselor', 'Volunteer Crisis Responder'] },
+    { department: 'Development & Fundraising', roles: ['VP of Philanthropy', 'Donor Data Custodian', 'Intake Coordinator'] },
+    { department: 'Security & Compliance (DPO)', roles: ['Chief Privacy Officer (Chair)', 'DPO Lead', 'Privacy Operations Analyst'] }
+  ]);
+
   // --- PSR Committee Mode State ---
   const [psrMeetings, setPsrMeetings] = useState([]);
   const [psrRiskQueue, setPsrRiskQueue] = useState([]);
@@ -1892,6 +1911,129 @@ const App = () => {
 
                     </div>
 
+                  </div>
+
+                  {/* Collapsible Corporate Governance & Data Registries */}
+                  <div className="bg-white border border-[#E5E7EB] rounded-xl shadow-xs overflow-hidden mt-6">
+                    <div 
+                      onClick={() => setGovIsExpanded(!govIsExpanded)}
+                      className="p-5 border-b border-[#E5E7EB] bg-gray-50/50 flex justify-between items-center cursor-pointer select-none hover:bg-gray-50 transition-all"
+                    >
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                        <FolderOpen size={14} className="text-blue-600" />
+                        <span>Corporate Governance & Data Registries</span>
+                      </h3>
+                      <span className="text-xs text-gray-400 font-bold">{govIsExpanded ? 'Collapse ▲' : 'Expand ▼'}</span>
+                    </div>
+
+                    {govIsExpanded && (
+                      <div className="p-6 space-y-6">
+                        
+                        {/* Tab selectors */}
+                        <div className="flex space-x-2 border-b border-[#E5E7EB] pb-3">
+                          {['inventory', 'processors', 'hierarchy'].map(tab => (
+                            <button
+                              key={tab}
+                              onClick={() => setGovSelectedTab(tab)}
+                              className={`px-4 py-2 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                                govSelectedTab === tab
+                                  ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-xs'
+                                  : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                              }`}
+                            >
+                              {tab === 'inventory' ? 'Data Inventory' : tab === 'processors' ? 'Sub-processors & Contractors' : 'Role & Dept Hierarchy'}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Inventory Tab */}
+                        {govSelectedTab === 'inventory' && (
+                          <div className="border border-[#E5E7EB] rounded-xl overflow-hidden bg-white">
+                            <table className="w-full text-xs text-left border-collapse">
+                              <thead>
+                                <tr className="bg-gray-50 text-gray-500 border-b border-[#E5E7EB] font-semibold text-[10px] uppercase">
+                                  <th className="p-3.5">Storage System</th>
+                                  <th className="p-3.5">Data Elements</th>
+                                  <th className="p-3.5">Data Subjects</th>
+                                  <th className="p-3.5">Retention Period</th>
+                                  <th className="p-3.5">Security Controls</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-[#E5E7EB]">
+                                {govDataInventory.map((item, idx) => (
+                                  <tr key={idx} className="hover:bg-gray-50 transition-all">
+                                    <td className="p-3.5 font-bold text-gray-800 font-mono text-[11px]">{item.system}</td>
+                                    <td className="p-3.5 font-semibold text-gray-700">{item.element}</td>
+                                    <td className="p-3.5 text-gray-600">{item.population}</td>
+                                    <td className="p-3.5 text-gray-600 font-medium">{item.retention}</td>
+                                    <td className="p-3.5 text-emerald-700 font-mono text-[10px] font-bold">✓ {item.control}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+
+                        {/* Processors Tab */}
+                        {govSelectedTab === 'processors' && (
+                          <div className="border border-[#E5E7EB] rounded-xl overflow-hidden bg-white">
+                            <table className="w-full text-xs text-left border-collapse">
+                              <thead>
+                                <tr className="bg-gray-50 text-gray-500 border-b border-[#E5E7EB] font-semibold text-[10px] uppercase">
+                                  <th className="p-3.5">Contractor / Sub-processor</th>
+                                  <th className="p-3.5">Service Role</th>
+                                  <th className="p-3.5">DPA Status (CPRA/GDPR)</th>
+                                  <th className="p-3.5">Data Storage Location</th>
+                                  <th className="p-3.5">Transfer Jurisdiction</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-[#E5E7EB]">
+                                {govSubProcessors.map((proc, idx) => (
+                                  <tr key={idx} className="hover:bg-gray-50 transition-all">
+                                    <td className="p-3.5 font-bold text-gray-800">{proc.name}</td>
+                                    <td className="p-3.5 text-gray-600 font-semibold">{proc.role}</td>
+                                    <td className="p-3.5">
+                                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                        proc.dpa.includes('Signed') || proc.dpa.includes('SCC')
+                                          ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                                          : 'bg-amber-50 border-amber-200 text-amber-800'
+                                      }`}>
+                                        {proc.dpa}
+                                      </span>
+                                    </td>
+                                    <td className="p-3.5 font-mono text-[11px] text-gray-655">{proc.storage}</td>
+                                    <td className="p-3.5 text-gray-500 italic">{proc.jurisdiction}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+
+                        {/* Hierarchy Tab */}
+                        {govSelectedTab === 'hierarchy' && (
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {govRoleHierarchy.map((dept, idx) => (
+                              <div key={idx} className="p-5 rounded-xl border border-[#E5E7EB] bg-gray-50/30 space-y-3">
+                                <div className="text-xs font-bold text-gray-800 uppercase tracking-wider border-b border-[#E5E7EB] pb-2 flex items-center space-x-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                                  <span>{dept.department}</span>
+                                </div>
+                                <div className="space-y-2">
+                                  {dept.roles.map((role, rIdx) => (
+                                    <div key={rIdx} className="flex items-center space-x-2 text-xs text-gray-655">
+                                      <span className="text-gray-400 font-mono">L{rIdx + 1}:</span>
+                                      <span className="font-medium text-gray-850">{role}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                      </div>
+                    )}
                   </div>
 
                 </div>
