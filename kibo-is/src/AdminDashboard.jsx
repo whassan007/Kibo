@@ -22,6 +22,8 @@ export default function AdminDashboard({
 }) {
   const [adminTab, setAdminTab] = useState('dashboard');
   const [selectedNode, setSelectedNode] = useState(null);
+  const [activeCycleStep, setActiveCycleStep] = useState(null);
+  const [activeCycleLogs, setActiveCycleLogs] = useState([]);
   const [diffMode, setDiffMode] = useState(false);
   const [triggers, setTriggers] = useState([
     { id: 'TR-101', timestamp: '2026-07-03 01:10', priority: 'high', source: 'EDPB Feed', framework: 'GDPR', jurisdiction: 'European Union', client: 'Kids Help Phone', confidence: '94%', impact: 'High', status: 'Triaged' },
@@ -97,11 +99,11 @@ export default function AdminDashboard({
   const [selectedAuditFilter, setSelectedAuditFilter] = useState('all');
 
   const nodes = [
-    { id: 'trigger', label: 'Trigger Ingestion', status: simIsRunning ? 'running' : 'completed', agent: 'Ingestion Agent', llm: 'qwen2.5:7b', cost: '$0.002', latency: '240ms' },
-    { id: 'analysis', label: 'Ingestion & Analysis', status: simIsRunning ? 'running' : 'completed', agent: 'Ingestion Agent', llm: 'qwen3.6:latest', cost: '$0.008', latency: '1.2s' },
-    { id: 'adaptation', label: 'Adaptation Proposer', status: simIsRunning ? 'waiting' : 'completed', agent: 'Adaptation Coder', llm: 'qwen2.5-coder:32b', cost: '$0.024', latency: '4.5s' },
-    { id: 'evaluation', label: 'Self-Critique Auditor', status: simIsRunning ? 'waiting' : 'completed', agent: 'Self-Critique Auditor', llm: 'qwen3.6:latest', cost: '$0.012', latency: '2.3s' },
-    { id: 'deploy', label: 'Deployment Gateway', status: simIsRunning ? 'waiting' : 'completed', agent: 'Deployment Controller', llm: 'rule-based', cost: '$0.000', latency: '50ms' }
+    { id: 'trigger', label: 'Trigger Ingestion', status: activeCycleStep === 'trigger' ? 'running' : 'completed', agent: 'Ingestion Agent', llm: 'qwen2.5:7b', cost: '$0.002', latency: '240ms' },
+    { id: 'analysis', label: 'Ingestion & Analysis', status: activeCycleStep === 'analysis' ? 'running' : (activeCycleStep === 'trigger' ? 'waiting' : 'completed'), agent: 'Ingestion Agent', llm: 'qwen3.6:latest', cost: '$0.008', latency: '1.2s' },
+    { id: 'adaptation', label: 'Adaptation Proposer', status: activeCycleStep === 'adaptation' ? 'running' : (['trigger', 'analysis'].includes(activeCycleStep) ? 'waiting' : 'completed'), agent: 'Adaptation Coder', llm: 'qwen2.5-coder:32b', cost: '$0.024', latency: '4.5s' },
+    { id: 'evaluation', label: 'Self-Critique Auditor', status: activeCycleStep === 'evaluation' ? 'running' : (['trigger', 'analysis', 'adaptation'].includes(activeCycleStep) ? 'waiting' : 'completed'), agent: 'Self-Critique Auditor', llm: 'qwen3.6:latest', cost: '$0.012', latency: '2.3s' },
+    { id: 'deploy', label: 'Deployment Gateway', status: activeCycleStep === 'deploy' ? 'running' : (['trigger', 'analysis', 'adaptation', 'evaluation'].includes(activeCycleStep) ? 'waiting' : 'completed'), agent: 'Deployment Controller', llm: 'rule-based', cost: '$0.000', latency: '50ms' }
   ];
 
   const nodeStates = {
@@ -114,14 +116,29 @@ export default function AdminDashboard({
 
   const handleSimulateCycle = async () => {
     setSimIsRunning(true);
+    setActiveCycleStep('trigger');
     setSimLogs(['[Agent Gateway] Ingesting dynamic client regulatory update...']);
+    
     setTimeout(() => {
-      setSimLogs(prev => [...prev, '[RAG Engine] Successfully retrieved 1 grounded clauses: LAW25-SEC14', '[Adaptation Node] Proposed logical changes updated.']);
-    }, 1500);
+      setActiveCycleStep('analysis');
+      setSimLogs(prev => [...prev, '[RAG Engine] Successfully retrieved 1 grounded clauses: LAW25-SEC14', '[Analysis Node] Ingestion metadata mapped.']);
+    }, 1200);
+
     setTimeout(() => {
-      setSimLogs(prev => [...prev, '[Evaluation Node] Verification critique complete. Score: 9/10 (APPROVED)', '[Deployment Controller] Live production deployment succeeded.']);
+      setActiveCycleStep('adaptation');
+      setSimLogs(prev => [...prev, '[Adaptation Node] Proposed compliance logic formulated.']);
+    }, 2400);
+
+    setTimeout(() => {
+      setActiveCycleStep('evaluation');
+      setSimLogs(prev => [...prev, '[Evaluation Node] Verification critique complete. Score: 9/10 (APPROVED)']);
+    }, 3600);
+
+    setTimeout(() => {
+      setActiveCycleStep('deploy');
+      setSimLogs(prev => [...prev, '[Deployment Controller] Live production deployment hot swap finished.']);
       setSimIsRunning(false);
-    }, 3500);
+    }, 4800);
   };
 
   const downloadAudits = (format) => {
@@ -144,6 +161,7 @@ export default function AdminDashboard({
               { id: 'dashboard', label: 'Executive Dashboard', icon: Activity },
               { id: 'engine', label: 'Improvement Engine', icon: Sparkles },
               { id: 'langgraph', label: 'LangGraph Visualizer', icon: GitBranch },
+              { id: 'orchestration', label: 'Governance Orchestration', icon: List },
               { id: 'rag', label: 'RAG Knowledge Base', icon: BookOpen },
               { id: 'source_viewer', label: 'Authoritative Sources', icon: FileCode },
               { id: 'trust_tiers', label: 'Trust Tiers', icon: Shield },
@@ -370,12 +388,14 @@ export default function AdminDashboard({
                   
                   {nodes.map((node, index) => {
                     const isSelected = selectedNode === node.id;
+                    const isActive = activeCycleStep === node.id;
                     return (
                       <React.Fragment key={node.id}>
                         <button
                           onClick={() => setSelectedNode(node.id)}
                           className={`w-44 p-4 rounded-xl border transition-all text-left space-y-2 shadow-lg cursor-pointer ${
-                            isSelected ? 'bg-blue-600/20 border-blue-500 ring-2 ring-blue-500/40 scale-105' : 'bg-[#0E1325] border-[#1E294B] hover:border-gray-550'
+                            isSelected ? 'bg-blue-600/25 border-blue-500 ring-2 ring-blue-500/40 scale-105' : 
+                            (isActive ? 'bg-blue-500/10 border-blue-400 ring-2 ring-blue-400/40 animate-pulse scale-102 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-[#0E1325] border-[#1E294B] hover:border-gray-550')
                           }`}
                         >
                           <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-gray-400">
@@ -386,6 +406,9 @@ export default function AdminDashboard({
                           <div className="text-[9px] text-gray-500 space-y-0.5 font-mono">
                             <div>Agent: {node.agent}</div>
                             <div>LLM: {node.llm}</div>
+                            <div className="text-[8px] text-blue-400 font-bold uppercase tracking-wider mt-1 truncate">
+                              {node.status === 'running' ? '⚡ Active' : (node.status === 'completed' ? '✓ Completed' : '⌛ Waiting')}
+                            </div>
                           </div>
                         </button>
 
@@ -398,6 +421,34 @@ export default function AdminDashboard({
                     );
                   })}
                   
+                </div>
+
+                {/* RAG Query Inspector Popover */}
+                {activeCycleStep === 'analysis' && (
+                  <div className="border border-amber-500/30 bg-amber-500/5 rounded-xl p-4 space-y-2 text-xs">
+                    <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
+                      <BookOpen size={12} className="animate-spin text-amber-400" />
+                      <span>RAG Query Inspector (Active)</span>
+                    </span>
+                    <div className="bg-[#090C15] p-3 rounded border border-amber-500/20 text-gray-300 leading-relaxed font-mono text-[11px]">
+                      <span className="text-amber-300 block font-bold mb-1">Source: Quebec Law 25 (LAW25-SEC14)</span>
+                      "For target campaign validation, automated bilingual consent checks are mandatory for all communications distributed within the province."
+                    </div>
+                  </div>
+                )}
+
+                {/* Live Agent Reasoning Log */}
+                <div className="bg-[#090C15] border border-[#1E294B] p-4 rounded-xl space-y-2 text-xs">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Live Agent Reasoning Stream (Chain of Thought)</span>
+                  <div className="font-mono text-gray-300 space-y-1 bg-black/35 p-3 rounded border border-[#1E294B]/50 h-28 overflow-y-auto">
+                    {simLogs.map((log, index) => (
+                      <div key={index} className="flex space-x-2">
+                        <span className="text-blue-400">[{new Date().toLocaleTimeString()}]</span>
+                        <span className="text-gray-300">{log}</span>
+                      </div>
+                    ))}
+                    {simLogs.length === 0 && <div className="text-gray-500 italic">Inject a trigger in the Simulator to stream live reasoning...</div>}
+                  </div>
                 </div>
 
                 {/* Selected Node Inspector */}
@@ -512,6 +563,118 @@ export default function AdminDashboard({
             </div>
           )}
 
+          {/* TAB: GOVERNANCE ORCHESTRATION */}
+          {adminTab === 'orchestration' && (
+            <div className="space-y-6">
+              
+              {/* Top Sub-Agent Flow diagram */}
+              <div className="bg-[#0E1325] border border-[#1E294B] p-5 rounded-xl space-y-3">
+                <h4 className="text-xs font-bold uppercase text-white tracking-wider">Sub-Agent LangGraph Node Pipelines</h4>
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-[#090C15]/40 p-4 rounded-lg border border-[#1E294B]">
+                  <div className="p-3 bg-[#0E1325] border border-[#1E294B] rounded-lg text-center w-full max-w-[180px]">
+                    <div className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Input Source</div>
+                    <div className="text-xs font-bold text-white mt-1">Email / Transcripts</div>
+                  </div>
+                  <ArrowRight size={14} className="text-blue-500 hidden md:block" />
+                  <div className="p-3 bg-blue-600/10 border border-blue-500/30 rounded-lg text-center w-full max-w-[200px] ring-2 ring-blue-500/20">
+                    <div className="text-[9px] font-bold text-blue-400 uppercase tracking-widest">Email & Meeting Agents</div>
+                    <div className="text-xs font-bold text-white mt-1">Extract PII / Intent</div>
+                  </div>
+                  <ArrowRight size={14} className="text-blue-500 hidden md:block" />
+                  <div className="p-3 bg-purple-600/10 border border-purple-500/30 rounded-lg text-center w-full max-w-[180px]">
+                    <div className="text-[9px] font-bold text-purple-400 uppercase tracking-widest">Governance Router</div>
+                    <div className="text-xs font-bold text-white mt-1">Verify Compliance Risks</div>
+                  </div>
+                  <ArrowRight size={14} className="text-blue-500 hidden md:block" />
+                  <div className="p-3 bg-[#0E1325] border border-emerald-500/20 rounded-lg text-center w-full max-w-[180px]">
+                    <div className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Analyze Node</div>
+                    <div className="text-xs font-bold text-white mt-1">Kibo State loop-back</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* 1. Email Extraction & Data Ingestion */}
+                <div className="bg-[#0E1325] border border-[#1E294B] p-5 rounded-xl space-y-4">
+                  <div className="border-b border-[#1E294B] pb-2">
+                    <h3 className="text-xs font-bold uppercase text-white tracking-wider">Email Extraction & Data Ingestion</h3>
+                    <p className="text-[10px] text-gray-500 mt-0.5">NLP context extraction and linking to DPIAs.</p>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-[#151C33] border border-[#1E294B] rounded-lg space-y-1.5">
+                      <div className="flex justify-between items-center text-[10px]">
+                        <span className="font-bold text-white">From: legal@kidshelpphone.ca</span>
+                        <span className="bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase">Critical</span>
+                      </div>
+                      <p className="text-[11px] text-gray-300 italic">"Please find the updated contract with OpenText for the Gen AI transition."</p>
+                      <div className="text-[9px] text-gray-400 flex justify-between border-t border-[#1E294B]/50 pt-1.5">
+                        <span>Extracted: Vendor DPA</span>
+                        <span className="text-blue-400">Linked to DPIA #12</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-t border-[#1E294B] pt-3 space-y-2">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Admin Rules Config</span>
+                    <label className="flex items-center space-x-2 text-[11px] text-gray-300 cursor-pointer">
+                      <input type="checkbox" defaultChecked className="rounded border-gray-600 text-blue-600 focus:ring-blue-500 bg-[#090C15]" />
+                      <span>Classify contract/DPA mentions as Critical</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* 2. Meeting Minutes & Intelligence */}
+                <div className="bg-[#0E1325] border border-[#1E294B] p-5 rounded-xl space-y-4">
+                  <div className="border-b border-[#1E294B] pb-2">
+                    <h3 className="text-xs font-bold uppercase text-white tracking-wider">Meeting Minutes & Intelligence</h3>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Real-time transcribing, entity extraction, and risk flags.</p>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-[#151C33] border border-[#1E294B] rounded-lg space-y-1.5">
+                      <div className="text-[10px] font-bold text-white">PSR Committee Meeting - May 27</div>
+                      <p className="text-[11px] text-gray-300 leading-relaxed">
+                        Decision to transition Gen AI MVP building to OpenText. Neil and Susan outlined agreement stages.
+                      </p>
+                      <div className="text-[9px] text-amber-400 font-bold flex items-center space-x-1 border-t border-[#1E294B]/50 pt-1.5">
+                        <AlertTriangle size={10} />
+                        <span>Risk: Missing new DPA signature from OpenText</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] py-2 rounded-lg cursor-pointer transition-all shadow-md">
+                    Approve Minutes for Archival
+                  </button>
+                </div>
+
+                {/* 3. Automated Agendas & Follow-up */}
+                <div className="bg-[#0E1325] border border-[#1E294B] p-5 rounded-xl space-y-4">
+                  <div className="border-b border-[#1E294B] pb-2">
+                    <h3 className="text-xs font-bold uppercase text-white tracking-wider">Agendas & Follow-up Orchestration</h3>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Automated task updates and compliance escalation.</p>
+                  </div>
+                  <div className="space-y-2 text-[11px]">
+                    <div className="font-bold text-gray-400 uppercase text-[9px] tracking-wider mb-1">Generated Agenda Draft</div>
+                    <div className="bg-[#151C33] p-2.5 rounded-lg border border-[#1E294B] space-y-1.5">
+                      <div>1. OpenText Gen AI MVP procurement agreement review</div>
+                      <div>2. Validate PHIPA compliance logic for database endpoints</div>
+                    </div>
+                  </div>
+                  <div className="space-y-2 text-[11px]">
+                    <div className="font-bold text-gray-400 uppercase text-[9px] tracking-wider mb-1">Automated Follow-ups</div>
+                    <div className="bg-[#151C33] p-2.5 rounded-lg border border-[#1E294B] flex justify-between items-center">
+                      <span>Nudge email to Betty (DPIA review)</span>
+                      <span className="text-[9px] text-amber-400 font-mono">Pending response</span>
+                    </div>
+                  </div>
+                  <button className="w-full bg-[#151C33] hover:bg-[#1E294B] text-gray-300 font-bold text-[10px] py-2 rounded-lg cursor-pointer transition-all border border-[#1E294B]">
+                    Approve Strategic Priorities
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
+
           {/* TAB 6: TRUST TIERS */}
           {adminTab === 'trust_tiers' && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -521,7 +684,7 @@ export default function AdminDashboard({
                 { tier: 'Tier 3', title: 'Internal Policies', items: ['Company Data Standards', 'DPIA Templates', 'Retention Calendars'], desc: 'Internal corporate structures and baseline profiles.' },
                 { tier: 'Tier 4', title: 'External Knowledge', items: ['Privacy Research', 'Legal Blogs', 'Technical Whitepapers'], desc: 'Auxiliary evidence used for context parsing.' }
               ].map(t => (
-                <div key={t.tier} className="bg-[#0E1325] border border-[#1E294B] p-5 rounded-xl space-y-3.5">
+                <div key={t.tier} className="bg-[#0E1325] border border-[#1E294B] p-5 rounded-xl space-y-3.5 animate-fade-in">
                   <div className="flex justify-between items-center">
                     <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest font-mono">{t.tier}</span>
                     <span className="w-2 h-2 rounded-full bg-emerald-500" />
