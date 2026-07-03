@@ -14,7 +14,13 @@ const API_BASE = window.location.origin.includes('localhost') || window.location
 const App = () => {
   // --- Core State ---
   const [securityMode, setSecurityMode] = useState('expert'); // public, employee, expert, psr
-  const [activeTab, setActiveTab] = useState('dashboard'); // for Expert mode
+  const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // --- Agent Persistent Memory State ---
+  const [agentLessons, setAgentLessons] = useState([]);
+  const [newLessonNotes, setNewLessonNotes] = useState('');
+  const [newLessonDomain, setNewLessonDomain] = useState('onboarding');
+  const [lessonsIsExpanded, setLessonsIsExpanded] = useState(true); // for Expert mode
   const [activeLegislations, setActiveLegislations] = useState(['canada', 'quebec', 'phipa', 'cyfsa']);
   const [activeJurisdiction, setActiveJurisdiction] = useState('canada');
   const [jurConfig, setJurConfig] = useState({
@@ -365,6 +371,7 @@ const App = () => {
       // Fetch Onboarding and Agentic data
       fetchOnboardingData();
       fetchAgenticData();
+      fetchLessons();
     } catch (e) {
       console.error(e);
       setIsSystemOnline(false);
@@ -627,6 +634,34 @@ const App = () => {
       const res = await kiboFetch(`${API_BASE}/api/expert/inbox/${emailId}/replies`);
       if (res.ok) {
         setInboxReplies(await res.json());
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchLessons = async () => {
+    try {
+      const res = await kiboFetch(`${API_BASE}/api/expert/lessons`);
+      if (res.ok) {
+        setAgentLessons(await res.json());
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleAddLesson = async () => {
+    if (!newLessonNotes.trim()) return;
+    try {
+      const res = await kiboFetch(`${API_BASE}/api/expert/lessons/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain: newLessonDomain, feedback_notes: newLessonNotes })
+      });
+      if (res.ok) {
+        setNewLessonNotes('');
+        await fetchLessons();
       }
     } catch (err) {
       console.error(err);
@@ -2063,6 +2098,93 @@ const App = () => {
                             ))}
                           </div>
                         )}
+
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Collapsible Agent Self-Improvement & Persistent Memory */}
+                  <div className="bg-white border border-[#E5E7EB] rounded-xl shadow-xs overflow-hidden mt-6">
+                    <div 
+                      onClick={() => setLessonsIsExpanded(!lessonsIsExpanded)}
+                      className="p-5 border-b border-[#E5E7EB] bg-gray-50/50 flex justify-between items-center cursor-pointer select-none hover:bg-gray-50 transition-all"
+                    >
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                        <Cpu size={14} className="text-indigo-600" />
+                        <span>Agent Self-Improvement & Persistent Memory (Level 2)</span>
+                      </h3>
+                      <span className="text-xs text-gray-400 font-bold">{lessonsIsExpanded ? 'Collapse ▲' : 'Expand ▼'}</span>
+                    </div>
+
+                    {lessonsIsExpanded && (
+                      <div className="p-6 space-y-6">
+                        <p className="text-xs text-gray-500 leading-relaxed">
+                          KIBO implements <strong>Level 2: SQLite-Backed Persistent Long-Term Memory</strong>. Reflection agents continuously record feedback and lessons, which are automatically retrieved and injected into the prompts of running active agents to ensure persistent self-improvement.
+                        </p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          
+                          {/* Write/Submit feedback panel */}
+                          <div className="bg-gray-50/50 border border-gray-200 p-5 rounded-xl space-y-4 md:col-span-1">
+                            <h4 className="text-xs font-bold uppercase text-gray-700 tracking-wider">Record Feedback / Lesson</h4>
+                            <div className="space-y-3">
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-gray-550 uppercase">Target Domain</label>
+                                <select 
+                                  value={newLessonDomain}
+                                  onChange={(e) => setNewLessonDomain(e.target.value)}
+                                  className="w-full bg-white border border-gray-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-hidden text-gray-700 font-semibold"
+                                >
+                                  <option value="onboarding">Onboarding Agent</option>
+                                  <option value="dsar">DSAR Fulfillment Agent</option>
+                                  <option value="vendor">Vendor Agent</option>
+                                  <option value="all">Universal / All Agents</option>
+                                </select>
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-gray-555 uppercase">Lesson / Constraint Notes</label>
+                                <textarea
+                                  value={newLessonNotes}
+                                  onChange={(e) => setNewLessonNotes(e.target.value)}
+                                  placeholder="E.g., Require a signed DPA prior to data exports..."
+                                  rows={4}
+                                  className="w-full border border-gray-300 rounded-lg p-3 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-hidden font-mono bg-white shadow-xs resize-none"
+                                />
+                              </div>
+                              <button 
+                                onClick={handleAddLesson}
+                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+                              >
+                                Commit to Agent Memory
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Persistent Memory logs */}
+                          <div className="md:col-span-2 space-y-3">
+                            <h4 className="text-xs font-bold uppercase text-gray-700 tracking-wider">Active Memory Registers</h4>
+                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                              {agentLessons.map(lesson => (
+                                <div key={lesson.lesson_id} className="p-4 rounded-xl border border-indigo-100 bg-indigo-50/10 space-y-2 hover:bg-indigo-50/20 transition-all shadow-xs">
+                                  <div className="flex justify-between items-center text-[10px] font-bold">
+                                    <span className="text-indigo-850 font-mono">ID: {lesson.lesson_id}</span>
+                                    <span className="uppercase bg-indigo-100/50 border border-indigo-200 text-indigo-800 px-2 py-0.5 rounded-md">
+                                      Domain: {lesson.domain}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-gray-755 font-mono italic">"{lesson.feedback_notes}"</p>
+                                  <div className="text-[9px] text-gray-400 font-medium">Recorded: {lesson.created_at}</div>
+                                </div>
+                              ))}
+                              {agentLessons.length === 0 && (
+                                <div className="p-8 text-center text-xs text-gray-400 italic">
+                                  No active lessons in persistent memory registry.
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                        </div>
 
                       </div>
                     )}

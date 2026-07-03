@@ -162,6 +162,18 @@ def detect_gaps(state: OnboardingState) -> Dict[str, Any]:
     logs = list(state.logs)
     logs.append("[Gap Detector] Comparing extracted attributes against Canadian regulatory baseline...")
     
+    # Level 2 Memory Loop: Load and apply persistent lessons learned
+    try:
+        conn = sqlite3.connect("kibo_state.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT lesson_id, feedback_notes FROM agent_lessons_learned WHERE domain='onboarding' OR domain='all'")
+        lessons = cursor.fetchall()
+        conn.close()
+        for lid, note in lessons:
+            logs.append(f"[Reflection Memory Engine] Applying persistent lesson {lid}: \"{note}\"")
+    except Exception as e:
+        logs.append(f"[Reflection Memory Engine] Warning: could not access memory database ({str(e)})")
+
     gaps = [
         {
             "id": "gap-1",

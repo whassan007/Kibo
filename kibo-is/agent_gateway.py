@@ -1002,6 +1002,13 @@ def seed_mock_data():
     cursor.execute("CREATE TABLE IF NOT EXISTS simulated_inbox (email_id TEXT PRIMARY KEY, sender TEXT NOT NULL, subject TEXT NOT NULL, body TEXT NOT NULL, category TEXT NOT NULL, status TEXT DEFAULT 'unread', converted_to_transaction TEXT)")
     cursor.execute("CREATE TABLE IF NOT EXISTS simulated_inbox_replies (reply_id TEXT PRIMARY KEY, email_id TEXT NOT NULL, body TEXT NOT NULL, sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
     cursor.execute("CREATE TABLE IF NOT EXISTS psr_recommendations (recommendation_id TEXT PRIMARY KEY, risk_id TEXT NOT NULL, member TEXT NOT NULL, vote TEXT NOT NULL, recommendation TEXT NOT NULL, timestamp TEXT NOT NULL)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS agent_lessons_learned (lesson_id TEXT PRIMARY KEY, domain TEXT NOT NULL, feedback_notes TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+    
+    # Seed initial memories/lessons
+    cursor.execute("SELECT count(*) FROM agent_lessons_learned")
+    if cursor.fetchone()[0] == 0:
+        cursor.execute("INSERT INTO agent_lessons_learned (lesson_id, domain, feedback_notes) VALUES (?, ?, ?)", ("L-001", "onboarding", "Ensure Quebec Law 25 bilingual policies are marked mandatory during French targeted campaigns."))
+        cursor.execute("INSERT INTO agent_lessons_learned (lesson_id, domain, feedback_notes) VALUES (?, ?, ?)", ("L-002", "dsar", "Always redact third-party IP addresses from SMS Twilio backups before delivery."))
 
     # Agentic CPO Intelligence Architecture Tables
     cursor.execute("""
@@ -4246,6 +4253,39 @@ def get_inbox_replies(id: str, scope: str = Depends(require_scopes(["expert"])))
             "sent_at": r[2]
         })
     return replies
+
+class LessonPayload(BaseModel):
+    domain: str
+    feedback_notes: str
+
+@app.post("/api/expert/lessons/add")
+def add_expert_lesson(payload: LessonPayload, scope: str = Depends(require_scopes(["expert"]))):
+    import uuid
+    lesson_id = f"L-{uuid.uuid4().hex[:4].upper()}"
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("INSERT INTO agent_lessons_learned (lesson_id, domain, feedback_notes) VALUES (?, ?, ?)", (lesson_id, payload.domain, payload.feedback_notes))
+    conn_db.commit()
+    conn_db.close()
+    return {"status": "success", "lesson_id": lesson_id}
+
+@app.get("/api/expert/lessons")
+def get_expert_lessons(scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT lesson_id, domain, feedback_notes, created_at FROM agent_lessons_learned ORDER BY created_at DESC")
+    rows = cursor.fetchall()
+    conn_db.close()
+    
+    lessons = []
+    for r in rows:
+        lessons.append({
+            "lesson_id": r[0],
+            "domain": r[1],
+            "feedback_notes": r[2],
+            "created_at": r[3]
+        })
+    return lessons
 
 @app.post("/api/expert/training/assign")
 def assign_expert_training(scope: str = Depends(require_scopes(["expert"]))):
