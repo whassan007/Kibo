@@ -115,8 +115,10 @@ def ingest_website(state: OnboardingState) -> Dict[str, Any]:
 def ingest_documents(state: OnboardingState) -> Dict[str, Any]:
     logs = list(state.logs)
     logs.append("[Doc Extractor] Parsing uploaded policies and internal records...")
-    logs.append("[Doc Extractor] Identified: 16 policy modules (Information Management, Incident/Breach, etc.).")
-    logs.append("[Doc Extractor] Merging data inventory from 11 team workbook sheets.")
+    for f in state.files:
+        logs.append(f"[Doc Extractor] Parsing: {f} (Format detected, resolving schema)")
+    logs.append(f"[Doc Extractor] Identified: {len(state.files)} target documents for compliance profile ingestion.")
+    logs.append("[Doc Extractor] Merging data inventory from team workbook sheets.")
     logs.append("[Doc Extractor] Extracted 12 active integrations (Salesforce, SAP Concur, Aselo/Twilio, CTL).")
     
     return {

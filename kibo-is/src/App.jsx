@@ -125,6 +125,17 @@ const App = () => {
   // --- Canadian Onboarding & CASL State ---
   const [onboardingTasks, setOnboardingTasks] = useState([]);
   const [caslRegistry, setCaslRegistry] = useState([]);
+  const [caslDisclaimers, setCaslDisclaimers] = useState([
+    { id: 'DISC-001', target: 'Youth Crisis Chat Gateway', text: 'By launching this chat, you consent to our collection of IP address, browser headers, and conversation logs. Transcripts are preserved for safety audits and clinical supervision.', placement: '/chat/launch-gate', type: 'Express Consent', jurisdiction: 'PIPEDA / Law 25' },
+    { id: 'DISC-002', target: 'Donor Transaction Page', text: 'Kids Help Phone collects donor names, billing details, and email addresses to process donations, issue official tax receipts, and send seasonal updates. Opt-out at any time.', placement: '/donate/checkout', type: 'Express (Consent Checkbox)', jurisdiction: 'PIPEDA / CASL' },
+    { id: 'DISC-003', target: 'Volunteer Intake Form', text: 'We collect reference details, police background screens, and contact info to evaluate eligibility for volunteer counseling positions.', placement: '/careers/volunteer-apply', type: 'Express Consent', jurisdiction: 'Ontario FIPPA' }
+  ]);
+  const [caslDataElements, setCaslDataElements] = useState([
+    { element: 'Phone Number', subject: 'SMS Support User', purpose: 'Immediate routing and delivery of SMS counseling sessions', disclaimer: 'DISC-001 (Gateway Notice)' },
+    { element: 'Chat Transcripts', subject: 'Web Chat Caller', purpose: 'Clinical supervision, risk escalation review, and safety protocols', disclaimer: 'DISC-001 (Gateway Notice)' },
+    { element: 'Credit Card Hash', subject: 'Financial Donor', purpose: 'Payment processing and tokenized recurring donation checks', disclaimer: 'DISC-002 (Donor Policy)' },
+    { element: 'Criminal Records Check', subject: 'Volunteer Applicant', purpose: 'Vulnerable sector screening for youth counseling suitability', disclaimer: 'DISC-003 (Intake Disclaimer)' }
+  ]);
   const [caslLogs, setCaslLogs] = useState([
     "[SYSTEM] Consent enforcement loop initialized.",
     "[SYSTEM] Awaiting sunset automation trigger..."
@@ -585,7 +596,9 @@ const App = () => {
         body: JSON.stringify({
           client_id: "KHP-Default",
           urls: [onbWebsiteUrl],
-          files: ["Data Governance Policy.docx", "Terms of Reference.docx", "Data Inventory.xlsx", "Information Management Policy.docx", "Risk Register.xlsx", "Privacy Policy.docx"]
+          files: onbUploadedFiles.length > 0 
+            ? onbUploadedFiles.map(f => f.name) 
+            : ["Data Governance Policy.docx", "Terms of Reference.docx", "Data Inventory.xlsx", "Information Management Policy.docx", "Risk Register.xlsx", "Privacy Policy.docx"]
         })
       });
       if (startRes.ok) {
@@ -2181,6 +2194,65 @@ const App = () => {
                           </div>
                         </div>
                       </div>
+
+                      {/* Consent Disclaimers & Data Mappings (CASL Obligation Tracker) */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                        
+                        {/* Consent Disclaimers Registry */}
+                        <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl space-y-4 shadow-xs">
+                          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                            <BookOpen size={14} className="text-blue-600" />
+                            <span>Consent Disclaimers Registry</span>
+                          </h2>
+                          <div className="space-y-3.5">
+                            {caslDisclaimers.map(d => (
+                              <div key={d.id} className="p-3.5 rounded-lg border border-gray-200 bg-gray-50/50 space-y-2">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-bold text-xs text-gray-800">{d.target}</span>
+                                  <span className="text-[9px] bg-blue-50 border border-blue-200 text-blue-700 px-2 py-0.5 rounded-full font-bold">{d.type}</span>
+                                </div>
+                                <p className="text-[11px] text-gray-650 italic leading-relaxed">"{d.text}"</p>
+                                <div className="flex justify-between items-center text-[10px] text-gray-400 pt-1 border-t border-gray-200">
+                                  <span>Placement: <code className="font-mono text-gray-600">{d.placement}</code></span>
+                                  <span className="font-semibold text-blue-650">{d.jurisdiction}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Data Element Purpose Map */}
+                        <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl space-y-4 shadow-xs">
+                          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                            <Database size={14} className="text-blue-600" />
+                            <span>Data Element Purpose Map</span>
+                          </h2>
+                          <div className="border border-[#E5E7EB] rounded-xl overflow-hidden bg-white shadow-xs">
+                            <table className="w-full text-xs text-left border-collapse">
+                              <thead>
+                                <tr className="bg-gray-50 text-gray-500 border-b border-[#E5E7EB] font-semibold text-[10px] uppercase">
+                                  <th className="p-3">Data Element</th>
+                                  <th className="p-3">Subject Class</th>
+                                  <th className="p-3">Stated Purpose</th>
+                                  <th className="p-3">Governing Consent</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-[#E5E7EB]">
+                                {caslDataElements.map((e, idx) => (
+                                  <tr key={idx} className="hover:bg-gray-50 transition-all">
+                                    <td className="p-3 font-semibold text-gray-850 font-mono text-[11px]">{e.element}</td>
+                                    <td className="p-3 text-gray-600">{e.subject}</td>
+                                    <td className="p-3 text-gray-600 leading-relaxed">{e.purpose}</td>
+                                    <td className="p-3 font-medium text-blue-700 text-[10px]">{e.disclaimer}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                      </div>
+
                     </div>
                   ) : (
                     <div className="space-y-6">
@@ -2232,13 +2304,36 @@ const App = () => {
                                 <div className="text-[9px] text-gray-400">crawls privacy policies, cookie notices, and AI systems securely.</div>
                               </div>
 
-                              <div className="space-y-1.5 pt-2">
+                               <div className="space-y-1.5 pt-2">
                                 <label className="text-[10px] font-bold text-gray-600 uppercase">Corporate Compliance Corpus</label>
-                                <div className="border border-dashed border-gray-250 p-4 rounded-lg text-center bg-gray-50/50">
-                                  <FileUp size={18} className="mx-auto text-gray-450 mb-1" />
-                                  <div className="text-[10px] text-gray-650 font-bold">6 Target Documents Selected</div>
-                                  <div className="text-[9px] text-gray-400 mt-0.5">Information Management, Data Inventory XLS, Terms of Reference, etc.</div>
-                                </div>
+                                <input
+                                  type="file"
+                                  multiple
+                                  accept=".docx,.xlsx,.xls,.pdf"
+                                  className="hidden"
+                                  id="onb-file-upload"
+                                  onChange={(e) => {
+                                    if (e.target.files) {
+                                      const filesArray = Array.from(e.target.files);
+                                      setOnbUploadedFiles(filesArray);
+                                      setOnbLogs(prev => [...prev, `[USER] Selected ${filesArray.length} document(s) for ingestion.`]);
+                                    }
+                                  }}
+                                />
+                                <label
+                                  htmlFor="onb-file-upload"
+                                  className="border border-dashed border-gray-250 p-4 rounded-lg text-center bg-gray-50/50 block cursor-pointer hover:bg-gray-100 hover:border-blue-300 transition-all"
+                                >
+                                  <FileUp size={18} className="mx-auto text-blue-650 mb-1" />
+                                  <div className="text-[10px] text-gray-650 font-bold">
+                                    {onbUploadedFiles.length > 0 ? `${onbUploadedFiles.length} file(s) selected` : "Select files (.pdf, .docx, .xlsx)"}
+                                  </div>
+                                  <div className="text-[9px] text-gray-400 mt-0.5 max-h-12 overflow-y-auto">
+                                    {onbUploadedFiles.length > 0
+                                      ? onbUploadedFiles.map(f => f.name).join(', ')
+                                      : "Click to upload policy documents, inventories, risk matrices"}
+                                  </div>
+                                </label>
                               </div>
                             </div>
                           </div>
