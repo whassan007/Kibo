@@ -133,6 +133,19 @@ const App = () => {
   const [editingNotesTaskId, setEditingNotesTaskId] = useState(null);
   const [editingNotesText, setEditingNotesText] = useState("");
 
+  // --- AI Onboarding Agent State ---
+  const [onboardingSubMode, setOnboardingSubMode] = useState('checklist'); // 'checklist' or 'ai_agent'
+  const [onbSessionId, setOnbSessionId] = useState(null);
+  const [onbWebsiteUrl, setOnbWebsiteUrl] = useState('https://kidshelphone.ca');
+  const [onbUploadedFiles, setOnbUploadedFiles] = useState([]);
+  const [onbStatus, setOnbStatus] = useState('idle'); // 'idle', 'ingesting', 'normalizing', 'gap_review', 'validated'
+  const [onbProgress, setOnbProgress] = useState(0);
+  const [onbLogs, setOnbLogs] = useState([]);
+  const [onbProfile, setOnbProfile] = useState(null);
+  const [onbGaps, setOnbGaps] = useState([]);
+  const [onbSelectedProfileSection, setOnbSelectedProfileSection] = useState('policies');
+  const [onbGapInputs, setOnbGapInputs] = useState({}); // stores text values for answers
+
   // --- Agentic CPO Console State ---
   const [agentsList, setAgentsList] = useState([
     { id: "dsar", name: "DSAR Fulfillment Engine", status: "Listening", lastAction: "Scanned database tables; no new requests pending.", focus: "GDPR, CCPA/CPRA, Law 25" },
@@ -558,6 +571,94 @@ const App = () => {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  // --- AI Onboarding Agent Handlers ---
+  const handleStartOnboarding = async () => {
+    setOnbStatus('ingesting');
+    setOnbProgress(0.05);
+    setOnbLogs(['[System Orchestrator] Initializing AI Onboarding Agent session...']);
+    try {
+      const startRes = await kiboFetch(`${API_BASE}/api/onboarding/start`, {
+        method: 'POST',
+        body: JSON.stringify({
+          client_id: "KHP-Default",
+          urls: [onbWebsiteUrl],
+          files: ["Data Governance Policy.docx", "Terms of Reference.docx", "Data Inventory.xlsx", "Information Management Policy.docx", "Risk Register.xlsx", "Privacy Policy.docx"]
+        })
+      });
+      if (startRes.ok) {
+        const startData = await startRes.json();
+        const sid = startData.session_id;
+        setOnbSessionId(sid);
+        
+        setOnbLogs(prev => [...prev, `[System Orchestrator] Session ${sid} created. Triggering website extraction...`]);
+        const webRes = await kiboFetch(`${API_BASE}/api/onboarding/${sid}/website`, { method: 'POST' });
+        if (webRes.ok) {
+          const webData = await webRes.json();
+          setOnbLogs(prev => [...prev, ...webData.logs]);
+          setOnbProgress(0.30);
+          
+          setOnbLogs(prev => [...prev, `[System Orchestrator] Website crawl complete. Ingesting compliance documents and data inventory...`]);
+          const docRes = await kiboFetch(`${API_BASE}/api/onboarding/${sid}/documents`, { method: 'POST' });
+          if (docRes.ok) {
+            const docData = await docRes.json();
+            setOnbLogs(prev => [...prev, ...docData.logs]);
+            setOnbProgress(0.85);
+            setOnbStatus('gap_review');
+            
+            const profRes = await kiboFetch(`${API_BASE}/api/onboarding/${sid}/profile`);
+            if (profRes.ok) setOnbProfile(await profRes.json());
+            
+            const gapsRes = await kiboFetch(`${API_BASE}/api/onboarding/${sid}/gaps`);
+            if (gapsRes.ok) setOnbGaps(await gapsRes.json());
+          }
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      setOnbLogs(prev => [...prev, `[ERROR] Onboarding failed: ${e.message}`]);
+      setOnbStatus('idle');
+    }
+  };
+
+  const handleResolveOnbGap = async (gapId, decision, value) => {
+    try {
+      const res = await kiboFetch(`${API_BASE}/api/onboarding/${onbSessionId}/gaps/${gapId}`, {
+        method: 'POST',
+        body: JSON.stringify({ decision, value })
+      });
+      if (res.ok) {
+        setOnbGaps(prev => prev.map(g => g.id === gapId ? { ...g, status: decision } : g));
+        
+        const profRes = await kiboFetch(`${API_BASE}/api/onboarding/${onbSessionId}/profile`);
+        if (profRes.ok) setOnbProfile(await profRes.json());
+        
+        const statusRes = await kiboFetch(`${API_BASE}/api/onboarding/${onbSessionId}/status`);
+        if (statusRes.ok) {
+          const sData = await statusRes.json();
+          setOnbLogs(sData.logs);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleFinalizeOnbProfile = async () => {
+    try {
+      const res = await kiboFetch(`${API_BASE}/api/onboarding/${onbSessionId}/finalize`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setOnbProfile(data.profile);
+        setOnbStatus('validated');
+        setOnbProgress(1.0);
+        setOnbLogs(prev => [...prev, `[System] ONBOARDING COMPLETE. Baseline profile validated successfully.`]);
+        alert("Organizational profile committed to downstream compliance pipelines!");
+      }
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -1703,226 +1804,535 @@ const App = () => {
                     </p>
                   </div>
 
-                  {/* Progress Indicators */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl shadow-xs">
-                      <div className="flex justify-between text-xs font-semibold mb-2 text-gray-700">
-                        <span>Federal (PIPEDA/CASL) Compliance</span>
-                        <span className="text-blue-600 font-bold">
-                          {Math.round((onboardingTasks.filter(t => t.scope === 'Federal' && t.status === 'completed').length / (onboardingTasks.filter(t => t.scope === 'Federal').length || 1)) * 100)}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden border border-gray-200">
-                        <div 
-                          className="bg-blue-600 h-full transition-all duration-500" 
-                          style={{ width: `${(onboardingTasks.filter(t => t.scope === 'Federal' && t.status === 'completed').length / (onboardingTasks.filter(t => t.scope === 'Federal').length || 1)) * 100}%` }}
-                        />
-                      </div>
-                      <div className="text-[10px] text-gray-500 mt-2">
-                        {onboardingTasks.filter(t => t.scope === 'Federal' && t.status === 'completed').length} of {onboardingTasks.filter(t => t.scope === 'Federal').length} tasks completed
-                      </div>
-                    </div>
-
-                    <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl shadow-xs">
-                      <div className="flex justify-between text-xs font-semibold mb-2 text-gray-700">
-                        <span>Provincial (Law 25/PIPA/FIPPA) Compliance</span>
-                        <span className="text-blue-600 font-bold">
-                          {Math.round((onboardingTasks.filter(t => t.scope === 'Provincial' && t.status === 'completed').length / (onboardingTasks.filter(t => t.scope === 'Provincial').length || 1)) * 100)}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden border border-gray-200">
-                        <div 
-                          className="bg-blue-600 h-full transition-all duration-500" 
-                          style={{ width: `${(onboardingTasks.filter(t => t.scope === 'Provincial' && t.status === 'completed').length / (onboardingTasks.filter(t => t.scope === 'Provincial').length || 1)) * 100}%` }}
-                        />
-                      </div>
-                      <div className="text-[10px] text-gray-500 mt-2">
-                        {onboardingTasks.filter(t => t.scope === 'Provincial' && t.status === 'completed').length} of {onboardingTasks.filter(t => t.scope === 'Provincial').length} tasks completed
-                      </div>
-                    </div>
+                  {/* Mode Selector */}
+                  <div className="flex border-b border-[#E5E7EB] mb-4">
+                    <button
+                      onClick={() => setOnboardingSubMode('checklist')}
+                      className={`px-4 py-2.5 text-xs font-semibold border-b-2 transition-all cursor-pointer ${
+                        onboardingSubMode === 'checklist'
+                          ? 'border-blue-600 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      Dynamic Checklists
+                    </button>
+                    <button
+                      onClick={() => setOnboardingSubMode('ai_agent')}
+                      className={`px-4 py-2.5 text-xs font-semibold border-b-2 transition-all cursor-pointer flex items-center space-x-1.5 ${
+                        onboardingSubMode === 'ai_agent'
+                          ? 'border-blue-600 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      <Sparkles size={12} className={onboardingSubMode === 'ai_agent' ? 'text-blue-600' : 'text-gray-400'} />
+                      <span>AI Onboarding Agent</span>
+                    </button>
                   </div>
 
-                  {/* Task Checklist Panel */}
-                  <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl space-y-4 shadow-xs">
-                    <h2 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
-                      <CheckSquare size={14} className="text-blue-600" />
-                      <span>Dynamic Compliance Checklist</span>
-                    </h2>
-
-                    <div className="border border-[#E5E7EB] rounded-xl overflow-hidden bg-white shadow-xs">
-                      <table className="w-full text-xs text-left border-collapse">
-                        <thead>
-                          <tr className="bg-gray-50 text-gray-500 border-b border-[#E5E7EB] font-semibold text-[11px] uppercase tracking-wider">
-                            <th className="p-3.5 w-12 text-center">Status</th>
-                            <th className="p-3.5 w-1/4">Task</th>
-                            <th className="p-3.5 w-28">Category</th>
-                            <th className="p-3.5 w-32">Scope & Region</th>
-                            <th className="p-3.5">Guidance & Action Notes</th>
-                            <th className="p-3.5 w-24 text-right">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#E5E7EB]">
-                          {onboardingTasks.length === 0 ? (
-                            <tr>
-                              <td colSpan="6" className="p-8 text-center text-gray-500 italic">
-                                {isSystemOnline 
-                                  ? "No onboarding tasks loaded. Select a Canadian jurisdiction to view checklist." 
-                                  : "System Offline - Unable to load compliance checklist."}
-                              </td>
-                            </tr>
-                          ) : (
-                            onboardingTasks.map(t => (
-                              <tr key={t.id} className="hover:bg-gray-550/50 transition-all">
-                                <td className="p-3.5 text-center">
-                                  <button 
-                                    onClick={() => handleToggleOnboardingTask(t.id)}
-                                    className={`p-1 rounded-md border transition-all cursor-pointer ${
-                                      t.status === 'completed' 
-                                        ? 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100' 
-                                        : 'bg-white border-[#E5E7EB] text-gray-400 hover:border-gray-300'
-                                    }`}
-                                  >
-                                    <Check size={12} />
-                                  </button>
-                                </td>
-                                <td className="p-3.5 font-semibold">
-                                  <span className={t.status === 'completed' ? 'line-through text-gray-400 font-normal' : 'text-[#111827]'}>
-                                    {t.task_name}
-                                  </span>
-                                </td>
-                                <td className="p-3.5">
-                                  <span className="px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-gray-650 text-[10px] uppercase font-bold">
-                                    {t.category}
-                                  </span>
-                                </td>
-                                <td className="p-3.5 space-y-0.5">
-                                  <div className={`text-[10px] font-bold ${t.scope === 'Federal' ? 'text-blue-600' : 'text-purple-650'}`}>
-                                    {t.scope.toUpperCase()}
-                                  </div>
-                                  <div className="text-[10px] text-gray-500">{t.jurisdiction}</div>
-                                </td>
-                                <td className="p-3.5">
-                                  {editingNotesTaskId === t.id ? (
-                                    <div className="flex space-x-2">
-                                      <input 
-                                        type="text" 
-                                        value={editingNotesText}
-                                        onChange={(e) => setEditingNotesText(e.target.value)}
-                                        className="flex-1 bg-white border border-[#E5E7EB] focus:border-blue-600 focus:ring-1 focus:ring-blue-500/20 p-1 rounded text-xs text-[#111827] font-mono"
-                                      />
-                                      <button 
-                                        onClick={() => handleUpdateTaskNotes(t.id, editingNotesText)}
-                                        className="bg-emerald-650 text-white px-3 py-1 rounded text-[10px] font-bold cursor-pointer shadow-xs"
-                                      >
-                                        Save
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <div className="text-gray-650 text-[11px] leading-relaxed">
-                                      {t.notes || <span className="italic text-gray-400">No guidelines provided.</span>}
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="p-3.5 text-right">
-                                  <button 
-                                    onClick={() => {
-                                      setEditingNotesTaskId(t.id);
-                                      setEditingNotesText(t.notes || '');
-                                    }}
-                                    className="text-blue-600 hover:text-blue-700 font-semibold hover:underline text-xs cursor-pointer"
-                                  >
-                                    Edit Info
-                                  </button>
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  {/* CASL Email Consent & Sunset Automation */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Left Column: CASL Registry */}
-                    <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl space-y-4 col-span-2 shadow-xs">
-                      <h2 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
-                        <Users size={14} className="text-blue-600" />
-                        <span>CASL Compliance Registry</span>
-                      </h2>
-
-                      <div className="border border-[#E5E7EB] rounded-xl overflow-hidden bg-white shadow-xs">
-                        <table className="w-full text-xs text-left border-collapse">
-                          <thead>
-                            <tr className="bg-gray-50 text-gray-500 border-b border-[#E5E7EB] font-semibold text-[11px] uppercase tracking-wider">
-                              <th className="p-3">Data Subject</th>
-                              <th className="p-3">Email</th>
-                              <th className="p-3">Consent Type</th>
-                              <th className="p-3">Obtained Source</th>
-                              <th className="p-3">Expiry Date</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-[#E5E7EB]">
-                            {caslRegistry.map(c => (
-                              <tr key={c.id} className="hover:bg-gray-550/50 transition-all">
-                                <td className="p-3 text-[#111827] font-semibold">{c.name}</td>
-                                <td className="p-3 text-gray-600">{c.email}</td>
-                                <td className="p-3">
-                                  <span className={`px-2 py-0.5 rounded-full text-[9px] uppercase font-bold border ${
-                                    c.consent_status === 'Express' ? 'bg-emerald-50 border-emerald-250 text-emerald-800' :
-                                    c.consent_status === 'Implied' ? 'bg-amber-50 border-amber-250 text-amber-800' :
-                                    c.consent_status === 'Expired' ? 'bg-rose-50 border-rose-250 text-rose-800' :
-                                    'bg-gray-100 border-gray-200 text-gray-600'
-                                  }`}>
-                                    {c.consent_status}
-                                  </span>
-                                </td>
-                                <td className="p-3 text-gray-500">{c.consent_source}</td>
-                                <td className="p-3 text-gray-700 font-semibold">
-                                  {c.expiry_date ? c.expiry_date.split('T')[0] : <span className="text-emerald-700">Never (Unlimited)</span>}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                    {/* Right Column: Sunset Automation Console */}
-                    <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl space-y-4 flex flex-col justify-between shadow-xs">
-                      <div className="space-y-3">
-                        <h2 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
-                          <Terminal size={14} className="text-blue-600" />
-                          <span>CASL Sunset Loop</span>
-                        </h2>
-                        <p className="text-xs text-gray-500 leading-relaxed">
-                          Enforces CASL rules: implied consent expires in 6 or 24 months. Automatically warns subjects near expiry and suppresses expired records.
-                        </p>
-
-                        <button 
-                          onClick={handleRunCaslSunset}
-                          disabled={isSunsetting}
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 text-xs rounded-lg shadow-sm transition-all flex items-center justify-center space-x-2 cursor-pointer"
-                        >
-                          <RefreshCw size={12} className={isSunsetting ? 'animate-spin' : ''} />
-                          <span>Run Sunset Automation</span>
-                        </button>
-                      </div>
-
-                      <div className="flex-1 mt-4 bg-gray-950 border border-gray-900 rounded-xl p-3.5 text-[10px] text-gray-300 h-40 overflow-y-auto space-y-1.5 select-none font-mono">
-                        {caslLogs.map((log, index) => (
-                          <div key={index} className={
-                            log.includes('[ERROR]') ? 'text-rose-400 font-semibold' : 
-                            log.includes('EXPIRED:') ? 'text-rose-300' : 
-                            log.includes('WARNING:') ? 'text-amber-400' : 
-                            'text-gray-400'
-                          }>
-                            {log}
+                  {onboardingSubMode === 'checklist' ? (
+                    <div className="space-y-6">
+                      {/* Progress Indicators */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl shadow-xs">
+                          <div className="flex justify-between text-xs font-semibold mb-2 text-gray-700">
+                            <span>Federal (PIPEDA/CASL) Compliance</span>
+                            <span className="text-blue-600 font-bold">
+                              {Math.round((onboardingTasks.filter(t => t.scope === 'Federal' && t.status === 'completed').length / (onboardingTasks.filter(t => t.scope === 'Federal').length || 1)) * 100)}%
+                            </span>
                           </div>
-                        ))}
+                          <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden border border-gray-200">
+                            <div 
+                              className="bg-blue-600 h-full transition-all duration-500" 
+                              style={{ width: `${(onboardingTasks.filter(t => t.scope === 'Federal' && t.status === 'completed').length / (onboardingTasks.filter(t => t.scope === 'Federal').length || 1)) * 100}%` }}
+                            />
+                          </div>
+                          <div className="text-[10px] text-gray-500 mt-2">
+                            {onboardingTasks.filter(t => t.scope === 'Federal' && t.status === 'completed').length} of {onboardingTasks.filter(t => t.scope === 'Federal').length} tasks completed
+                          </div>
+                        </div>
+
+                        <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl shadow-xs">
+                          <div className="flex justify-between text-xs font-semibold mb-2 text-gray-700">
+                            <span>Provincial (Law 25/PIPA/FIPPA) Compliance</span>
+                            <span className="text-blue-600 font-bold">
+                              {Math.round((onboardingTasks.filter(t => t.scope === 'Provincial' && t.status === 'completed').length / (onboardingTasks.filter(t => t.scope === 'Provincial').length || 1)) * 100)}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden border border-gray-200">
+                            <div 
+                              className="bg-blue-600 h-full transition-all duration-500" 
+                              style={{ width: `${(onboardingTasks.filter(t => t.scope === 'Provincial' && t.status === 'completed').length / (onboardingTasks.filter(t => t.scope === 'Provincial').length || 1)) * 100}%` }}
+                            />
+                          </div>
+                          <div className="text-[10px] text-gray-500 mt-2">
+                            {onboardingTasks.filter(t => t.scope === 'Provincial' && t.status === 'completed').length} of {onboardingTasks.filter(t => t.scope === 'Provincial').length} tasks completed
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Task Checklist Panel */}
+                      <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl space-y-4 shadow-xs">
+                        <h2 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                          <CheckSquare size={14} className="text-blue-600" />
+                          <span>Dynamic Compliance Checklist</span>
+                        </h2>
+
+                        <div className="border border-[#E5E7EB] rounded-xl overflow-hidden bg-white shadow-xs">
+                          <table className="w-full text-xs text-left border-collapse">
+                            <thead>
+                              <tr className="bg-gray-50 text-gray-500 border-b border-[#E5E7EB] font-semibold text-[11px] uppercase tracking-wider">
+                                <th className="p-3.5 w-12 text-center">Status</th>
+                                <th className="p-3.5 w-1/4">Task</th>
+                                <th className="p-3.5 w-28">Category</th>
+                                <th className="p-3.5 w-32">Scope & Region</th>
+                                <th className="p-3.5">Guidance & Action Notes</th>
+                                <th className="p-3.5 w-24 text-right">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[#E5E7EB]">
+                              {onboardingTasks.length === 0 ? (
+                                <tr>
+                                  <td colSpan="6" className="p-8 text-center text-gray-500 italic">
+                                    {isSystemOnline 
+                                      ? "No onboarding tasks loaded. Select a Canadian jurisdiction to view checklist." 
+                                      : "System Offline - Unable to load compliance checklist."}
+                                  </td>
+                                </tr>
+                              ) : (
+                                onboardingTasks.map(t => (
+                                  <tr key={t.id} className="hover:bg-gray-550/50 transition-all">
+                                    <td className="p-3.5 text-center">
+                                      <button 
+                                        onClick={() => handleToggleOnboardingTask(t.id)}
+                                        className={`p-1 rounded-md border transition-all cursor-pointer ${
+                                          t.status === 'completed' 
+                                            ? 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100' 
+                                            : 'bg-white border-[#E5E7EB] text-gray-400 hover:border-gray-300'
+                                        }`}
+                                      >
+                                        <Check size={12} />
+                                      </button>
+                                    </td>
+                                    <td className="p-3.5 font-semibold">
+                                      <span className={t.status === 'completed' ? 'line-through text-gray-400 font-normal' : 'text-[#111827]'}>
+                                        {t.task_name}
+                                      </span>
+                                    </td>
+                                    <td className="p-3.5">
+                                      <span className="px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-gray-650 text-[10px] uppercase font-bold">
+                                        {t.category}
+                                      </span>
+                                    </td>
+                                    <td className="p-3.5 space-y-0.5">
+                                      <div className={`text-[10px] font-bold ${t.scope === 'Federal' ? 'text-blue-600' : 'text-purple-650'}`}>
+                                        {t.scope.toUpperCase()}
+                                      </div>
+                                      <div className="text-[10px] text-gray-500">{t.jurisdiction}</div>
+                                    </td>
+                                    <td className="p-3.5">
+                                      {editingNotesTaskId === t.id ? (
+                                        <div className="flex space-x-2">
+                                          <input 
+                                            type="text" 
+                                            value={editingNotesText}
+                                            onChange={(e) => setEditingNotesText(e.target.value)}
+                                            className="flex-1 bg-white border border-[#E5E7EB] focus:border-blue-600 focus:ring-1 focus:ring-blue-500/20 p-1 rounded text-xs text-[#111827] font-mono"
+                                          />
+                                          <button 
+                                            onClick={() => handleUpdateTaskNotes(t.id, editingNotesText)}
+                                            className="bg-emerald-650 text-white px-3 py-1 rounded text-[10px] font-bold cursor-pointer shadow-xs"
+                                          >
+                                            Save
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <div className="text-gray-650 text-[11px] leading-relaxed">
+                                          {t.notes || <span className="italic text-gray-400">No guidelines provided.</span>}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="p-3.5 text-right">
+                                      <button 
+                                        onClick={() => {
+                                          setEditingNotesTaskId(t.id);
+                                          setEditingNotesText(t.notes || '');
+                                        }}
+                                        className="text-blue-600 hover:text-blue-700 font-semibold hover:underline text-xs cursor-pointer"
+                                      >
+                                        Edit Info
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* CASL Email Consent & Sunset Automation */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Left Column: CASL Registry */}
+                        <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl space-y-4 col-span-2 shadow-xs">
+                          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                            <Users size={14} className="text-blue-600" />
+                            <span>CASL Compliance Registry</span>
+                          </h2>
+
+                          <div className="border border-[#E5E7EB] rounded-xl overflow-hidden bg-white shadow-xs">
+                            <table className="w-full text-xs text-left border-collapse">
+                              <thead>
+                                <tr className="bg-gray-50 text-gray-500 border-b border-[#E5E7EB] font-semibold text-[11px] uppercase tracking-wider">
+                                  <th className="p-3">Data Subject</th>
+                                  <th className="p-3">Email</th>
+                                  <th className="p-3">Consent Type</th>
+                                  <th className="p-3">Obtained Source</th>
+                                  <th className="p-3">Expiry Date</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-[#E5E7EB]">
+                                {caslRegistry.map(c => (
+                                  <tr key={c.id} className="hover:bg-gray-550/50 transition-all">
+                                    <td className="p-3 text-[#111827] font-semibold">{c.name}</td>
+                                    <td className="p-3 text-gray-600">{c.email}</td>
+                                    <td className="p-3">
+                                      <span className={`px-2 py-0.5 rounded-full text-[9px] uppercase font-bold border ${
+                                        c.consent_status === 'Express' ? 'bg-emerald-50 border-emerald-250 text-emerald-800' :
+                                        c.consent_status === 'Implied' ? 'bg-amber-50 border-amber-250 text-amber-800' :
+                                        c.consent_status === 'Expired' ? 'bg-rose-50 border-rose-250 text-rose-800' :
+                                        'bg-gray-100 border-gray-200 text-gray-600'
+                                      }`}>
+                                        {c.consent_status}
+                                      </span>
+                                    </td>
+                                    <td className="p-3 text-gray-500">{c.consent_source}</td>
+                                    <td className="p-3 text-gray-700 font-semibold">
+                                      {c.expiry_date ? c.expiry_date.split('T')[0] : <span className="text-emerald-700">Never (Unlimited)</span>}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Right Column: Sunset Automation Console */}
+                        <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl space-y-4 flex flex-col justify-between shadow-xs">
+                          <div className="space-y-3">
+                            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                              <Terminal size={14} className="text-blue-600" />
+                              <span>CASL Sunset Loop</span>
+                            </h2>
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                              Enforces CASL rules: implied consent expires in 6 or 24 months. Automatically warns subjects near expiry and suppresses expired records.
+                            </p>
+
+                            <button 
+                              onClick={handleRunCaslSunset}
+                              disabled={isSunsetting}
+                              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 text-xs rounded-lg shadow-sm transition-all flex items-center justify-center space-x-2 cursor-pointer"
+                            >
+                              <RefreshCw size={12} className={isSunsetting ? 'animate-spin' : ''} />
+                              <span>Run Sunset Automation</span>
+                            </button>
+                          </div>
+
+                          <div className="flex-1 mt-4 bg-gray-950 border border-gray-900 rounded-xl p-3.5 text-[10px] text-gray-300 h-40 overflow-y-auto space-y-1.5 select-none font-mono">
+                            {caslLogs.map((log, index) => (
+                              <div key={index} className={
+                                log.includes('[ERROR]') ? 'text-rose-400 font-semibold' : 
+                                log.includes('EXPIRED:') ? 'text-rose-300' : 
+                                log.includes('WARNING:') ? 'text-amber-400' : 
+                                'text-gray-400'
+                              }>
+                                {log}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Overview completeness card */}
+                      <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="space-y-1">
+                          <h2 className="text-sm font-bold text-gray-800">Kids Help Phone Compliance Profile Ingestion</h2>
+                          <p className="text-xs text-gray-500 font-medium">Automated extraction from public website, internal policies, risk registers, and team data inventories.</p>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <div className="text-right">
+                            <div className="text-xs text-gray-500 font-semibold">Profile Completeness</div>
+                            <div className="text-xl font-extrabold text-blue-650">{onbProfile ? onbProfile.completeness_pct : 0}%</div>
+                          </div>
+                          <div className="w-24 bg-gray-155 h-2.5 rounded-full overflow-hidden border border-gray-200">
+                            <div className="bg-blue-600 h-full transition-all duration-500" style={{ width: `${onbProfile ? onbProfile.completeness_pct : 0}%` }} />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Left column: Ingestion parameters */}
+                        <div className="space-y-6 lg:col-span-1">
+                          <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-4 shadow-xs">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                              <Globe size={14} className="text-blue-600" />
+                              <span>Multi-Source Ingestion</span>
+                            </h3>
+
+                            <div className="space-y-3">
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-gray-600 uppercase">Authorized Site URL</label>
+                                <div className="flex gap-2">
+                                  <input
+                                    type="text"
+                                    value={onbWebsiteUrl}
+                                    onChange={(e) => setOnbWebsiteUrl(e.target.value)}
+                                    disabled={onbStatus !== 'idle' && onbStatus !== 'validated'}
+                                    className="flex-1 bg-white border border-[#E5E7EB] p-2 rounded-lg text-xs font-mono"
+                                  />
+                                  <button
+                                    onClick={handleStartOnboarding}
+                                    disabled={onbStatus === 'ingesting' || onbStatus === 'normalizing'}
+                                    className="bg-blue-600 text-white px-3 rounded-lg text-xs font-bold hover:bg-blue-700 disabled:opacity-50 transition-all cursor-pointer"
+                                  >
+                                    Ingest
+                                  </button>
+                                </div>
+                                <div className="text-[9px] text-gray-400">crawls privacy policies, cookie notices, and AI systems securely.</div>
+                              </div>
+
+                              <div className="space-y-1.5 pt-2">
+                                <label className="text-[10px] font-bold text-gray-600 uppercase">Corporate Compliance Corpus</label>
+                                <div className="border border-dashed border-gray-250 p-4 rounded-lg text-center bg-gray-50/50">
+                                  <FileUp size={18} className="mx-auto text-gray-450 mb-1" />
+                                  <div className="text-[10px] text-gray-650 font-bold">6 Target Documents Selected</div>
+                                  <div className="text-[9px] text-gray-400 mt-0.5">Information Management, Data Inventory XLS, Terms of Reference, etc.</div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-3 shadow-xs">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                              <Terminal size={14} className="text-blue-600" />
+                              <span>Onboarding Trace Logs</span>
+                            </h3>
+                            <div className="bg-gray-950 text-[#38BDF8] p-3.5 rounded-lg font-mono text-[10px] h-48 overflow-y-auto space-y-1 scrollbar-thin">
+                              {onbLogs.length === 0 ? (
+                                <div className="text-gray-500 italic">Awaiting ingestion trigger...</div>
+                              ) : (
+                                onbLogs.map((log, idx) => (
+                                  <div key={idx} className="leading-relaxed">{log}</div>
+                                ))
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right column: profile review & gap solver */}
+                        <div className="lg:col-span-2 space-y-6">
+                          {/* Gaps card stack */}
+                          {onbGaps.length > 0 && (
+                            <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl space-y-4 shadow-xs">
+                              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                                <AlertTriangle size={14} className="text-amber-500" />
+                                <span>Targeted Onboarding Gaps ({onbGaps.filter(g => g.status === 'pending').length} active)</span>
+                              </h3>
+
+                              <div className="space-y-3">
+                                {onbGaps.map(g => (
+                                  <div key={g.id} className={`p-4 rounded-xl border transition-all ${
+                                    g.status === 'pending' ? 'bg-amber-50/30 border-amber-200' : 'bg-gray-50 border-gray-200 opacity-60'
+                                  }`}>
+                                    <div className="flex justify-between items-start gap-4">
+                                      <div className="space-y-1">
+                                        <div className="flex items-center space-x-2">
+                                          <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border ${
+                                            g.priority === 'high' ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-amber-50 border-amber-200 text-amber-700'
+                                          }`}>
+                                            {g.priority} priority
+                                          </span>
+                                          <h4 className="text-xs font-bold text-gray-850">{g.title}</h4>
+                                        </div>
+                                        <p className="text-xs text-gray-650 leading-relaxed pt-1">{g.details}</p>
+                                      </div>
+
+                                      {g.status === 'pending' ? (
+                                        <div className="flex flex-col gap-1.5">
+                                          <div className="flex gap-1.5">
+                                            <input
+                                              type="text"
+                                              placeholder="Type answer..."
+                                              value={onbGapInputs[g.id] || ''}
+                                              onChange={(e) => setOnbGapInputs({...onbGapInputs, [g.id]: e.target.value})}
+                                              className="bg-white border border-gray-300 rounded px-2.5 py-1 text-xs focus:border-blue-600 focus:outline-none"
+                                            />
+                                            <button
+                                              onClick={() => handleResolveOnbGap(g.id, 'answer', onbGapInputs[g.id] || '')}
+                                              className="bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded hover:bg-blue-700 cursor-pointer"
+                                            >
+                                              Submit
+                                            </button>
+                                          </div>
+                                          <div className="flex justify-end gap-1.5">
+                                            <button
+                                              onClick={() => handleResolveOnbGap(g.id, 'accept', 'Accepted Default')}
+                                              className="text-gray-500 hover:text-gray-700 text-[10px] font-bold border border-gray-300 px-2.5 py-1 rounded bg-white hover:bg-gray-50 cursor-pointer"
+                                            >
+                                              Accept Default
+                                            </button>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <span className="text-[10px] text-emerald-600 font-bold uppercase flex items-center space-x-1">
+                                          <Check size={12} />
+                                          <span>Resolved</span>
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Profile review tree */}
+                          {onbProfile && (
+                            <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl space-y-4 shadow-xs">
+                              <div className="flex justify-between items-center border-b border-[#E5E7EB] pb-3">
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                                  <Database size={14} className="text-blue-600" />
+                                  <span>Normalized Organizational Profile</span>
+                                </h3>
+                                <div className="flex space-x-2">
+                                  {['policies', 'vendors', 'data_inventory'].map(sec => (
+                                    <button
+                                      key={sec}
+                                      onClick={() => setOnbSelectedProfileSection(sec)}
+                                      className={`px-3 py-1 rounded-md text-[10px] font-bold border transition-all cursor-pointer ${
+                                        onbSelectedProfileSection === sec
+                                          ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                          : 'bg-white border-gray-205 text-gray-600 hover:bg-gray-50'
+                                      }`}
+                                    >
+                                      {sec.replace('_', ' ').toUpperCase()}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="border border-gray-200 rounded-xl overflow-hidden bg-gray-50/30">
+                                {onbSelectedProfileSection === 'policies' && (
+                                  <table className="w-full text-xs text-left border-collapse bg-white">
+                                    <thead>
+                                      <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 font-semibold text-[10px] uppercase">
+                                        <th className="p-3">Policy Module</th>
+                                        <th className="p-3">Version</th>
+                                        <th className="p-3">Owner</th>
+                                        <th className="p-3">Status</th>
+                                        <th className="p-3">Review Period</th>
+                                        <th className="p-3">Source Citation</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-150">
+                                      {onbProfile.policies.map((p, idx) => (
+                                        <tr key={idx} className="hover:bg-gray-50/50">
+                                          <td className="p-3 font-semibold text-[#111827]">{p.name}</td>
+                                          <td className="p-3 font-mono text-[10px]">{p.version}</td>
+                                          <td className="p-3">{p.owner}</td>
+                                          <td className="p-3">
+                                            <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px]">
+                                              {p.status}
+                                            </span>
+                                          </td>
+                                          <td className="p-3">{p.review}</td>
+                                          <td className="p-3 text-gray-450 italic text-[10px]">{p.citation}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                )}
+
+                                {onbSelectedProfileSection === 'vendors' && (
+                                  <table className="w-full text-xs text-left border-collapse bg-white">
+                                    <thead>
+                                      <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 font-semibold text-[10px] uppercase">
+                                        <th className="p-3">Vendor / Integration</th>
+                                        <th className="p-3">Service Role</th>
+                                        <th className="p-3">Data Processed</th>
+                                        <th className="p-3">Storage Provider</th>
+                                        <th className="p-3">Retention Policy</th>
+                                        <th className="p-3">DPA Status</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-150">
+                                      {onbProfile.vendors.map((v, idx) => (
+                                        <tr key={idx} className="hover:bg-gray-50/50">
+                                          <td className="p-3 font-semibold text-[#111827]">{v.name}</td>
+                                          <td className="p-3">{v.service}</td>
+                                          <td className="p-3">{v.data_types}</td>
+                                          <td className="p-3 font-mono text-[11px]">{v.storage}</td>
+                                          <td className="p-3">{v.retention}</td>
+                                          <td className="p-3">
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] ${
+                                              v.dpa_status.includes('Annex') || v.dpa_status.includes('Validated')
+                                                ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
+                                                : 'bg-amber-50 border border-amber-200 text-amber-700'
+                                            }`}>
+                                              {v.dpa_status}
+                                            </span>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                )}
+
+                                {onbSelectedProfileSection === 'data_inventory' && (
+                                  <table className="w-full text-xs text-left border-collapse bg-white">
+                                    <thead>
+                                      <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 font-semibold text-[10px] uppercase">
+                                        <th className="p-3">Internal Team</th>
+                                        <th className="p-3">Data Asset</th>
+                                        <th className="p-3">Accountable Owner</th>
+                                        <th className="p-3">Storage Console</th>
+                                        <th className="p-3">Retention Claim</th>
+                                        <th className="p-3">Disposal Pipeline</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-150">
+                                      {onbProfile.data_inventory.map((d, idx) => (
+                                        <tr key={idx} className="hover:bg-gray-550/50">
+                                          <td className="p-3 font-semibold text-[#111827]">{d.team}</td>
+                                          <td className="p-3 font-semibold">{d.asset}</td>
+                                          <td className="p-3">{d.owner}</td>
+                                          <td className="p-3 font-mono text-[11px]">{d.storage}</td>
+                                          <td className="p-3">{d.retention}</td>
+                                          <td className="p-3">{d.disposal}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                )}
+                              </div>
+
+                              {onbStatus === 'gap_review' && onbGaps.filter(g => g.status === 'pending').length === 0 && (
+                                <div className="flex justify-end pt-3">
+                                  <button
+                                    onClick={handleFinalizeOnbProfile}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-lg cursor-pointer shadow-xs transition-all"
+                                  >
+                                    Commit Validated Baseline Profile
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
