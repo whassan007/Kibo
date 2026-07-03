@@ -256,6 +256,37 @@ const App = () => {
     }
   };
 
+  const fetchAgenticData = async () => {
+    try {
+      const agentsRes = await kiboFetch(`${API_BASE}/api/agents/sensing`);
+      if (agentsRes.ok) {
+        const rawAgents = await agentsRes.json();
+        setAgentsList(prev => prev.map(pa => {
+          const match = rawAgents.find(ra => ra.agent_id === pa.id);
+          return match ? { ...pa, status: match.status === 'active' ? (pa.status === 'Running' || pa.status === 'Active' ? pa.status : 'Listening') : 'Idle' } : pa;
+        }));
+      }
+
+      const updatesRes = await kiboFetch(`${API_BASE}/api/knowledge/updates`);
+      if (updatesRes.ok) {
+        const updates = await updatesRes.json();
+        const pendingUpdates = updates.filter(u => u.status === 'pending_review');
+        const queueItems = pendingUpdates.map(u => ({
+          id: u.update_id,
+          title: `Approve Knowledge Update: ${u.entity}`,
+          details: `${u.impact_summary} (New Value: "${u.new_value}". Confidence: ${u.confidence}%. Source: ${u.source})`,
+          agent: u.agent,
+          priority: u.confidence < 90 ? "high" : "medium",
+          status: "pending"
+        }));
+        setHitlQueue(queueItems);
+      }
+    } catch (e) {
+      console.error(e);
+      setIsSystemOnline(false);
+    }
+  };
+
   const fetchExpertData = async () => {
     try {
       const assessRes = await kiboFetch(`${API_BASE}/api/expert/assessments`);
@@ -270,8 +301,9 @@ const App = () => {
       const complianceRes = await kiboFetch(`${API_BASE}/api/expert/training/compliance`);
       if (complianceRes.ok) setTrainingCompliance(await complianceRes.json());
 
-      // Fetch Onboarding data
+      // Fetch Onboarding and Agentic data
       fetchOnboardingData();
+      fetchAgenticData();
     } catch (e) {
       console.error(e);
       setIsSystemOnline(false);
@@ -530,7 +562,7 @@ const App = () => {
   };
 
   // --- Agentic CPO Console Event Simulator ---
-  const handleTriggerAgenticEvent = (eventType) => {
+  const handleTriggerAgenticEvent = async (eventType) => {
     if (isSimulatingLoop) return;
     setIsSimulatingLoop(true);
     setAgentLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ⚡ Event Triggered: ${eventType}`]);
@@ -539,152 +571,60 @@ const App = () => {
       setAgentLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
     };
 
-    if (eventType === 'git_push') {
-      setTimeout(() => {
-        addLog("🔍 [Code Auditing Agent] Intercepted Git commit hash e7654ce on branch main.");
-        setAgentsList(prev => prev.map(a => a.id === 'code' ? { ...a, status: "Active", lastAction: "Scanning git commit e7654ce..." } : a));
-      }, 600);
-
-      setTimeout(() => {
-        addLog("⚠️ [Code Auditing Agent] Flagged unencrypted PII exposure (phone numbers) in client_registration.py.");
-        setAgentsList(prev => prev.map(a => a.id === 'code' ? { ...a, status: "Active", lastAction: "Flagged unencrypted PII in client_registration.py" } : a));
-      }, 1400);
-
-      setTimeout(() => {
-        addLog("🧠 [PIA Agent] Initiating risk analysis for code change path: /api/registration.");
-        setAgentsList(prev => prev.map(a => a.id === 'pia' ? { ...a, status: "Active", lastAction: "Assessing risk score for /api/registration..." } : a));
-      }, 2200);
-
-      setTimeout(() => {
-        addLog("✓ [PIA Agent] Calculated Risk Score: 78 (High). PHIPA trigger detected.");
-        setAgentsList(prev => prev.map(a => a.id === 'pia' ? { ...a, status: "Idle", lastAction: "Generated risk score 78 for registration API" } : a));
-      }, 3000);
-
-      setTimeout(() => {
-        addLog("📋 [Orchestrator] Enqueuing correction task to DPO Human-in-the-Loop Action Queue.");
-        setHitlQueue(prev => [
-          {
-            id: `HITL-${Math.floor(Math.random() * 9000) + 1000}`,
-            title: "Remediate Unencrypted PII in Registration API (commit e7654ce)",
-            details: "Code Auditing Agent found unencrypted phone numbers on registration endpoint. PIA Agent flagged this as High Risk under Ontario FIPPA/PHIPA. Requires code fix approval.",
-            agent: "Code Auditing Agent",
-            priority: "high",
-            status: "pending"
-          },
-          ...prev
-        ]);
-        setAgentsList(prev => prev.map(a => a.id === 'code' ? { ...a, status: "Monitoring", lastAction: "Flagged commit e7654ce; pending human review." } : a));
+    let agentIdMap = {
+      'git_push': 'regulatory',
+      'dsar_filed': 'internal',
+      'vendor_dpa': 'vendor',
+      'siem_anomaly': 'threat'
+    };
+    
+    const targetAgentId = agentIdMap[eventType] || 'regulatory';
+    
+    try {
+      const res = await kiboFetch(`${API_BASE}/api/agents/sensing/${targetAgentId}/run`, {
+        method: 'POST'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        let delay = 0;
+        data.logs.forEach(logLine => {
+          setTimeout(() => {
+            addLog(logLine);
+          }, delay);
+          delay += 800;
+        });
+        
+        setTimeout(async () => {
+          await fetchAgenticData();
+          setIsSimulatingLoop(false);
+        }, delay);
+      } else {
+        addLog(`[ERROR] Failed to execute sensing agent: ${res.status}`);
         setIsSimulatingLoop(false);
-      }, 3800);
-
-    } else if (eventType === 'dsar_filed') {
-      setTimeout(() => {
-        addLog("📥 [DSAR Fulfillment Engine] Intake received for data deletion (Requester: Jane Doe).");
-        setAgentsList(prev => prev.map(a => a.id === 'dsar' ? { ...a, status: "Running", lastAction: "Processing deletion request for Jane Doe..." } : a));
-      }, 600);
-
-      setTimeout(() => {
-        addLog("🔒 [Regulatory Watchdog] Validating jurisdiction rules for Quebec - Law 25 (30-day clock).");
-        setAgentsList(prev => prev.map(a => a.id === 'watchdog' ? { ...a, status: "Active", lastAction: "Validating Law 25 rules for Jane Doe" } : a));
-      }, 1400);
-
-      setTimeout(() => {
-        addLog("🔍 [DSAR Fulfillment Engine] Querying core databases (Salesforce CRM, Stripe Billing).");
-        setAgentsList(prev => prev.map(a => a.id === 'dsar' ? { ...a, status: "Running", lastAction: "Querying Salesforce & Stripe databases..." } : a));
-      }, 2200);
-
-      setTimeout(() => {
-        addLog("✓ [DSAR Fulfillment Engine] Data package generated. Redaction pipeline complete.");
-      }, 3000);
-
-      setTimeout(() => {
-        addLog("📋 [Orchestrator] Requesting DPO sign-off on Jane Doe deletion package before executing database wipe.");
-        setHitlQueue(prev => [
-          {
-            id: `HITL-${Math.floor(Math.random() * 9000) + 1000}`,
-            title: "Sign-off Deletion Package (Jane Doe - Law 25)",
-            details: "DSAR Fulfillment Engine compiled data from Salesforce and Stripe. Jane Doe requested erasure. Human DPO review required before sending API delete hooks.",
-            agent: "DSAR Fulfillment Engine",
-            priority: "medium",
-            status: "pending"
-          },
-          ...prev
-        ]);
-        setAgentsList(prev => prev.map(a => a.id === 'dsar' ? { ...a, status: "Listening", lastAction: "Awaiting DPO sign-off for Jane Doe deletion." } : a));
-        setAgentsList(prev => prev.map(a => a.id === 'watchdog' ? { ...a, status: "Active", lastAction: "Rules verified for Jane Doe deletion." } : a));
-        setIsSimulatingLoop(false);
-      }, 3800);
-
-    } else if (eventType === 'vendor_dpa') {
-      setTimeout(() => {
-        addLog("📄 [Vendor Compliance Agent] Scanned uploaded contract: 'HubSpot DPA Addendum.pdf'.");
-        setAgentsList(prev => prev.map(a => a.id === 'vendor' ? { ...a, status: "Active", lastAction: "Analyzing HubSpot DPA Addendum.pdf..." } : a));
-      }, 600);
-
-      setTimeout(() => {
-        addLog("⚠️ [Vendor Compliance Agent] Warning: Clause 4.2 delegates data storage to US-East (AWS).");
-      }, 1400);
-
-      setTimeout(() => {
-        addLog("🔒 [Regulatory Watchdog] Cross-border transfer detected. GDPR / Law 25 Transfer Impact Assessment (TIA) required.");
-        setAgentsList(prev => prev.map(a => a.id === 'watchdog' ? { ...a, status: "Active", lastAction: "Cross-border rule triggered for HubSpot DPA" } : a));
-      }, 2200);
-
-      setTimeout(() => {
-        addLog("📋 [Orchestrator] Enqueuing TIA Review to DPO human task board.");
-        setHitlQueue(prev => [
-          {
-            id: `HITL-${Math.floor(Math.random() * 9000) + 1000}`,
-            title: "Conduct HubSpot Transfer Impact Assessment (TIA)",
-            details: "Vendor Compliance Agent flagged HubSpot DPA cross-border data transfer. Requires standard TIA questionnaire completion and SCC execution.",
-            agent: "Vendor Compliance Agent",
-            priority: "medium",
-            status: "pending"
-          },
-          ...prev
-        ]);
-        setAgentsList(prev => prev.map(a => a.id === 'vendor' ? { ...a, status: "Idle", lastAction: "HubSpot contract analyzed; TIA flagged." } : a));
-        setIsSimulatingLoop(false);
-      }, 3000);
-
-    } else if (eventType === 'siem_anomaly') {
-      setTimeout(() => {
-        addLog("🚨 [Incident & Breach Agent] Alert: Anomalous volume of download requests from employee-default session.");
-        setAgentsList(prev => prev.map(a => a.id === 'incident' ? { ...a, status: "Active", lastAction: "Investigating anomalous download on employee-default..." } : a));
-      }, 600);
-
-      setTimeout(() => {
-        addLog("🔒 [Orchestrator] Containment: Temporarily disabled API access tokens for employee-default.");
-        setAgentsList(prev => prev.map(a => a.id === 'incident' ? { ...a, status: "Active", lastAction: "Containment: Disabled session tokens for employee-default" } : a));
-      }, 1400);
-
-      setTimeout(() => {
-        addLog("🛡️ [Regulatory Watchdog] Checking reporting obligations. PIPEDA Real Risk of Significant Harm (RROSH) evaluation triggered.");
-        setAgentsList(prev => prev.map(a => a.id === 'watchdog' ? { ...a, status: "Active", lastAction: "Evaluating PIPEDA RROSH breach threshold" } : a));
-      }, 2200);
-
-      setTimeout(() => {
-        addLog("📋 [Orchestrator] Added Breach Triage checklist and Incident Log to DPO review board.");
-        setHitlQueue(prev => [
-          {
-            id: `HITL-${Math.floor(Math.random() * 9000) + 1000}`,
-            title: "Evaluate Breach RROSH Threshold (Incident INC-9021)",
-            details: "Incident & Breach Agent auto-disabled employee session after 500+ records download. Assess if OPC notification is required under PIPEDA RROSH.",
-            agent: "Incident & Breach Agent",
-            priority: "high",
-            status: "pending"
-          },
-          ...prev
-        ]);
-        setAgentsList(prev => prev.map(a => a.id === 'incident' ? { ...a, status: "Listening", lastAction: "Session contained; incident logs enqueued." } : a));
-        setIsSimulatingLoop(false);
-      }, 3000);
+      }
+    } catch (e) {
+      addLog(`[ERROR] Connection error: ${e.message}`);
+      setIsSimulatingLoop(false);
     }
   };
 
-  const handleResolveHitlDecision = (hitlId, action) => {
-    setHitlQueue(prev => prev.map(item => item.id === hitlId ? { ...item, status: action } : item));
-    setAgentLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ✅ DPO completed decision ${hitlId}: ${action.toUpperCase()}`]);
+  const handleResolveHitlDecision = async (hitlId, action) => {
+    try {
+      const res = await kiboFetch(`${API_BASE}/api/knowledge/updates/${hitlId}/decision`, {
+        method: 'POST',
+        body: JSON.stringify({
+          decision: action === 'approved' ? 'accept' : 'reject',
+          notes: `Decision resolved by DPO as ${action}`
+        })
+      });
+      if (res.ok) {
+        setHitlQueue(prev => prev.map(item => item.id === hitlId ? { ...item, status: action } : item));
+        setAgentLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ✅ DPO completed decision ${hitlId}: ${action.toUpperCase()}`]);
+        await fetchAgenticData();
+      }
+    } catch (e) {
+      console.error("Error resolving hitl decision:", e);
+    }
   };
 
   // --- Remind/Assign Training (Expert Admin) ---

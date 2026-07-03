@@ -1002,6 +1002,74 @@ def seed_mock_data():
     cursor.execute("CREATE TABLE IF NOT EXISTS simulated_inbox (email_id TEXT PRIMARY KEY, sender TEXT NOT NULL, subject TEXT NOT NULL, body TEXT NOT NULL, category TEXT NOT NULL, status TEXT DEFAULT 'unread', converted_to_transaction TEXT)")
     cursor.execute("CREATE TABLE IF NOT EXISTS psr_recommendations (recommendation_id TEXT PRIMARY KEY, risk_id TEXT NOT NULL, member TEXT NOT NULL, vote TEXT NOT NULL, recommendation TEXT NOT NULL, timestamp TEXT NOT NULL)")
 
+    # Agentic CPO Intelligence Architecture Tables
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS knowledge_updates (
+            update_id TEXT PRIMARY KEY,
+            domain TEXT NOT NULL,
+            agent TEXT NOT NULL,
+            change_type TEXT NOT NULL,
+            entity TEXT NOT NULL,
+            old_value TEXT,
+            new_value TEXT NOT NULL,
+            confidence INTEGER NOT NULL,
+            source TEXT NOT NULL,
+            impact_summary TEXT,
+            affected_entities TEXT,
+            status TEXT DEFAULT 'pending_review',
+            detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS regulatory_ontology (
+            obligation_id TEXT PRIMARY KEY,
+            jurisdiction TEXT NOT NULL,
+            statute TEXT NOT NULL,
+            obligation_name TEXT NOT NULL,
+            applicability_trigger TEXT NOT NULL,
+            deadline_days INTEGER NOT NULL,
+            regulator TEXT NOT NULL,
+            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS vendor_graph (
+            vendor_id TEXT PRIMARY KEY,
+            vendor_name TEXT NOT NULL,
+            service TEXT NOT NULL,
+            data_types TEXT NOT NULL,
+            dpa_status TEXT NOT NULL,
+            soc2_status TEXT NOT NULL,
+            sub_processors TEXT,
+            cross_border_vectors TEXT,
+            risk_rating TEXT NOT NULL,
+            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # Seed regulatory ontology
+    cursor.execute("SELECT count(*) FROM regulatory_ontology")
+    if cursor.fetchone()[0] == 0:
+        obligations = [
+            ("ob-1", "ontario", "FIPPA", "Freedom of Information Access", "Access request filed by individual", 30, "Information and Privacy Commissioner of Ontario (IPC)"),
+            ("ob-2", "quebec", "Law 25", "Mandatory Privacy Impact Assessment", "Deploying new high-risk IT system", 30, "Commission d'accès à l'information (CAI)"),
+            ("ob-3", "canada", "PIPEDA", "Real Risk of Significant Harm Triage", "Data breach detected", 0, "Office of the Privacy Commissioner of Canada (OPC)"),
+            ("ob-4", "us", "CPRA", "Consumer Deletion Request", "Consumer submits deletion request", 45, "California Privacy Protection Agency (CPPA)"),
+            ("ob-5", "eu", "GDPR", "72-Hour Breach Notification", "Confidentiality incident detected", 3, "Supervisory Authority (DPA)")
+        ]
+        cursor.executemany("INSERT INTO regulatory_ontology VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)", obligations)
+
+    # Seed vendor graph
+    cursor.execute("SELECT count(*) FROM vendor_graph")
+    if cursor.fetchone()[0] == 0:
+        vendors = [
+            ("v-1", "Cohere", "AI Model Hosting", "User chat logs, prompt data", "No DPA executed", "SOC 2 Type II active", "None", "None", "High"),
+            ("v-2", "Twilio", "SMS & Verification", "Phone numbers, timestamps", "DPA executed", "SOC 2 Type II active", "AWS, GCP", "Canada to US transfer", "Medium"),
+            ("v-3", "AWS", "Cloud Infrastructure", "Application databases, storage", "DPA executed", "SOC 2 Type II active", "AWS entities", "US-East storage", "Low"),
+            ("v-4", "Salesforce", "Customer Relation", "Client profiles, clinical notes", "DPA executed", "SOC 2 Type II active", "Salesforce entities", "US-East storage", "Medium")
+        ]
+        cursor.executemany("INSERT INTO vendor_graph VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)", vendors)
+
     # Seed user_settings with default active jurisdiction 'ontario'
     cursor.execute("SELECT count(*) FROM user_settings WHERE key='active_jurisdiction'")
     if cursor.fetchone()[0] == 0:
@@ -4339,6 +4407,234 @@ def trigger_verdicts_collector(scope: str = Depends(require_scopes(["expert", "e
     """Trigger the verdicts collector manually."""
     canadian_verdicts_agent.collect_new_verdicts()
     return {"status": "success", "message": "Verdicts collector triggered successfully."}
+
+
+from pydantic import BaseModel
+from typing import Any, List, Optional, Literal
+
+class KnowledgeDecisionPayload(BaseModel):
+    decision: Literal["accept", "reject"]
+    notes: Optional[str] = None
+
+# --- SENSING AGENTS ENDPOINTS ---
+
+@app.get("/api/agents/sensing")
+def get_sensing_agents(scope: str = Depends(require_scopes(["expert"]))):
+    # Retrieve pending updates count
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT agent, COUNT(*) FROM knowledge_updates WHERE status = 'pending_review' GROUP BY agent")
+    pending_counts = dict(cursor.fetchall())
+    conn_db.close()
+
+    agents = [
+        {"agent_id": "regulatory", "name": "Regulatory Sensing Agent", "domain": "regulatory", "schedule": "0 0 * * *", "status": "active", "updates_pending": pending_counts.get("Regulatory Sensing Agent", 0), "last_run": "2026-07-02T12:00:00Z"},
+        {"agent_id": "vendor", "name": "Vendor Sensing Agent", "domain": "vendor", "schedule": "0 12 * * *", "status": "active", "updates_pending": pending_counts.get("Vendor Sensing Agent", 0), "last_run": "2026-07-02T18:30:00Z"},
+        {"agent_id": "internal", "name": "Internal Systems Sensing Agent", "domain": "internal", "schedule": "*/30 * * * *", "status": "active", "updates_pending": pending_counts.get("Internal Systems Sensing Agent", 0), "last_run": "2026-07-02T23:30:00Z"},
+        {"agent_id": "threat", "name": "Threat Sensing Agent", "domain": "threat", "schedule": "0 */4 * * *", "status": "active", "updates_pending": pending_counts.get("Threat Sensing Agent", 0), "last_run": "2026-07-02T20:00:00Z"},
+        {"agent_id": "web", "name": "Web & Consent Sensing Agent", "domain": "web", "schedule": "0 2 * * *", "status": "active", "updates_pending": pending_counts.get("Web & Consent Sensing Agent", 0), "last_run": "2026-07-02T22:00:00Z"}
+    ]
+    return agents
+
+@app.post("/api/agents/sensing/{agent_id}/run")
+def run_sensing_agent(agent_id: str, scope: str = Depends(require_scopes(["expert"]))):
+    import uuid
+    from datetime import datetime
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    
+    update_id = f"KUP-{uuid.uuid4().hex[:6].upper()}"
+    logs = []
+    
+    if agent_id == "regulatory":
+        logs = [
+            "[Regulatory Agent] Crawling CAI Quebec and IPC Ontario feeds...",
+            "[Regulatory Agent] Found new CAI ruling: profiling technologies require mandatory pre-deployment PIA.",
+            f"[Regulatory Agent] Synthesized new obligation for Quebec jurisdiction. Confidence: 92%."
+        ]
+        cursor.execute("""
+            INSERT INTO knowledge_updates (update_id, domain, agent, change_type, entity, old_value, new_value, confidence, source, impact_summary, affected_entities, status)
+            VALUES (?, 'regulatory', 'Regulatory Sensing Agent', 'new', 'Mandatory PIA for Profiling', 'None', 'Quebec Law 25 Section 12.3: Organisation must conduct PIA before deploying profiling or tracking technologies.', 92, 'CAI Rulings Release July 2026', 'All active PIAs using tracking tech must be re-evaluated.', '["pia"]', 'pending_review')
+        """, (update_id,))
+    elif agent_id == "vendor":
+        logs = [
+            "[Vendor Agent] Scanning subprocessor list for active integrations...",
+            "[Vendor Agent] Detected updated HubSpot DPA: Clause 4.2 delegates client telemetry data storage to US AWS servers.",
+            f"[Vendor Agent] Warning: cross-border transfer obligation triggered. Confidence: 88%."
+        ]
+        cursor.execute("""
+            INSERT INTO knowledge_updates (update_id, domain, agent, change_type, entity, old_value, new_value, confidence, source, impact_summary, affected_entities, status)
+            VALUES (?, 'vendor', 'Vendor Sensing Agent', 'amended', 'HubSpot Data Processing Agreement', 'HubSpot data local to Canada', 'HubSpot DPA Clause 4.2: Data stored in AWS US-East servers. Cross-border transfer triggered.', 88, 'HubSpot DPA Addendum July 2026', 'Requires execution of Transfer Impact Assessment (TIA).', '["v-2", "risk"]', 'pending_review')
+        """, (update_id,))
+    elif agent_id == "internal":
+        logs = [
+            "[Internal Agent] Crawling system schema maps and asset registries...",
+            "[Internal Agent] Found new database table 'minor_intake_forms' containing PII (birthdays, health numbers).",
+            f"[Internal Agent] Data catalog updated. Confidence: 95%."
+        ]
+        cursor.execute("""
+            INSERT INTO knowledge_updates (update_id, domain, agent, change_type, entity, old_value, new_value, confidence, source, impact_summary, affected_entities, status)
+            VALUES (?, 'inventory', 'Internal Systems Sensing Agent', 'new', 'minor_intake_forms database table', 'None', 'System Table minor_intake_forms: Stores name, dob, health_card_number.', 95, 'KIBO Database Schema Monitor', 'Requires encryption compliance audit on intake forms.', '["inventory"]', 'pending_review')
+        """, (update_id,))
+    elif agent_id == "threat":
+        logs = [
+            "[Threat Agent] Fetching global threat advisory databases...",
+            "[Threat Agent] Flagged security bulletin CVE-2026-9021: Local privilege escalation in uvicorn/fastapi configurations.",
+            f"[Threat Agent] Risk weighting increased. Confidence: 85%."
+        ]
+        cursor.execute("""
+            INSERT INTO knowledge_updates (update_id, domain, agent, change_type, entity, old_value, new_value, confidence, source, impact_summary, affected_entities, status)
+            VALUES (?, 'risk', 'Threat Sensing Agent', 'amended', 'FastAPI/Uvicorn CVE-2026-9021', 'Low Threat Level', 'CVE-2026-9021: Uvicorn service exposure vulnerability. Risk level raised to Medium.', 85, 'NVD Threat Registry', 'Requires system update and access logging audit.', '["risk"]', 'pending_review')
+        """, (update_id,))
+    elif agent_id == "web":
+        logs = [
+            "[Web Agent] Headless browser scanning of public web surface kibo.is...",
+            "[Web Agent] Found new unauthorized tracking cookie: '_ga_client_metric' (Google Analytics proxy).",
+            f"[Web Agent] Consent banner geo compliance check triggered. Confidence: 90%."
+        ]
+        cursor.execute("""
+            INSERT INTO knowledge_updates (update_id, domain, agent, change_type, entity, old_value, new_value, confidence, source, impact_summary, affected_entities, status)
+            VALUES (?, 'web', 'Web & Consent Sensing Agent', 'new', '_ga_client_metric tracker', 'None', 'Unregistered third-party tracking cookie detected in visitor sessions.', 90, 'Headless Scan crawler-01', 'Violates Law 25 default-off consent banner rules.', '["policy"]', 'pending_review')
+        """, (update_id,))
+    else:
+        conn_db.close()
+        return {"status": "error", "message": "Unknown agent"}
+
+    conn_db.commit()
+    conn_db.close()
+    return {"status": "success", "update_id": update_id, "logs": logs}
+
+# --- KNOWLEDGE ENDPOINTS ---
+
+@app.get("/api/knowledge/updates")
+def get_knowledge_updates(scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("""
+        SELECT update_id, domain, agent, change_type, entity, old_value, new_value, confidence, source, impact_summary, affected_entities, status, detected_at
+        FROM knowledge_updates
+        ORDER BY detected_at DESC
+    """)
+    rows = cursor.fetchall()
+    conn_db.close()
+    
+    updates = []
+    for r in rows:
+        updates.append({
+            "update_id": r[0],
+            "domain": r[1],
+            "agent": r[2],
+            "change_type": r[3],
+            "entity": r[4],
+            "old_value": r[5],
+            "new_value": r[6],
+            "confidence": r[7],
+            "source": r[8],
+            "impact_summary": r[9],
+            "affected_entities": json.loads(r[10]) if r[10] else [],
+            "status": r[11],
+            "detected_at": r[12]
+        })
+    return updates
+
+@app.post("/api/knowledge/updates/{update_id}/decision")
+def post_knowledge_decision(update_id: str, payload: KnowledgeDecisionPayload, scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    
+    cursor.execute("SELECT domain, change_type, entity, new_value, affected_entities FROM knowledge_updates WHERE update_id = ?", (update_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn_db.close()
+        raise HTTPException(status_code=404, detail="Update not found")
+        
+    domain, change_type, entity, new_value, affected_entities_str = row
+    status_val = "accepted" if payload.decision == "accept" else "rejected"
+    
+    cursor.execute("UPDATE knowledge_updates SET status = ? WHERE update_id = ?", (status_val, update_id))
+    
+    if payload.decision == "accept":
+        if domain == "regulatory":
+            cursor.execute("INSERT OR REPLACE INTO regulatory_ontology (obligation_id, jurisdiction, statute, obligation_name, applicability_trigger, deadline_days, regulator) VALUES (?, 'quebec', 'Law 25', ?, 'Deploying profiling technologies', 30, 'Commission d''accès à l''information (CAI)')", (update_id, entity))
+        elif domain == "vendor":
+            cursor.execute("INSERT OR REPLACE INTO vendor_graph (vendor_id, vendor_name, service, data_types, dpa_status, soc2_status, risk_rating) VALUES (?, 'HubSpot', 'Marketing Analytics', 'Client telemetry, email clicks', 'Amended (US AWS)', 'SOC 2 active', 'Medium')", (update_id,))
+        elif domain == "inventory":
+            cursor.execute("INSERT OR REPLACE INTO data_inventory (inventory_id, system_name, data_types, sensitivity, purpose, retention_rules, sharing_recipient, jurisdiction) VALUES (?, 'minor_intake_forms', 'dob, health_card_number', 'high', 'Patient check-in', 'Delete on session exit', 'None', 'Ontario')", (update_id,))
+            
+    conn_db.commit()
+    conn_db.close()
+    return {"status": "success", "update_id": update_id, "resolution": status_val}
+
+@app.get("/api/knowledge/{domain}")
+def get_knowledge_domain(domain: str, scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    data = []
+    
+    if domain == "regulatory":
+        cursor.execute("SELECT obligation_id, jurisdiction, statute, obligation_name, applicability_trigger, deadline_days, regulator, last_updated FROM regulatory_ontology")
+        for r in cursor.fetchall():
+            data.append({
+                "obligation_id": r[0],
+                "jurisdiction": r[1],
+                "statute": r[2],
+                "obligation_name": r[3],
+                "applicability_trigger": r[4],
+                "deadline_days": r[5],
+                "regulator": r[6],
+                "last_updated": r[7]
+            })
+    elif domain == "vendor":
+        cursor.execute("SELECT vendor_id, vendor_name, service, data_types, dpa_status, soc2_status, sub_processors, cross_border_vectors, risk_rating, last_updated FROM vendor_graph")
+        for r in cursor.fetchall():
+            data.append({
+                "vendor_id": r[0],
+                "vendor_name": r[1],
+                "service": r[2],
+                "data_types": r[3],
+                "dpa_status": r[4],
+                "soc2_status": r[5],
+                "sub_processors": r[6],
+                "cross_border_vectors": r[7],
+                "risk_rating": r[8],
+                "last_updated": r[9]
+            })
+    elif domain == "inventory":
+        cursor.execute("SELECT inventory_id, system_name, data_types, sensitivity, purpose, retention_rules, sharing_recipient, jurisdiction, last_updated FROM data_inventory")
+        for r in cursor.fetchall():
+            data.append({
+                "inventory_id": r[0],
+                "system_name": r[1],
+                "data_types": r[2],
+                "sensitivity": r[3],
+                "purpose": r[4],
+                "retention_rules": r[5],
+                "sharing_recipient": r[6],
+                "jurisdiction": r[7],
+                "last_updated": r[8]
+            })
+            
+    conn_db.close()
+    return data
+
+@app.get("/api/evaluations/flagged")
+def get_flagged_evaluations(scope: str = Depends(require_scopes(["expert"]))):
+    conn_db = sqlite3.connect(DB_FILE)
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT update_id, entity, domain, impact_summary, detected_at FROM knowledge_updates WHERE status = 'accepted'")
+    rows = cursor.fetchall()
+    conn_db.close()
+    
+    flagged = []
+    for r in rows:
+        flagged.append({
+            "id": r[0],
+            "evaluation_type": "PIA Re-Assessment" if r[2] == 'regulatory' else "Risk Review",
+            "name": f"Re-verify {r[1]} conformity",
+            "reason": r[3],
+            "flagged_at": r[4]
+        })
+    return flagged
 
 
 
