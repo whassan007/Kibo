@@ -1407,52 +1407,182 @@ const App = () => {
               {activeTab === 'dashboard' && (
                 <div className="space-y-6">
                   
-                  {/* Localized Assessments List */}
-                  <div className="space-y-3.5">
-                    <h2 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Active {jurConfig.primary_statute} Compliance Assessments</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {expertAssessments.map(a => (
-                        <div key={a.assessment_id} className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-2.5 hover:border-gray-300 transition-all shadow-xs">
-                          <div className="flex justify-between items-start">
-                            <span className="font-semibold text-[#111827] text-xs">{a.title}</span>
-                            <span className="text-[9px] bg-blue-50 border border-blue-200 text-blue-650 px-2 py-0.5 rounded-full font-bold">{a.type}</span>
-                          </div>
-                          <div className="text-[10px] text-gray-550">Prepared by: {a.prepared_by} | Level: {a.level}</div>
-                          <div className="flex justify-between items-center text-[10px] pt-2 border-t border-[#E5E7EB]">
-                            <span className="text-emerald-700 font-semibold">✓ Status: {a.status}</span>
-                            <span className="text-gray-500">Statute: {jurConfig.primary_statute}</span>
-                          </div>
-                        </div>
-                      ))}
+                  {/* Summary / Indicators Bar */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    
+                    <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl shadow-xs space-y-1.5">
+                      <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Statutory SLA Clock</div>
+                      <div className="flex items-center space-x-2">
+                        <Clock size={16} className="text-blue-600 animate-pulse" />
+                        <span className="text-lg font-extrabold text-[#111827]">{jurConfig.access_deadline_days} Days</span>
+                      </div>
+                      <div className="text-[9px] text-gray-400">Response deadline for active {jurConfig.access_request_abbr} requests.</div>
                     </div>
+
+                    <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl shadow-xs space-y-1.5">
+                      <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Onboarding Gaps</div>
+                      <div className="flex items-center space-x-2">
+                        <AlertTriangle size={16} className="text-amber-500" />
+                        <span className="text-lg font-extrabold text-[#111827]">{onbGaps.filter(g => g.status === 'pending').length} Actionable</span>
+                      </div>
+                      <div className="text-[9px] text-gray-400">Gaps in organizational profile awaiting validation.</div>
+                    </div>
+
+                    <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl shadow-xs space-y-1.5">
+                      <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">HITL Queue Tasks</div>
+                      <div className="flex items-center space-x-2">
+                        <ShieldAlert size={16} className="text-rose-500" />
+                        <span className="text-lg font-extrabold text-[#111827]">{hitlQueue.filter(h => h.status === 'pending').length} Decisions</span>
+                      </div>
+                      <div className="text-[9px] text-gray-400">Agent audits and policy overrides pending CPO sign-off.</div>
+                    </div>
+
+                    <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl shadow-xs space-y-1.5">
+                      <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Unread Inbox Intake</div>
+                      <div className="flex items-center space-x-2">
+                        <Mail size={16} className="text-blue-600" />
+                        <span className="text-lg font-extrabold text-[#111827]">{inboxEmails.filter(e => e.status === 'unread').length} Inquiries</span>
+                      </div>
+                      <div className="text-[9px] text-gray-400">Direct user requests or regulator letters requiring triage.</div>
+                    </div>
+
                   </div>
 
-                  {/* Audit and compliance actions */}
-                  <div className="space-y-3.5">
-                    <h2 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Statutory Audit & Assurance</h2>
-                    <div className="flex space-x-3">
-                      <button
-                        onClick={async () => {
-                          const res = await kiboFetch(`${API_BASE}/api/expert/audit`, { method: 'POST' });
-                          if (res.ok) alert("Audit session initialized on the blockchain ledger.");
-                        }}
-                        className="bg-white hover:bg-gray-550 text-gray-700 border border-[#E5E7EB] px-4 py-2.5 text-xs rounded-lg uppercase tracking-wide transition-all cursor-pointer shadow-xs"
-                      >
-                        Run Activities Audit
-                      </button>
-                      <button
-                        onClick={async () => {
-                          const res = await kiboFetch(`${API_BASE}/api/expert/soc-compliance`, { method: 'POST' });
-                          if (res.ok) {
-                            const data = await res.json();
-                            alert(`SOC Compliance Scan Status: ${data.status}`);
-                          }
-                        }}
-                        className="bg-white hover:bg-gray-550 text-gray-700 border border-[#E5E7EB] px-4 py-2.5 text-xs rounded-lg uppercase tracking-wide transition-all cursor-pointer shadow-xs"
-                      >
-                        SOC 1 / SOC 2 Assessment
-                      </button>
+                  {/* Operational Action Center Grid */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                    {/* Left & Middle Column: Gaps & Actions */}
+                    <div className="lg:col-span-2 space-y-6">
+                      
+                      {/* Flagged and Pending tasks requiring action */}
+                      <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl space-y-4 shadow-xs">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                          <Activity size={14} className="text-blue-600" />
+                          <span>Immediate Attention & Tasks Queue</span>
+                        </h3>
+                        
+                        <div className="space-y-3">
+                          {onbGaps.filter(g => g.status === 'pending').map(g => (
+                            <div key={g.id} className="p-3.5 rounded-lg border border-amber-200 bg-amber-50/20 flex justify-between items-center gap-4">
+                              <div className="space-y-1">
+                                <div className="text-xs font-bold text-gray-850 flex items-center space-x-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                  <span>{g.title}</span>
+                                </div>
+                                <div className="text-[10px] text-gray-500 leading-relaxed">{g.details}</div>
+                              </div>
+                              <button
+                                onClick={() => setActiveTab('onboarding')}
+                                className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-[10px] font-bold px-3 py-1.5 rounded-md cursor-pointer transition-all"
+                              >
+                                Resolve
+                              </button>
+                            </div>
+                          ))}
+
+                          {hitlQueue.filter(h => h.status === 'pending').map(h => (
+                            <div key={h.id} className="p-3.5 rounded-lg border border-rose-200 bg-rose-50/20 flex justify-between items-center gap-4">
+                              <div className="space-y-1">
+                                <div className="text-xs font-bold text-gray-850 flex items-center space-x-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                                  <span>{h.title}</span>
+                                </div>
+                                <div className="text-[10px] text-gray-500 leading-relaxed">{h.details}</div>
+                              </div>
+                              <button
+                                onClick={() => setActiveTab('cpo_agents')}
+                                className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-[10px] font-bold px-3 py-1.5 rounded-md cursor-pointer transition-all"
+                              >
+                                Approve
+                              </button>
+                            </div>
+                          ))}
+
+                          {onbGaps.filter(g => g.status === 'pending').length === 0 && hitlQueue.filter(h => h.status === 'pending').length === 0 && (
+                            <div className="p-8 text-center text-xs text-gray-500 italic">
+                              ✓ All onboarding gaps and agent decisions resolved. System is aligned with baseline.
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Active Assessments List */}
+                      <div className="space-y-3.5">
+                        <h2 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Active {jurConfig.primary_statute} Compliance Assessments</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {expertAssessments.map(a => (
+                            <div key={a.assessment_id} className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-2.5 hover:border-gray-300 transition-all shadow-xs">
+                              <div className="flex justify-between items-start">
+                                <span className="font-semibold text-[#111827] text-xs">{a.title}</span>
+                                <span className="text-[9px] bg-blue-50 border border-blue-200 text-blue-650 px-2 py-0.5 rounded-full font-bold">{a.type}</span>
+                              </div>
+                              <div className="text-[10px] text-gray-550">Prepared by: {a.prepared_by} | Level: {a.level}</div>
+                              <div className="flex justify-between items-center text-[10px] pt-2 border-t border-[#E5E7EB]">
+                                <span className="text-emerald-700 font-semibold">✓ Status: {a.status}</span>
+                                <span className="text-gray-500">Statute: {jurConfig.primary_statute}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
                     </div>
+
+                    {/* Right Column: Quick Operations & Blockchain Ledger */}
+                    <div className="space-y-6">
+                      
+                      <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-4 shadow-xs">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                          <Settings size={14} className="text-blue-600" />
+                          <span>Quick Operations</span>
+                        </h3>
+                        
+                        <div className="space-y-2">
+                          <button
+                            onClick={async () => {
+                              const res = await kiboFetch(`${API_BASE}/api/expert/audit`, { method: 'POST' });
+                              if (res.ok) alert("Audit session initialized on the blockchain ledger.");
+                            }}
+                            className="w-full text-left bg-white hover:bg-gray-50 text-gray-700 border border-[#E5E7EB] px-4 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-xs flex justify-between items-center"
+                          >
+                            <span>Run Blockchain Activities Audit</span>
+                            <span className="text-[9px] text-gray-400 font-mono">POST /audit</span>
+                          </button>
+
+                          <button
+                            onClick={async () => {
+                              const res = await kiboFetch(`${API_BASE}/api/expert/soc-compliance`, { method: 'POST' });
+                              if (res.ok) {
+                                const data = await res.json();
+                                alert(`SOC Compliance Scan Status: ${data.status}`);
+                              }
+                            }}
+                            className="w-full text-left bg-white hover:bg-gray-550 text-gray-750 border border-[#E5E7EB] px-4 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-xs flex justify-between items-center"
+                          >
+                            <span>Evaluate SOC 1/SOC 2 Matrix</span>
+                            <span className="text-[9px] text-gray-400 font-mono">POST /soc-scan</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-3 shadow-xs">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                          <Terminal size={14} className="text-blue-600" />
+                          <span>Sensing Agent Signals</span>
+                        </h3>
+                        <p className="text-[11px] text-gray-500 leading-relaxed">
+                          Regulatory, threat, and internal discovery crawlers operate continuously on background schedulers. Trigger a manual sync on the CPO Console.
+                        </p>
+                        <button
+                          onClick={() => setActiveTab('cpo_agents')}
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 text-xs rounded-lg shadow-sm transition-all text-center cursor-pointer block"
+                        >
+                          View Agent Console
+                        </button>
+                      </div>
+
+                    </div>
+
                   </div>
 
                 </div>
