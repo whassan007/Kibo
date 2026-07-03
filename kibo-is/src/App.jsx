@@ -7,6 +7,7 @@ import {
   Activity, Server, Mail, Settings, Plus, CheckSquare, Square, Edit, Save, List,
   FolderOpen, Cpu, BookOpen
 } from 'lucide-react';
+import AdminDashboard from './AdminDashboard';
 
 const API_BASE = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
   ? 'http://localhost:8000'
@@ -27,6 +28,39 @@ const App = () => {
   const [simLogs, setSimLogs] = useState([]);
   const [simIsRunning, setSimIsRunning] = useState(false);
   const [legalLibrary, setLegalLibrary] = useState([]);
+  
+  // --- Admin Dashboard State ---
+  const [adminActiveTab, setAdminActiveTab] = useState('dashboard');
+  const [adminSelectedNode, setAdminSelectedNode] = useState(null);
+  const [adminDiffMode, setAdminDiffMode] = useState(false);
+  const [adminTriggers, setAdminTriggers] = useState([
+    { id: 'TR-101', timestamp: '2026-07-03 01:10', priority: 'high', source: 'EDPB Feed', framework: 'GDPR', jurisdiction: 'European Union', client: 'Kids Help Phone', confidence: '94%', impact: 'High', status: 'Triaged' },
+    { id: 'TR-102', timestamp: '2026-07-03 01:12', priority: 'medium', source: 'CMP Telemetry', framework: 'Law 25', jurisdiction: 'Quebec, CA', client: 'KHP Foundation', confidence: '88%', impact: 'Medium', status: 'Pending Review' },
+    { id: 'TR-103', timestamp: '2026-07-02 23:45', priority: 'critical', source: 'Privacy Officer Ticket', framework: 'PHIPA', jurisdiction: 'Ontario, CA', client: 'Clinical Portal', confidence: '99%', impact: 'High', status: 'Investigating' },
+    { id: 'TR-104', timestamp: '2026-07-02 22:15', priority: 'low', source: 'ISO Auditer', framework: 'ISO 27701', jurisdiction: 'Global', client: 'All', confidence: '95%', impact: 'Low', status: 'Completed' }
+  ]);
+  const [adminAgents, setAdminAgents] = useState([
+    { name: 'Ingestion Agent', version: 'v2.1.4', status: 'idle', queue: 0, runtime: '1.2s', cost: '$0.004', success: '99.8%', failure: '0.2%', memory: '124MB', cpu: '4%', tokens: '1.5k' },
+    { name: 'Adaptation Coder', version: 'v3.0.2', status: 'processing', queue: 1, runtime: '4.8s', cost: '$0.015', success: '97.2%', failure: '2.8%', memory: '512MB', cpu: '68%', tokens: '8.4k' },
+    { name: 'Self-Critique Auditor', version: 'v2.2.0', status: 'idle', queue: 0, runtime: '2.5s', cost: '$0.008', success: '98.5%', failure: '1.5%', memory: '256MB', cpu: '12%', tokens: '3.2k' },
+    { name: 'Deployment Controller', version: 'v1.8.1', status: 'waiting', queue: 2, runtime: '0.8s', cost: '$0.002', success: '99.9%', failure: '0.1%', memory: '96MB', cpu: '2%', tokens: '500' }
+  ]);
+  const [adminDeployments, setAdminDeployments] = useState([
+    { version: 'v2.8.4-rel', environment: 'production', status: 'active', proposed_by: 'Adaptation Coder', approved_by: 'CPO (HITL)', timestamp: '2026-07-03 01:16', commit: '89a0fcdb' },
+    { version: 'v2.8.3-rel', environment: 'production', status: 'completed', proposed_by: 'Adaptation Coder', approved_by: 'System Admin', timestamp: '2026-07-03 00:05', commit: 'f45bdcca' },
+    { version: 'v2.8.4-rc1', environment: 'staging', status: 'completed', proposed_by: 'Adaptation Coder', approved_by: 'Automatic (Score > 8)', timestamp: '2026-07-02 23:45', commit: 'c90cdbea' }
+  ]);
+  const [adminAudits, setAdminAudits] = useState([
+    { timestamp: '2026-07-03 01:16', user: 'Waël Hassan', agent: 'Deployment Controller', llm: 'qwen2.5-coder:32b', action: 'Deploy UI adaptation template', hash: 'SHA256:d9b2089f', status: 'success' },
+    { timestamp: '2026-07-03 01:15', user: 'LangGraph Engine', agent: 'Self-Critique Auditor', llm: 'qwen3.6:latest', action: 'Grounded RAG critique scoring (9/10)', hash: 'SHA256:b8c983ea', status: 'approved' },
+    { timestamp: '2026-07-03 01:12', user: 'LangGraph Engine', agent: 'Self-Critique Auditor', llm: 'qwen3.6:latest', action: 'Grounded RAG critique scoring (5/10)', hash: 'SHA256:c0901e9d', status: 'rejected' }
+  ]);
+  const [adminClients, setAdminClients] = useState([
+    { name: 'Kids Help Phone', organization: 'KHP Canada', role: 'Data Controller', coverage: ['PIPEDA', 'Quebec Law 25', 'PHIPA'], users: 24, status: 'active' },
+    { name: 'KHP Foundation', organization: 'KHP Foundation', role: 'Joint Controller', coverage: ['PIPEDA', 'CASL'], users: 8, status: 'active' },
+    { name: 'Crisis Support Portal', organization: 'Clinical Services', role: 'Processor', coverage: ['PHIPA', 'CYFSA'], users: 12, status: 'active' }
+  ]);
+
   const [activeLegislations, setActiveLegislations] = useState(['canada', 'quebec', 'phipa', 'cyfsa']);
   const [activeJurisdiction, setActiveJurisdiction] = useState('canada');
   const [jurConfig, setJurConfig] = useState({
@@ -482,6 +516,10 @@ const App = () => {
       fetchExpertData();
     } else if (securityMode === 'psr') {
       fetchPsrData();
+    } else if (securityMode === 'admin') {
+      fetchExpertData();
+      fetchLessons();
+      fetchLegalLibrary();
     }
   }, [securityMode, activeJurisdiction]);
 
@@ -999,6 +1037,7 @@ const App = () => {
               <option value="employee">Employee Mode</option>
               <option value="psr">PSR Committee Member</option>
               <option value="public">Public Widget</option>
+              <option value="admin">System Administration (AI Ops)</option>
             </select>
           </div>
         </div>
@@ -1018,6 +1057,11 @@ const App = () => {
               if (securityMode === 'employee') fetchEmployeeData();
               else if (securityMode === 'expert') fetchExpertData();
               else if (securityMode === 'psr') fetchPsrData();
+              else if (securityMode === 'admin') {
+                fetchExpertData();
+                fetchLessons();
+                fetchLegalLibrary();
+              }
             }}
             className="bg-white hover:bg-rose-100 border border-rose-300 text-rose-800 px-3 py-1 rounded shadow-xs text-[10px] transition-all cursor-pointer font-semibold"
           >
@@ -1309,6 +1353,22 @@ const App = () => {
             </div>
 
           </div>
+        )}
+        {/* SYSTEM ADMIN MODE */}
+        {securityMode === 'admin' && (
+          <AdminDashboard
+            API_BASE={API_BASE}
+            activeJurisdiction={activeJurisdiction}
+            jurConfig={jurConfig}
+            legalLibrary={legalLibrary}
+            agentLessons={agentLessons}
+            fetchLessons={fetchLessons}
+            fetchLegalLibrary={fetchLegalLibrary}
+            simLogs={simLogs}
+            simIsRunning={simIsRunning}
+            setSimLogs={setSimLogs}
+            setSimIsRunning={setSimIsRunning}
+          />
         )}
         {/* EXPERT MODE */}
         {securityMode === 'expert' && (
