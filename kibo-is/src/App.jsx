@@ -133,6 +133,43 @@ const App = () => {
   const [editingNotesTaskId, setEditingNotesTaskId] = useState(null);
   const [editingNotesText, setEditingNotesText] = useState("");
 
+  // --- Agentic CPO Console State ---
+  const [agentsList, setAgentsList] = useState([
+    { id: "dsar", name: "DSAR Fulfillment Engine", status: "Listening", lastAction: "Scanned database tables; no new requests pending.", focus: "GDPR, CCPA/CPRA, Law 25" },
+    { id: "pia", name: "PIA Agent", status: "Idle", lastAction: "Analyzed 'SaaS Telemetry Core' project; generated risk matrix.", focus: "DPIAs, FIPPA, PIPEDA" },
+    { id: "vendor", name: "Vendor Compliance Agent", status: "Idle", lastAction: "Reviewed sub-processor agreements for Workday integration.", focus: "Data Processors, Accountability" },
+    { id: "code", name: "Code Auditing Agent", status: "Monitoring", lastAction: "Verified 28 production API schemas; zero cleartext leaks detected.", focus: "Privacy by Design, Minimization" },
+    { id: "watchdog", name: "Regulatory Watchdog Agent", status: "Active", lastAction: "Synchronized rulings from IPC Ontario; updated internal checklist.", focus: "Jurisdictional Mapping, Rulings" },
+    { id: "incident", name: "Incident & Breach Agent", status: "Listening", lastAction: "SIEM access logs verified; no anomalous patterns detected.", focus: "Breach Notifications, Containment" },
+    { id: "policy", name: "Policy & Consent Agent", status: "Idle", lastAction: "Verified public cookie preferences and CMP parameters.", focus: "CASL, Transparency, Disclosures" }
+  ]);
+
+  const [agentLogs, setAgentLogs] = useState([
+    `[${new Date().toLocaleTimeString()}] Orchestration Loop initialized. Standing by for triggers...`,
+    `[${new Date().toLocaleTimeString()}] Regulatory Watchdog connected to commissioner feeds.`
+  ]);
+
+  const [hitlQueue, setHitlQueue] = useState([
+    {
+      id: "HITL-001",
+      title: "Approve Vendor Sub-processor Agreement (OpenAI DPA)",
+      details: "Vendor Compliance Agent detected a high-risk data transfer clause sending PII to US-based systems under Ontario PHIPA jurisdiction. DPA requires execution of Standard Contractual Clauses (SCCs).",
+      agent: "Vendor Compliance Agent",
+      priority: "high",
+      status: "pending"
+    },
+    {
+      id: "HITL-002",
+      title: "DSAR Redaction Package Approval (REQ-8291)",
+      details: "DSAR Fulfillment Engine completed data collection for employee 'John Smith'. Package contains redacted corporate logs containing other employee emails. Requires human verification before export.",
+      agent: "DSAR Fulfillment Engine",
+      priority: "medium",
+      status: "pending"
+    }
+  ]);
+
+  const [isSimulatingLoop, setIsSimulatingLoop] = useState(false);
+
   // Helper fetch function to inject the X-Kibo-Scope header automatically
   const kiboFetch = async (url, options = {}) => {
     const headers = {
@@ -490,6 +527,164 @@ const App = () => {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  // --- Agentic CPO Console Event Simulator ---
+  const handleTriggerAgenticEvent = (eventType) => {
+    if (isSimulatingLoop) return;
+    setIsSimulatingLoop(true);
+    setAgentLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ⚡ Event Triggered: ${eventType}`]);
+
+    const addLog = (msg) => {
+      setAgentLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
+    };
+
+    if (eventType === 'git_push') {
+      setTimeout(() => {
+        addLog("🔍 [Code Auditing Agent] Intercepted Git commit hash e7654ce on branch main.");
+        setAgentsList(prev => prev.map(a => a.id === 'code' ? { ...a, status: "Active", lastAction: "Scanning git commit e7654ce..." } : a));
+      }, 600);
+
+      setTimeout(() => {
+        addLog("⚠️ [Code Auditing Agent] Flagged unencrypted PII exposure (phone numbers) in client_registration.py.");
+        setAgentsList(prev => prev.map(a => a.id === 'code' ? { ...a, status: "Active", lastAction: "Flagged unencrypted PII in client_registration.py" } : a));
+      }, 1400);
+
+      setTimeout(() => {
+        addLog("🧠 [PIA Agent] Initiating risk analysis for code change path: /api/registration.");
+        setAgentsList(prev => prev.map(a => a.id === 'pia' ? { ...a, status: "Active", lastAction: "Assessing risk score for /api/registration..." } : a));
+      }, 2200);
+
+      setTimeout(() => {
+        addLog("✓ [PIA Agent] Calculated Risk Score: 78 (High). PHIPA trigger detected.");
+        setAgentsList(prev => prev.map(a => a.id === 'pia' ? { ...a, status: "Idle", lastAction: "Generated risk score 78 for registration API" } : a));
+      }, 3000);
+
+      setTimeout(() => {
+        addLog("📋 [Orchestrator] Enqueuing correction task to DPO Human-in-the-Loop Action Queue.");
+        setHitlQueue(prev => [
+          {
+            id: `HITL-${Math.floor(Math.random() * 9000) + 1000}`,
+            title: "Remediate Unencrypted PII in Registration API (commit e7654ce)",
+            details: "Code Auditing Agent found unencrypted phone numbers on registration endpoint. PIA Agent flagged this as High Risk under Ontario FIPPA/PHIPA. Requires code fix approval.",
+            agent: "Code Auditing Agent",
+            priority: "high",
+            status: "pending"
+          },
+          ...prev
+        ]);
+        setAgentsList(prev => prev.map(a => a.id === 'code' ? { ...a, status: "Monitoring", lastAction: "Flagged commit e7654ce; pending human review." } : a));
+        setIsSimulatingLoop(false);
+      }, 3800);
+
+    } else if (eventType === 'dsar_filed') {
+      setTimeout(() => {
+        addLog("📥 [DSAR Fulfillment Engine] Intake received for data deletion (Requester: Jane Doe).");
+        setAgentsList(prev => prev.map(a => a.id === 'dsar' ? { ...a, status: "Running", lastAction: "Processing deletion request for Jane Doe..." } : a));
+      }, 600);
+
+      setTimeout(() => {
+        addLog("🔒 [Regulatory Watchdog] Validating jurisdiction rules for Quebec - Law 25 (30-day clock).");
+        setAgentsList(prev => prev.map(a => a.id === 'watchdog' ? { ...a, status: "Active", lastAction: "Validating Law 25 rules for Jane Doe" } : a));
+      }, 1400);
+
+      setTimeout(() => {
+        addLog("🔍 [DSAR Fulfillment Engine] Querying core databases (Salesforce CRM, Stripe Billing).");
+        setAgentsList(prev => prev.map(a => a.id === 'dsar' ? { ...a, status: "Running", lastAction: "Querying Salesforce & Stripe databases..." } : a));
+      }, 2200);
+
+      setTimeout(() => {
+        addLog("✓ [DSAR Fulfillment Engine] Data package generated. Redaction pipeline complete.");
+      }, 3000);
+
+      setTimeout(() => {
+        addLog("📋 [Orchestrator] Requesting DPO sign-off on Jane Doe deletion package before executing database wipe.");
+        setHitlQueue(prev => [
+          {
+            id: `HITL-${Math.floor(Math.random() * 9000) + 1000}`,
+            title: "Sign-off Deletion Package (Jane Doe - Law 25)",
+            details: "DSAR Fulfillment Engine compiled data from Salesforce and Stripe. Jane Doe requested erasure. Human DPO review required before sending API delete hooks.",
+            agent: "DSAR Fulfillment Engine",
+            priority: "medium",
+            status: "pending"
+          },
+          ...prev
+        ]);
+        setAgentsList(prev => prev.map(a => a.id === 'dsar' ? { ...a, status: "Listening", lastAction: "Awaiting DPO sign-off for Jane Doe deletion." } : a));
+        setAgentsList(prev => prev.map(a => a.id === 'watchdog' ? { ...a, status: "Active", lastAction: "Rules verified for Jane Doe deletion." } : a));
+        setIsSimulatingLoop(false);
+      }, 3800);
+
+    } else if (eventType === 'vendor_dpa') {
+      setTimeout(() => {
+        addLog("📄 [Vendor Compliance Agent] Scanned uploaded contract: 'HubSpot DPA Addendum.pdf'.");
+        setAgentsList(prev => prev.map(a => a.id === 'vendor' ? { ...a, status: "Active", lastAction: "Analyzing HubSpot DPA Addendum.pdf..." } : a));
+      }, 600);
+
+      setTimeout(() => {
+        addLog("⚠️ [Vendor Compliance Agent] Warning: Clause 4.2 delegates data storage to US-East (AWS).");
+      }, 1400);
+
+      setTimeout(() => {
+        addLog("🔒 [Regulatory Watchdog] Cross-border transfer detected. GDPR / Law 25 Transfer Impact Assessment (TIA) required.");
+        setAgentsList(prev => prev.map(a => a.id === 'watchdog' ? { ...a, status: "Active", lastAction: "Cross-border rule triggered for HubSpot DPA" } : a));
+      }, 2200);
+
+      setTimeout(() => {
+        addLog("📋 [Orchestrator] Enqueuing TIA Review to DPO human task board.");
+        setHitlQueue(prev => [
+          {
+            id: `HITL-${Math.floor(Math.random() * 9000) + 1000}`,
+            title: "Conduct HubSpot Transfer Impact Assessment (TIA)",
+            details: "Vendor Compliance Agent flagged HubSpot DPA cross-border data transfer. Requires standard TIA questionnaire completion and SCC execution.",
+            agent: "Vendor Compliance Agent",
+            priority: "medium",
+            status: "pending"
+          },
+          ...prev
+        ]);
+        setAgentsList(prev => prev.map(a => a.id === 'vendor' ? { ...a, status: "Idle", lastAction: "HubSpot contract analyzed; TIA flagged." } : a));
+        setIsSimulatingLoop(false);
+      }, 3000);
+
+    } else if (eventType === 'siem_anomaly') {
+      setTimeout(() => {
+        addLog("🚨 [Incident & Breach Agent] Alert: Anomalous volume of download requests from employee-default session.");
+        setAgentsList(prev => prev.map(a => a.id === 'incident' ? { ...a, status: "Active", lastAction: "Investigating anomalous download on employee-default..." } : a));
+      }, 600);
+
+      setTimeout(() => {
+        addLog("🔒 [Orchestrator] Containment: Temporarily disabled API access tokens for employee-default.");
+        setAgentsList(prev => prev.map(a => a.id === 'incident' ? { ...a, status: "Active", lastAction: "Containment: Disabled session tokens for employee-default" } : a));
+      }, 1400);
+
+      setTimeout(() => {
+        addLog("🛡️ [Regulatory Watchdog] Checking reporting obligations. PIPEDA Real Risk of Significant Harm (RROSH) evaluation triggered.");
+        setAgentsList(prev => prev.map(a => a.id === 'watchdog' ? { ...a, status: "Active", lastAction: "Evaluating PIPEDA RROSH breach threshold" } : a));
+      }, 2200);
+
+      setTimeout(() => {
+        addLog("📋 [Orchestrator] Added Breach Triage checklist and Incident Log to DPO review board.");
+        setHitlQueue(prev => [
+          {
+            id: `HITL-${Math.floor(Math.random() * 9000) + 1000}`,
+            title: "Evaluate Breach RROSH Threshold (Incident INC-9021)",
+            details: "Incident & Breach Agent auto-disabled employee session after 500+ records download. Assess if OPC notification is required under PIPEDA RROSH.",
+            agent: "Incident & Breach Agent",
+            priority: "high",
+            status: "pending"
+          },
+          ...prev
+        ]);
+        setAgentsList(prev => prev.map(a => a.id === 'incident' ? { ...a, status: "Listening", lastAction: "Session contained; incident logs enqueued." } : a));
+        setIsSimulatingLoop(false);
+      }, 3000);
+    }
+  };
+
+  const handleResolveHitlDecision = (hitlId, action) => {
+    setHitlQueue(prev => prev.map(item => item.id === hitlId ? { ...item, status: action } : item));
+    setAgentLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ✅ DPO completed decision ${hitlId}: ${action.toUpperCase()}`]);
   };
 
   // --- Remind/Assign Training (Expert Admin) ---
@@ -896,6 +1091,15 @@ const App = () => {
                   <span>Dashboard</span>
                 </button>
                 <button 
+                  onClick={() => setActiveTab('cpo_agents')}
+                  className={`w-full text-left p-2.5 text-xs rounded-lg hover:bg-gray-100 flex items-center space-x-2.5 transition-all cursor-pointer ${
+                    activeTab === 'cpo_agents' ? 'bg-blue-50 text-blue-700 font-semibold shadow-xs' : 'text-gray-600'
+                  }`}
+                >
+                  <Sparkles size={14} className="text-blue-650 animate-pulse" />
+                  <span className="font-semibold text-blue-755">CPO Agents Console</span>
+                </button>
+                <button 
                   onClick={() => setActiveTab('inbox')}
                   className={`w-full text-left p-2.5 text-xs rounded-lg hover:bg-gray-100 flex items-center space-x-2.5 transition-all cursor-pointer ${
                     activeTab === 'inbox' ? 'bg-blue-50 text-blue-700 font-semibold shadow-xs' : 'text-gray-600'
@@ -945,6 +1149,219 @@ const App = () => {
 
             {/* TAB CONTENT PANEL */}
             <div className="flex-1 p-6 overflow-y-auto space-y-6 bg-[#FAFAFA]">
+
+              {activeTab === 'cpo_agents' && (
+                <div className="space-y-6">
+                  {/* Title Header */}
+                  <div className="space-y-1">
+                    <h1 className="text-lg font-bold text-[#111827] flex items-center space-x-2">
+                      <Sparkles size={18} className="text-blue-600" />
+                      <span>Autonomous CPO Agentic Control Center</span>
+                    </h1>
+                    <p className="text-xs text-gray-500 max-w-2xl leading-relaxed">
+                      Maintains continuous compliance monitoring and enforcement by orchestrating specialized agents across data lifecycle steps, matching GDPR, PIPEDA, Law 25, and ISO 27701 frameworks.
+                    </p>
+                  </div>
+
+                  {/* Main Grid: Agents & Controls */}
+                  <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                    
+                    {/* Left Column: CPO Agent Ontology (2/3 width) */}
+                    <div className="xl:col-span-2 space-y-4">
+                      <h2 className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center space-x-1.5">
+                        <Server size={14} className="text-blue-600" />
+                        <span>Active CPO Agent Ontology</span>
+                      </h2>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {agentsList.map(a => (
+                          <div key={a.id} className="bg-white border border-[#E5E7EB] p-4.5 rounded-xl space-y-3 hover:border-gray-300 transition-all shadow-xs flex flex-col justify-between">
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-start">
+                                <span className="font-semibold text-[#111827] text-xs">{a.name}</span>
+                                <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold border ${
+                                  a.status === 'Active' || a.status === 'Running'
+                                    ? 'bg-blue-50 border-blue-200 text-blue-700 animate-pulse'
+                                    : a.status === 'Monitoring' || a.status === 'Listening'
+                                    ? 'bg-emerald-50 border-emerald-250 text-emerald-700 font-semibold'
+                                    : 'bg-gray-50 border-gray-200 text-gray-500'
+                                }`}>
+                                  {a.status}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-gray-400 font-medium">Focus: {a.focus}</p>
+                            </div>
+                            <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-100 mt-2">
+                              <div className="text-[9px] text-gray-450 uppercase font-bold tracking-wider mb-0.5">Last System Action:</div>
+                              <div className="text-[11px] text-gray-700 font-medium leading-relaxed font-mono">{a.lastAction}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Right Column: Execution Triggers & Loop Trace (1/3 width) */}
+                    <div className="space-y-6">
+                      
+                      {/* Section: Simulator */}
+                      <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-4 shadow-xs">
+                        <h2 className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center space-x-1.5">
+                          <Radio size={14} className="text-blue-600" />
+                          <span>Simulate Event Triggers</span>
+                        </h2>
+                        <p className="text-[11px] text-gray-500 leading-relaxed">
+                          Trigger events to fire the event-driven orchestration loop. Agents will auto-triage and queue human approvals.
+                        </p>
+                        <div className="space-y-2 pt-1">
+                          <button
+                            onClick={() => handleTriggerAgenticEvent('git_push')}
+                            disabled={isSimulatingLoop || !isSystemOnline}
+                            className="w-full bg-white hover:bg-gray-100 text-gray-700 border border-[#E5E7EB] py-2 px-3 rounded-lg text-xs font-semibold text-left transition-all flex items-center justify-between cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <span>⚡ Git Commit Push (Code Audit)</span>
+                            <ChevronDown size={12} className="text-gray-400" />
+                          </button>
+                          <button
+                            onClick={() => handleTriggerAgenticEvent('dsar_filed')}
+                            disabled={isSimulatingLoop || !isSystemOnline}
+                            className="w-full bg-white hover:bg-gray-100 text-gray-700 border border-[#E5E7EB] py-2 px-3 rounded-lg text-xs font-semibold text-left transition-all flex items-center justify-between cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <span>📥 DSAR Filed (Data Deletion)</span>
+                            <ChevronDown size={12} className="text-gray-400" />
+                          </button>
+                          <button
+                            onClick={() => handleTriggerAgenticEvent('vendor_dpa')}
+                            disabled={isSimulatingLoop || !isSystemOnline}
+                            className="w-full bg-white hover:bg-gray-100 text-gray-700 border border-[#E5E7EB] py-2 px-3 rounded-lg text-xs font-semibold text-left transition-all flex items-center justify-between cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <span>📄 Third-Party DPA Uploaded</span>
+                            <ChevronDown size={12} className="text-gray-400" />
+                          </button>
+                          <button
+                            onClick={() => handleTriggerAgenticEvent('siem_anomaly')}
+                            disabled={isSimulatingLoop || !isSystemOnline}
+                            className="w-full bg-white hover:bg-gray-100 text-gray-700 border border-[#E5E7EB] py-2 px-3 rounded-lg text-xs font-semibold text-left transition-all flex items-center justify-between cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <span>🚨 SIEM Data Anomaly Detected</span>
+                            <ChevronDown size={12} className="text-gray-400" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Section: Live Trace Console */}
+                      <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl space-y-3 shadow-xs">
+                        <h2 className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center space-x-1.5">
+                          <Terminal size={14} className="text-blue-600" />
+                          <span>Orchestration Loop Trace</span>
+                        </h2>
+                        <div className="bg-gray-900 text-emerald-400 p-4 rounded-lg font-mono text-[10px] h-48 overflow-y-auto space-y-1.5 shadow-inner">
+                          {agentLogs.map((log, index) => (
+                            <div key={index} className="leading-normal">{log}</div>
+                          ))}
+                          {isSimulatingLoop && (
+                            <div className="text-blue-400 animate-pulse">Running CPO Orchestration State Machine...</div>
+                          )}
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* Bottom Panel: Human-in-the-Loop (HITL) Queue */}
+                  <div className="bg-white border border-[#E5E7EB] p-6 rounded-xl space-y-4 shadow-xs">
+                    <div className="flex justify-between items-center border-b border-[#E5E7EB] pb-3">
+                      <div>
+                        <h2 className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center space-x-2">
+                          <UserCheck size={14} className="text-blue-600" />
+                          <span>HITL Compliance Action Queue</span>
+                        </h2>
+                        <p className="text-[10px] text-gray-500 mt-1">
+                          Decisions flagged by CPO Agents requiring mandatory human sign-off before operational execution.
+                        </p>
+                      </div>
+                      <span className="text-[10px] font-bold bg-amber-50 border border-amber-250 text-amber-700 px-2.5 py-0.5 rounded-full">
+                        {hitlQueue.filter(h => h.status === 'pending').length} Actions Pending
+                      </span>
+                    </div>
+
+                    <div className="border border-[#E5E7EB] rounded-xl overflow-hidden">
+                      <table className="w-full text-xs text-left border-collapse bg-white">
+                        <thead>
+                          <tr className="bg-gray-50 text-gray-500 border-b border-[#E5E7EB] font-semibold text-[11px] uppercase tracking-wider">
+                            <th className="p-3.5 w-24">ID</th>
+                            <th className="p-3.5 w-1/4">Action Title</th>
+                            <th className="p-3.5 w-44">Trigger Agent</th>
+                            <th className="p-3.5">Details</th>
+                            <th className="p-3.5 w-20">Priority</th>
+                            <th className="p-3.5 w-52 text-right">Human Override Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#E5E7EB]">
+                          {hitlQueue.length === 0 ? (
+                            <tr>
+                              <td colSpan="6" className="p-8 text-center text-gray-500 italic">No actions pending. All systems in compliance.</td>
+                            </tr>
+                          ) : (
+                            hitlQueue.map(h => (
+                              <tr key={h.id} className="hover:bg-gray-50/50 transition-all">
+                                <td className="p-3.5 font-bold text-gray-400 font-mono">{h.id}</td>
+                                <td className="p-3.5 font-semibold text-gray-900">{h.title}</td>
+                                <td className="p-3.5 text-blue-650 font-medium">{h.agent}</td>
+                                <td className="p-3.5 text-gray-600 leading-normal">{h.details}</td>
+                                <td className="p-3.5">
+                                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                                    h.priority === 'high' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                  }`}>
+                                    {h.priority}
+                                  </span>
+                                </td>
+                                <td className="p-3.5 text-right">
+                                  {h.status === 'pending' ? (
+                                    <div className="flex justify-end space-x-1.5">
+                                      <button
+                                        onClick={() => handleResolveHitlDecision(h.id, 'approved')}
+                                        disabled={!isSystemOnline}
+                                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded font-semibold text-[10px] uppercase transition-all shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        Approve
+                                      </button>
+                                      <button
+                                        onClick={() => handleResolveHitlDecision(h.id, 'legal')}
+                                        disabled={!isSystemOnline}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded font-semibold text-[10px] uppercase transition-all shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        Flag Legal
+                                      </button>
+                                      <button
+                                        onClick={() => handleResolveHitlDecision(h.id, 'rejected')}
+                                        disabled={!isSystemOnline}
+                                        className="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded font-semibold text-[10px] uppercase transition-all shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        Reject
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <span className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider border ${
+                                      h.status === 'approved'
+                                        ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
+                                        : h.status === 'legal'
+                                        ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                        : 'bg-rose-50 border-rose-300 text-rose-700'
+                                    }`}>
+                                      {h.status === 'approved' ? '✓ APPROVED & DEPLOYED' : h.status === 'legal' ? '⚖ SENT TO LEGAL' : '✕ REJECTED & BLOCKED'}
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                </div>
+              )}
 
               {activeTab === 'dashboard' && (
                 <div className="space-y-6">
