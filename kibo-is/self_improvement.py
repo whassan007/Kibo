@@ -4,6 +4,14 @@ import random
 from typing import TypedDict, List, Optional, Dict, Any
 from langgraph.graph import StateGraph, START, END
 
+# Guardrails definition
+ALLOWED_ADAPTATION_DOMAINS = [
+    "tooltip_text_updates",
+    "risk_weight_tuning",
+    "sla_threshold_adjustments",
+    "rule_engine_conditions",
+]
+
 class KiboState(TypedDict):
     current_framework: str      # E.g., "PIPEDA + Quebec Law 25"
     trigger_type: str           # "Regulatory_Update" or "User_Friction"
@@ -14,6 +22,10 @@ class KiboState(TypedDict):
     is_approved: bool
     loop_count: int
     logs: List[str]
+    # Guardrail fields
+    domain: str                 # Domain of proposed change
+    decision: str               # "APPROVED", "REJECTED", "REJECTED_OUT_OF_BOUNDS", "SYSTEM_FATIGUE"
+    justification: str          # Justification for decision
 
 def analyze_trigger(state: KiboState) -> Dict[str, Any]:
     logs = list(state.get("logs", []))
@@ -26,7 +38,6 @@ def analyze_trigger(state: KiboState) -> Dict[str, Any]:
     try:
         conn = sqlite3.connect("kibo_state.db")
         cursor = conn.cursor()
-        # Find any keyword matches (e.g. bilingual, Law 25, credentials, safeguards, DPA)
         cursor.execute("SELECT clause_id, legislation, clause_text, keywords FROM legal_ground_truth")
         all_clauses = cursor.fetchall()
         conn.close()
@@ -45,8 +56,17 @@ def analyze_trigger(state: KiboState) -> Dict[str, Any]:
         legal_context = "\n".join([f"[{c[0]} ({c[1]})]: {c[2]}" for c in retrieved_clauses])
         logs.append(f"[RAG Context Bound]: Using legal context for adaptation formulation.")
     else:
-        logs.append(f"[RAG Engine] WARNING: No matching ground truth clauses found for '{state['trigger_data']}'. Escalating to human legal review.")
+        logs.append(f"[RAG Engine] WARNING: No matching ground truth clauses found. Escalating to human legal review.")
         legal_context = "NO COVERAGE FOUND - REQUIRE HUMAN REVIEW"
+        
+    # Determine proposed domain based on trigger contents (to test out-of-bounds guardrail)
+    proposed_domain = "risk_weight_tuning"
+    if "create component" in trigger_lower or "react" in trigger_lower or "write code" in trigger_lower:
+        proposed_domain = "core_platform_code" # Out-of-bounds!
+    elif "sla" in trigger_lower:
+        proposed_domain = "sla_threshold_adjustments"
+    elif "tooltip" in trigger_lower:
+        proposed_domain = "tooltip_text_updates"
         
     # Simulate adaptation generation with strict RAG context
     if "REQUIRE HUMAN REVIEW" in legal_context:
@@ -67,36 +87,65 @@ def analyze_trigger(state: KiboState) -> Dict[str, Any]:
             ]
         })
         
-    logs.append(f"[Analysis Phase] Generated logic adaptation: \"{logic}\"")
+    logs.append(f"[Analysis Phase] Generated logic adaptation in domain '{proposed_domain}': \"{logic}\"")
     logs.append(f"[Analysis Phase] Generated UI adaptation schema: \"{ui}\"")
     
     return {
         "proposed_logic_update": logic,
         "proposed_ui_schema": ui,
         "loop_count": loop_count,
+        "domain": proposed_domain,
         "logs": logs
     }
 
 def evaluate_adaptation(state: KiboState) -> Dict[str, Any]:
     logs = list(state["logs"])
     loop_count = state["loop_count"]
+    domain = state.get("domain", "risk_weight_tuning")
     
-    logs.append(f"[Evaluation Phase] Conducting self-critique on proposed changes...")
+    logs.append(f"[Evaluation Phase] Conducting self-critique on proposed changes in domain '{domain}'...")
     
-    # We want a dynamic critique loop:
-    # First loop might fail to simulate a real correction/improvement loop, then succeed!
+    # 1. Feature-Creep Rejector (Evaluation Gatekeeper)
+    if domain not in ALLOWED_ADAPTATION_DOMAINS:
+        logs.append(f"[Evaluation Phase] CRITICAL: Proposed change in domain '{domain}' is OUT OF BOUNDS. Adaptation blocked.")
+        return {
+            "evaluation_score": 0,
+            "is_approved": False,
+            "decision": "REJECTED_OUT_OF_BOUNDS",
+            "justification": f"CRITICAL: Agent attempted to modify core platform features ('{domain}') or execute arbitrary code. Adaptation blocked.",
+            "logs": logs
+        }
+        
+    # 2. Retry Fatigue Limit
+    if loop_count >= 3:
+        logs.append("[Evaluation Phase] SYSTEM FATIGUE: Retry limit of 3 exceeded. Escalating to human CPO.")
+        return {
+            "evaluation_score": 0,
+            "is_approved": False,
+            "decision": "SYSTEM_FATIGUE",
+            "justification": "System loop fatigue: 3 adaptation loops failed to reach approval threshold.",
+            "logs": logs
+        }
+        
+    # First loop fails to simulate improvement cycles, second loop succeeds
     if loop_count < 2:
         score = 6
         is_approved = False
-        logs.append(f"[Evaluation Phase] Score: {score}/10 - REJECTED. Legal audit detected missing audit log schema. Re-routing back to Analysis.")
+        decision = "REJECTED"
+        justification = "Legal audit detected missing audit log schema. Re-routing back to Analysis."
+        logs.append(f"[Evaluation Phase] Score: {score}/10 - {decision}. {justification}")
     else:
         score = 9
         is_approved = True
-        logs.append(f"[Evaluation Phase] Score: {score}/10 - APPROVED. All safety constraints and UX friction checks passed.")
+        decision = "APPROVED"
+        justification = "All safety constraints and UX friction checks passed."
+        logs.append(f"[Evaluation Phase] Score: {score}/10 - {decision}. {justification}")
         
     return {
         "evaluation_score": score,
         "is_approved": is_approved,
+        "decision": decision,
+        "justification": justification,
         "logs": logs
     }
 
@@ -120,8 +169,11 @@ def deploy_update(state: KiboState) -> Dict[str, Any]:
     }
 
 def route_evaluation(state: KiboState) -> str:
-    if state["is_approved"]:
+    decision = state.get("decision")
+    if decision == "APPROVED":
         return "deploy"
+    elif decision in ["REJECTED_OUT_OF_BOUNDS", "SYSTEM_FATIGUE"]:
+        return "route_to_human_cpo"
     else:
         return "re_analyze"
 
@@ -140,6 +192,7 @@ def get_self_improvement_flow():
         route_evaluation,
         {
             "deploy": "Deploy",
+            "route_to_human_cpo": END,
             "re_analyze": "Analyze"
         }
     )
@@ -159,7 +212,10 @@ def run_self_improvement(trigger_type: str, trigger_data: str, current_framework
         "evaluation_score": 0,
         "is_approved": False,
         "loop_count": 0,
-        "logs": []
+        "logs": [],
+        "domain": "risk_weight_tuning",
+        "decision": "pending",
+        "justification": ""
     }
     
     result = self_improvement_flow.invoke(initial_state)
