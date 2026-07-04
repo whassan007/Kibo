@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "ollama-local": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@iflow-mcp/ollama-mcp"
+      ],
+      "env": {
+        "OLLAMA_HOST": "http://127.0.0.1:11434"
+      }
+    },
+    "dgx": {
+      "command": "/opt/homebrew/bin/python3",
+      "args": [
+        "/Users/dr.wael/Documents/DGX/dgx-model-servers/dgx_mcp_server.py"
+      ],
+      "env": {
+        "DGX_OLLAMA": "http://100.113.62.112:11434",
+        "DGX_SSH": "spark"
+      }
+    }
+  }
+}

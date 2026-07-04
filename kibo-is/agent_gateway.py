@@ -343,29 +343,61 @@ def route_to_statutory_artifacts(state: AgentState):
     # LangGraph parallel branch mapping using Send API
     return [Send(r, {"id": state["id"], "intake": state["intake"], "artifacts": []}) for r in set(routes)]
 
-# Helper to execute prompt against local models or return mock
+# Ollama routing — local gemma4 when prompt fits in 4096 ctx, waelbot reasoning-core otherwise
+_OLLAMA_LOCAL  = "http://127.0.0.1:11434"
+_OLLAMA_REMOTE = "http://100.113.62.112:11434"   # waelbot DGX via Tailscale
+_MODEL_LOCAL   = "gemma4:latest"
+_MODEL_REMOTE  = "reasoning-core:latest"
+_LOCAL_TOKEN_LIMIT = 3000  # gemma4 has 4096 total; reserve ~1000 for the response
+
+def _estimate_tokens(text: str) -> int:
+    return len(text) // 4
+
 def run_agent_node(prompt: str, context: str, mock_data: dict) -> dict:
+    import urllib.request
+    full_prompt = f"{prompt}\n\nCONTEXT:\n{context}\n\nReturn JSON only."
+    token_estimate = _estimate_tokens(full_prompt)
+
+    if token_estimate <= _LOCAL_TOKEN_LIMIT:
+        url, model = _OLLAMA_LOCAL, _MODEL_LOCAL
+    else:
+        url, model = _OLLAMA_REMOTE, _MODEL_REMOTE
+
+    print(f"[Ollama Router] ~{token_estimate} tokens → {model} @ {url}")
     try:
-        import urllib.request
-        import json
         req_data = {
-            "model": "qwen2.5-coder:32b",
-            "prompt": f"{prompt}\n\nCONTEXT:\n{context}\n\nReturn JSON only.",
+            "model": model,
+            "prompt": full_prompt,
             "stream": False,
             "format": "json"
         }
         req = urllib.request.Request(
-            "http://127.0.0.1:11434/api/generate",
+            f"{url}/api/generate",
             data=json.dumps(req_data).encode("utf-8"),
             headers={"Content-Type": "application/json"}
         )
-        with urllib.request.urlopen(req, timeout=4) as res:
+        with urllib.request.urlopen(req, timeout=60) as res:
             res_json = json.loads(res.read().decode("utf-8"))
             return json.loads(res_json.get("response", ""))
-    except Exception:
+    except Exception as e:
+        print(f"[Ollama Router] Failed ({e}), using mock data")
         return mock_data
 
 # Parallel Assessment Nodes
+def check_cross_border_enforcement() -> bool:
+    try:
+        import sqlite3
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute("SELECT value FROM user_settings WHERE key = 'enforce_cross_border_agreements'")
+        row = cursor.fetchone()
+        conn.close()
+        if row and row[0].lower() == 'true':
+            return True
+    except Exception:
+        pass
+    return False
+
 def phipa_tra_node(state: AgentState) -> Dict[str, Any]:
     print("[Agent Node] Running PHIPA TRA...")
     mock = {
@@ -383,17 +415,26 @@ def phipa_tra_node(state: AgentState) -> Dict[str, Any]:
 
 def law25_tia_node(state: AgentState) -> Dict[str, Any]:
     print("[Agent Node] Running Law 25 TIA...")
+    enforce = check_cross_border_enforcement()
+    status = "BLOCKED" if enforce else "WARNING"
+    score = 4.5 if enforce else 7.8
+    findings = "Independent TIA failed: Target jurisdiction has sub-adequate surveillance protections. Strict cross-border agreement enforcement is active." if enforce else "Independent TIA flagged warnings. Permissive mode active: Proceeding with transfer warning."
+    
     mock = {
         "artifact_id": f"TIA-LAW25-{state['id'][:6]}",
         "title": "Quebec Law 25 Transfer Impact Assessment",
-        "status": "BLOCKED",
-        "score": 4.5,
+        "status": status,
+        "score": score,
         "legal_basis": "Quebec Law 25 Section 17 & Chapter III",
         "relevance": "Non-adequate cross-border data transfer detected (Quebec to US).",
-        "findings": "Independent TIA failed: Target jurisdiction has sub-adequate surveillance protections.",
+        "findings": findings,
         "mitigation": "Bind data using Standard Contractual Clauses (SCC) and encrypt before transit."
     }
     art = run_agent_node(LAW25_TIA_PROMPT, str(state["intake"]), mock)
+    if art and isinstance(art, dict):
+        art["status"] = status
+        art["score"] = score
+        art["findings"] = findings
     return {"artifacts": [art]}
 
 def law25_pia_node(state: AgentState) -> Dict[str, Any]:
@@ -413,17 +454,28 @@ def law25_pia_node(state: AgentState) -> Dict[str, Any]:
 
 def article35_dpia_node(state: AgentState) -> Dict[str, Any]:
     print("[Agent Node] Running Article 35 DPIA...")
+    enforce = check_cross_border_enforcement()
+    status = "APPROVED"
+    score = 9.1 if not enforce else 8.2
+    findings = "Adequacy clearance verified under PIPEDA reciprocity."
+    if enforce:
+        findings += " Strict cross-border agreement checks active and cleared."
+    
     mock = {
         "artifact_id": f"DPIA-GDPR-{state['id'][:6]}",
         "title": "GDPR Article 35 Data Protection Impact Assessment",
-        "status": "APPROVED",
-        "score": 9.1,
+        "status": status,
+        "score": score,
         "legal_basis": "EU GDPR Regulation Article 35",
         "relevance": "High-risk processing activity mapping large-scale storage.",
-        "findings": "Adequacy clearance verified under PIPEDA reciprocity.",
+        "findings": findings,
         "mitigation": "Ensure data subjects can exercise deletion rights at any time."
     }
     art = run_agent_node(ARTICLE35_DPIA_PROMPT, str(state["intake"]), mock)
+    if art and isinstance(art, dict):
+        art["status"] = status
+        art["score"] = score
+        art["findings"] = findings
     return {"artifacts": [art]}
 
 def cpra_admt_node(state: AgentState) -> Dict[str, Any]:
@@ -1309,6 +1361,7 @@ def seed_mock_data():
 
     # New tables for localization, employee training, data inventory, meetings, inbox, PSR recommendations
     cursor.execute("CREATE TABLE IF NOT EXISTS user_settings (key TEXT PRIMARY KEY, value TEXT)")
+    cursor.execute("INSERT OR IGNORE INTO user_settings (key, value) VALUES ('enforce_cross_border_agreements', 'false')")
     cursor.execute("CREATE TABLE IF NOT EXISTS employee_data_inventory (id TEXT PRIMARY KEY, employee_id TEXT NOT NULL, system_name TEXT NOT NULL, data_types TEXT NOT NULL, purpose TEXT NOT NULL, retention TEXT NOT NULL, sharing TEXT NOT NULL, submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
     cursor.execute("CREATE TABLE IF NOT EXISTS employee_training (module_id TEXT NOT NULL, employee_id TEXT NOT NULL, title TEXT NOT NULL, role_tags TEXT NOT NULL, jurisdiction TEXT NOT NULL, source_policy TEXT, duration_min INTEGER, required BOOLEAN, completed BOOLEAN DEFAULT 0, completed_at TEXT, PRIMARY KEY(module_id, employee_id))")
     cursor.execute("CREATE TABLE IF NOT EXISTS meetings (meeting_id TEXT PRIMARY KEY, type TEXT NOT NULL, date TEXT NOT NULL, agenda TEXT NOT NULL, attendees TEXT NOT NULL, minutes TEXT, action_items TEXT, materials TEXT)")
@@ -5613,6 +5666,30 @@ def import_ontology(payload: JsonLdPayload, scope: str = Depends(require_scopes(
         return {"status": "success", "message": "Ontology imported successfully"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+class SettingsPayload(BaseModel):
+    enforce_cross_border_agreements: bool
+
+@app.get("/api/settings/expert")
+def get_expert_settings(scope: str = Depends(require_scopes(["expert"]))):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT value FROM user_settings WHERE key = 'enforce_cross_border_agreements'")
+    row = cursor.fetchone()
+    conn.close()
+    val = (row[0].lower() == 'true') if row else False
+    return {"enforce_cross_border_agreements": val}
+
+@app.post("/api/settings/expert")
+def update_expert_settings(payload: SettingsPayload, scope: str = Depends(require_scopes(["expert"]))):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    val_str = 'true' if payload.enforce_cross_border_agreements else 'false'
+    cursor.execute("INSERT OR REPLACE INTO user_settings (key, value) VALUES ('enforce_cross_border_agreements', ?)", (val_str,))
+    conn.commit()
+    conn.close()
+    return {"status": "success", "enforce_cross_border_agreements": payload.enforce_cross_border_agreements}
+
 
 @app.get("/api/rag/domains")
 def get_rag_domains(scope: str = Depends(require_scopes(["expert"]))):
