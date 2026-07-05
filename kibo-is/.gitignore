@@ -22,3 +22,22 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Runtime & process artifacts
+*.pid
+*.pid.lock
+uvicorn.pid
+
+# SQLite WAL/SHM journal files (ephemeral, never commit)
+*.db-shm
+*.db-wal
+
+# FUSE / macOS temp files
+.fuse_hidden*
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv

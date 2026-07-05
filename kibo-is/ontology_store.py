@@ -60,7 +60,7 @@ def seed_ontology():
     cursor.execute("DELETE FROM ontology_instances")
     cursor.execute("DELETE FROM ontology_edges")
     
-    # 1. Seed Core Classes (Eight Classes)
+    # 1. Seed Core Classes (Eleven Classes — extended from Ontology_builder entities)
     classes = [
         ("Jurisdiction", None),
         ("LegalFramework", None),
@@ -69,7 +69,11 @@ def seed_ontology():
         ("DataCategory", None),
         ("ProcessingActivity", None),
         ("ComplianceObligation", None),
-        ("AssessmentArtifact", None)
+        ("AssessmentArtifact", None),
+        # Added from Ontology_builder discovery engine
+        ("PrivacyTort", None),
+        ("PenaltyExposure", None),
+        ("CrossBorderFramework", None),
     ]
     cursor.executemany("INSERT INTO ontology_classes VALUES (?, ?)", classes)
     
@@ -121,7 +125,28 @@ def seed_ontology():
         ("Law25_PIA", "AssessmentArtifact", "Quebec Law 25 Privacy Impact Assessment", json.dumps({"hasSLAClock": 30})),
         ("Article35_DPIA", "AssessmentArtifact", "GDPR Article 35 Data Protection Impact Assessment", json.dumps({"hasSLAClock": 30})),
         ("CPRA_ADMT", "AssessmentArtifact", "CPRA Automated Decision-Making Assessment", json.dumps({"hasSLAClock": 45})),
-        ("StandardReview", "AssessmentArtifact", "Standard Compliance Review", json.dumps({"hasSLAClock": 60}))
+        ("StandardReview", "AssessmentArtifact", "Standard Compliance Review", json.dumps({"hasSLAClock": 60})),
+
+        # ---- Privacy Torts (from Ontology_builder.py PRIVACY_TORTS) ----
+        ("T_US_Intrusion", "PrivacyTort", "Intrusion upon seclusion (US)", json.dumps({"jurisdiction": "United States"})),
+        ("T_US_PubDisc", "PrivacyTort", "Public disclosure of private facts (US)", json.dumps({"jurisdiction": "United States"})),
+        ("T_US_FalseLight", "PrivacyTort", "False light (US)", json.dumps({"jurisdiction": "United States"})),
+        ("T_US_Approp", "PrivacyTort", "Appropriation of name/likeness (US)", json.dumps({"jurisdiction": "United States"})),
+        ("T_CA_Intrusion", "PrivacyTort", "Intrusion upon seclusion (Canada)", json.dumps({"jurisdiction": "Canada"})),
+        ("T_CA_PubDisc", "PrivacyTort", "Public disclosure of private facts (Canada)", json.dumps({"jurisdiction": "Canada"})),
+        ("T_EU_Infringement", "PrivacyTort", "Infringement of personality rights (EU)", json.dumps({"jurisdiction": "European Union"})),
+        ("T_EU_BreachConf", "PrivacyTort", "Breach of confidentiality (EU)", json.dumps({"jurisdiction": "European Union"})),
+
+        # ---- Penalty / Regulatory Exposure nodes (from Ontology_builder.py PENALTIES) ----
+        ("Pen_OPC_Fed", "PenaltyExposure", "OPC (Federal Canada)", json.dumps({"jurisdiction": "Canada (Federal)", "max_penalty": "CAD 100k/violation"})),
+        ("Pen_FTC", "PenaltyExposure", "FTC (US Federal)", json.dumps({"jurisdiction": "United States", "max_penalty": "USD 43,792/violation"})),
+        ("Pen_EU_DPA", "PenaltyExposure", "EU DPA (European Union)", json.dumps({"jurisdiction": "European Union", "max_penalty": "4% global turnover or EUR 20M"})),
+        ("Pen_CAI_QC", "PenaltyExposure", "CAI Quebec (Law 25)", json.dumps({"jurisdiction": "Quebec, Canada", "max_penalty": "CAD 25M or 4% of worldwide turnover"})),
+
+        # ---- Cross-Border Frameworks (from Ontology_builder.py CROSS_BORDER_AGREEMENTS) ----
+        ("CB_CETA", "CrossBorderFramework", "CETA (Canada-EU)", json.dumps({"parties": ["Canada", "EU"], "type": "Trade Agreement with Data Chapter"})),
+        ("CB_USMCA", "CrossBorderFramework", "USMCA (US-Mexico-Canada)", json.dumps({"parties": ["US", "Canada", "Mexico"], "type": "Trade Agreement with Digital Trade Chapter"})),
+        ("CB_EU_US_DPF", "CrossBorderFramework", "EU-US Data Privacy Framework", json.dumps({"parties": ["EU", "US"], "type": "Adequacy Decision"})),
     ]
     cursor.executemany("INSERT INTO ontology_instances VALUES (?, ?, ?, ?)", instances)
     
@@ -155,12 +180,134 @@ def seed_ontology():
         ("Storage", "Article35_DPIA", "mandatesArtifact"),
         
         ("California", "CPRA_ADMT", "mandatesArtifact"),
-        ("AI_Training", "CPRA_ADMT", "mandatesArtifact")
+        ("AI_Training", "CPRA_ADMT", "mandatesArtifact"),
+
+        # ---- Tort -> Penalty enforcement edges ----
+        ("T_US_Intrusion", "Pen_FTC", "enforcedBy"),
+        ("T_US_PubDisc", "Pen_FTC", "enforcedBy"),
+        ("T_US_FalseLight", "Pen_FTC", "enforcedBy"),
+        ("T_US_Approp", "Pen_FTC", "enforcedBy"),
+        ("T_CA_Intrusion", "Pen_OPC_Fed", "enforcedBy"),
+        ("T_CA_PubDisc", "Pen_OPC_Fed", "enforcedBy"),
+        ("T_EU_Infringement", "Pen_EU_DPA", "enforcedBy"),
+        ("T_EU_BreachConf", "Pen_EU_DPA", "enforcedBy"),
+
+        # ---- Framework -> Penalty regulator edges ----
+        ("PIPEDA", "Pen_OPC_Fed", "regulatedBy"),
+        ("Law_25", "Pen_CAI_QC", "regulatedBy"),
+        ("GDPR", "Pen_EU_DPA", "regulatedBy"),
+        ("CCPA", "Pen_FTC", "regulatedBy"),
+        ("VCDPA", "Pen_FTC", "regulatedBy"),
+        ("TDPSA", "Pen_FTC", "regulatedBy"),
+
+        # ---- Cross-border frameworks -> Transfer artifact ----
+        ("CB_CETA", "Law25_TIA", "triggersArtifact"),
+        ("CB_USMCA", "Law25_TIA", "triggersArtifact"),
+        ("CB_EU_US_DPF", "Article35_DPIA", "triggersArtifact"),
+
+        # ---- Torts connected to Jurisdiction context ----
+        ("CA_Federal", "T_CA_Intrusion", "recognizesTort"),
+        ("CA_Federal", "T_CA_PubDisc", "recognizesTort"),
+        ("EU_Union", "T_EU_Infringement", "recognizesTort"),
+        ("EU_Union", "T_EU_BreachConf", "recognizesTort"),
     ]
     cursor.executemany("INSERT INTO ontology_edges VALUES (?, ?, ?)", edges)
     
     conn.commit()
     conn.close()
+
+# ---------------------------------------------------------------------------
+# Graph-traversal routing (used by route_to_statutory_artifacts)
+# ---------------------------------------------------------------------------
+# State/province -> federal parent, so federal statutes (PIPEDA, HIPAA, FERPA,
+# FTC Act) activate for sub-national transactions.
+JURISDICTION_PARENTS = {
+    "Ontario": "CA_Federal", "Quebec": "CA_Federal", "Alberta": "CA_Federal",
+    "California": "US_Federal", "Texas": "US_Federal", "New_York": "US_Federal",
+    "Illinois": "US_Federal", "Washington": "US_Federal", "Virginia": "US_Federal",
+}
+
+def derive_compliance_routing(jurisdictions, data_categories, activities):
+    """Two-hop ontology traversal:
+
+      context (jurisdictions + data categories + activities)
+        -> active LegalFrameworks   (enforcesFramework / triggersFramework)
+        -> mandated controls        (mandatesControl)
+        -> produced artifacts       (producesArtifact + legacy mandatesArtifact)
+
+    Activation rules (conjunctive gating — avoids e.g. HIPAA firing in Ontario):
+      1. A framework enforced by a context jurisdiction is active, UNLESS it has
+         DataCategory trigger edges and none of them match the context (sector
+         statutes like HIPAA require jurisdiction AND data type).
+      2. A framework with no territorial edge at all (PCI-DSS, SOX, NIST —
+         contractual/sectoral) activates on a data/activity trigger alone.
+    """
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+
+    jurs = {j for j in (jurisdictions or []) if j}
+    for j in list(jurs):
+        parent = JURISDICTION_PARENTS.get(j)
+        if parent:
+            jurs.add(parent)
+    cats = set(data_categories or [])
+    acts = set(activities or [])
+
+    def targets(sources, predicate):
+        if not sources:
+            return set()
+        ph = ",".join("?" * len(sources))
+        cur.execute(
+            f"SELECT DISTINCT target_id FROM ontology_edges "
+            f"WHERE source_id IN ({ph}) AND predicate = ?",
+            (*sources, predicate))
+        return {r[0] for r in cur.fetchall()}
+
+    jur_frameworks = targets(jurs, "enforcesFramework")
+
+    cur.execute("SELECT DISTINCT target_id FROM ontology_edges "
+                "WHERE predicate = 'enforcesFramework'")
+    territorially_bound = {r[0] for r in cur.fetchall()}
+
+    # framework -> data categories that gate it
+    cur.execute("""SELECT e.source_id, e.target_id FROM ontology_edges e
+                   JOIN ontology_instances i ON i.instance_id = e.source_id
+                   WHERE e.predicate = 'triggersFramework'
+                     AND i.class_id = 'DataCategory'""")
+    data_gates = {}
+    for src, tgt in cur.fetchall():
+        data_gates.setdefault(tgt, set()).add(src)
+
+    active = set()
+    for fw in jur_frameworks:
+        gate = data_gates.get(fw)
+        if gate and not (gate & cats):
+            continue
+        active.add(fw)
+
+    trig_frameworks = targets(cats | acts, "triggersFramework")
+    active |= (trig_frameworks - territorially_bound)
+
+    controls = targets(active, "mandatesControl")
+    artifacts = targets(controls, "producesArtifact")
+
+    # Legacy direct mandatesArtifact edges, gated by their parent framework so a
+    # bare activity match (e.g. "Collection" in Illinois) can't fire a Quebec PIA.
+    ARTIFACT_GATE = {
+        "PHIPA_TRA": "PHIPA", "Law25_PIA": "Law_25", "Law25_TIA": "Law_25",
+        "Article35_DPIA": "GDPR", "CPRA_ADMT": "CCPA",
+    }
+    for art in targets(jurs | cats | acts, "mandatesArtifact"):
+        gate_fw = ARTIFACT_GATE.get(art)
+        if gate_fw is None or gate_fw in active:
+            artifacts.add(art)
+
+    conn.close()
+    return {
+        "active_frameworks": sorted(active),
+        "mandated_controls": sorted(controls),
+        "mandated_artifacts": sorted(artifacts),
+    }
 
 def export_jsonld():
     conn = sqlite3.connect(DB_FILE)

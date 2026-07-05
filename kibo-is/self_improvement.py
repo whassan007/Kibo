@@ -10,6 +10,7 @@ ALLOWED_ADAPTATION_DOMAINS = [
     "risk_weight_tuning",
     "sla_threshold_adjustments",
     "rule_engine_conditions",
+    "ontology_network_growth",
 ]
 
 class KiboState(TypedDict):

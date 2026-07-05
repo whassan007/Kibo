@@ -1,11 +1,28 @@
 @import "tailwindcss";
+@config "../tailwind.config.js";
 
 @layer base {
   body {
-    @apply bg-[#FAFAFA] text-[#111827] antialiased selection:bg-blue-600 selection:text-white;
-    font-family: 'Inter', sans-serif;
+    @apply bg-bauhaus-black text-bauhaus-white font-sans antialiased selection:bg-bauhaus-white selection:text-bauhaus-black;
   }
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-  }
+}
+
+/* Bauhaus Grid and Lines styling */
+.bauhaus-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, #E5E2D9 1px, transparent 1px),
+    linear-gradient(to bottom, #E5E2D9 1px, transparent 1px);
+}
+
+.hairline-border {
+  @apply border border-bauhaus-mediumgrey;
+}
+
+.hairline-border-r {
+  @apply border-r border-bauhaus-mediumgrey;
+}
+
+.hairline-border-b {
+  @apply border-b border-bauhaus-mediumgrey;
 }

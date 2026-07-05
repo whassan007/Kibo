@@ -143,6 +143,28 @@ from rule_engine import RuleEngine
 
 app = FastAPI(title="KIBO.IS Reactive API Gateway", version="1.0.0")
 
+def start_sources_sync_loop():
+    import threading
+    import time
+    def loop():
+        time.sleep(5)
+        while True:
+            try:
+                from sources_sync_agent import parse_sources_md, sync_sources_to_db
+                sources = parse_sources_md()
+                sync_sources_to_db(sources)
+            except Exception as e:
+                print(f"Error in sources sync loop: {e}")
+            time.sleep(60)
+            
+    t = threading.Thread(target=loop, daemon=True)
+    t.start()
+
+@app.on_event("startup")
+def on_startup():
+    start_sources_sync_loop()
+
+
 # Setup CORS for local React dashboard development
 app.add_middleware(
     CORSMiddleware,
@@ -278,53 +300,59 @@ def node_parse_intake_local(state: AgentState) -> Dict[str, Any]:
         "retry_count": 0
     }
 
-# Parallel dispatch node router based on mandatesArtifact ontology edges
+# Parallel dispatch node router — full ontology graph traversal:
+# jurisdiction/data/activity -> enforcesFramework/triggersFramework -> framework
+# -> mandatesControl -> control -> producesArtifact (+ legacy mandatesArtifact).
+# Sector statutes are conjunctively gated (HIPAA needs US jurisdiction AND PHI).
+
+# Legacy artifact-id -> LangGraph node (direct mandatesArtifact edges)
+ARTIFACT_NODE_MAP = {
+    "PHIPA_TRA": "phipa_tra_node",
+    "Law25_TIA": "law25_tia_node",
+    "Law25_PIA": "law25_pia_node",
+    "Article35_DPIA": "article35_dpia_node",
+    "CPRA_ADMT": "cpra_admt_node",
+}
+
+# Ontology control-id -> LangGraph node. Controls without an agent node yet
+# still surface in intake["mandated_controls"] for the standard review / HITL.
+CONTROL_NODE_MAP = {
+    "H3_TRA_PHIPA": "phipa_tra_node",
+    "H3_AgentAgreement_PHIPA": "phipa_tra_node",
+    "H3_TIA_Law25": "law25_tia_node",
+    "H3_DefaultPrivacy_Law25": "law25_pia_node",
+    "H3_BioDB_Reg_Law25": "law25_pia_node",
+    "H3_TransferMechanism_GDPR": "article35_dpia_node",
+    "H3_AI_Gov": "cpra_admt_node",
+}
+
 def route_to_statutory_artifacts(state: AgentState):
     intake_data = state.get("intake")
     if not intake_data:
         return ["standard_review_node"]
-        
+
     jur = intake_data.get("origin_jurisdiction")
+    dest = intake_data.get("destination_jurisdiction")
     categories = intake_data.get("data_categories", [])
     activities = intake_data.get("activities", [])
-    
-    mandated_artifacts = set()
+
+    routing = {"active_frameworks": [], "mandated_controls": [], "mandated_artifacts": []}
     try:
-        conn_db = sqlite3.connect(DB_FILE)
-        cursor = conn_db.cursor()
-        
-        # Query mandated artifacts
-        criteria = [jur] + categories + activities
-        placeholders = ",".join(["?"] * len(criteria))
-        
-        cursor.execute(f"""
-            SELECT target_id FROM ontology_edges 
-            WHERE source_id IN ({placeholders}) AND predicate = 'mandatesArtifact'
-        """, criteria)
-        
-        for row in cursor.fetchall():
-            mandated_artifacts.add(row[0])
-        conn_db.close()
+        from ontology_store import derive_compliance_routing
+        routing = derive_compliance_routing([jur, dest], categories, activities)
     except Exception as e:
-        print(f"[Ontology Router Error] {e}")
-        
-    node_map = {
-        "PHIPA_TRA": "phipa_tra_node",
-        "Law25_TIA": "law25_tia_node",
-        "Law25_PIA": "law25_pia_node",
-        "Article35_DPIA": "article35_dpia_node",
-        "CPRA_ADMT": "cpra_admt_node"
-    }
-    
-    routes = []
-    for art in mandated_artifacts:
-        if art in node_map:
-            routes.append(node_map[art])
-            
-    # Cross-border logic check (Quebec -> Non-adequate)
-    dest = intake_data.get("destination_jurisdiction")
+        print(f"[Ontology Router Error] graph traversal failed: {e}")
+
+    routes = set()
+    for art in routing["mandated_artifacts"]:
+        if art in ARTIFACT_NODE_MAP:
+            routes.add(ARTIFACT_NODE_MAP[art])
+    for ctl in routing["mandated_controls"]:
+        if ctl in CONTROL_NODE_MAP:
+            routes.add(CONTROL_NODE_MAP[ctl])
+
+    # Cross-border logic check (Quebec -> Non-adequate destination)
     if dest and jur == "Quebec":
-        # Check adequacy
         is_adequate = False
         try:
             conn_db = sqlite3.connect(DB_FILE)
@@ -335,13 +363,22 @@ def route_to_statutory_artifacts(state: AgentState):
         except Exception as e:
             print(e)
         if not is_adequate:
-            routes.append("law25_tia_node")
-            
+            routes.add("law25_tia_node")
+
     if not routes:
-        routes.append("standard_review_node")
-        
+        routes.add("standard_review_node")
+
+    # Enrich intake so downstream agents + HITL reviewers see the full derivation
+    enriched_intake = dict(intake_data)
+    enriched_intake["active_frameworks"] = routing["active_frameworks"]
+    enriched_intake["mandated_controls"] = routing["mandated_controls"]
+    enriched_intake["mandated_artifacts"] = routing["mandated_artifacts"]
+
+    print(f"[Ontology Router] frameworks={routing['active_frameworks']} "
+          f"controls={len(routing['mandated_controls'])} routes={sorted(routes)}")
+
     # LangGraph parallel branch mapping using Send API
-    return [Send(r, {"id": state["id"], "intake": state["intake"], "artifacts": []}) for r in set(routes)]
+    return [Send(r, {"id": state["id"], "intake": enriched_intake, "artifacts": []}) for r in sorted(routes)]
 
 # Ollama routing — local gemma4 when prompt fits in 4096 ctx, waelbot reasoning-core otherwise
 _OLLAMA_LOCAL  = "http://127.0.0.1:11434"
@@ -5712,12 +5749,87 @@ def get_rag_retrievals(workflow_id: str = "", scope: str = Depends(require_scope
 
 @app.get("/api/sources")
 def get_authoritative_sources(scope: str = Depends(require_scopes(["expert"]))):
-    # Authoritative source registry
-    return [
-        { "id": "SRC-001", "tier": "Tier 1 - Binding Law", "jurisdiction": "Quebec, CA", "statute": "Law 25", "version": "2023 Edition", "last_verified": "2026-07-01", "hash": "SHA256:b8c983ea" },
-        { "id": "SRC-002", "tier": "Tier 1 - Binding Law", "jurisdiction": "Canada (Federal)", "statute": "PIPEDA", "version": "Consolidated", "last_verified": "2026-07-02", "hash": "SHA256:d9b2089f" },
-        { "id": "SRC-003", "tier": "Tier 2 - Guidance", "jurisdiction": "European Union", "statute": "EDPB Dark Patterns Guide", "version": "v3.0", "last_verified": "2026-06-28", "hash": "SHA256:f45bdcca" }
-    ]
+    # Dynamic Authoritative source registry from SQLite ontology
+    import hashlib
+    import re
+    
+    def extract_jurisdiction_heuristics(label, node_id):
+        label_lower = label.lower()
+        if "us health" in label_lower or "hipaa" in label_lower:
+            return "United States (Health)"
+        elif "(ny)" in label_lower or "new york" in label_lower:
+            return "New York, US"
+        elif "(wa)" in label_lower:
+            return "Washington, US"
+        elif "(il)" in label_lower or "bipa" in label_lower:
+            return "Illinois, US"
+        elif "(co)" in label_lower or "colorado" in label_lower:
+            return "Colorado, US"
+        elif "nyc" in label_lower or "new york city" in label_lower:
+            return "New York City, US"
+        elif "uk" in label_lower:
+            return "United Kingdom"
+        elif "(au)" in label_lower or "australia" in label_lower:
+            return "Australia"
+        elif "(sg)" in label_lower or "singapore" in label_lower:
+            return "Singapore"
+        elif "quebec" in label_lower:
+            return "Quebec, CA"
+        elif "ontario" in label_lower:
+            return "Ontario, CA"
+        elif "canada" in label_lower or "pipeda" in label_lower or "cppa" in label_lower:
+            return "Canada (Federal)"
+        elif "eu" in label_lower or "european" in label_lower:
+            return "European Union"
+        elif "global" in label_lower or "iso" in label_lower:
+            return "Global"
+        return "Multiple / Global"
+
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT instance_id, class_id, label, properties_json FROM ontology_instances")
+    rows = cursor.fetchall()
+    conn.close()
+
+    sources = []
+    for inst_id, cls, label, props_json in rows:
+        if inst_id.startswith("H1_") or inst_id.startswith("T_") or cls == "LegalFramework":
+            if inst_id.startswith("T_"):
+                tier = "Tier 3 - Common Law Tort"
+            elif "ISO" in inst_id or "NIST" in inst_id:
+                tier = "Tier 2 - Voluntary Standard"
+            else:
+                tier = "Tier 1 - Binding Law"
+            
+            props = json.loads(props_json) if props_json else {}
+            jurisdiction = props.get("jurisdiction") or extract_jurisdiction_heuristics(label, inst_id)
+            
+            statute = label
+            # Clean up trailing parentheses/tags
+            statute = re.sub(r'\s*\([^)]*\)', '', statute)
+            statute = re.sub(r'\s*–.*$', '', statute)
+            
+            h = hashlib.sha256(inst_id.encode('utf-8')).hexdigest()[:8]
+            
+            sources.append({
+                "id": inst_id.replace("H1_", "SRC-").replace("T_", "SRC-"),
+                "tier": tier,
+                "jurisdiction": jurisdiction,
+                "statute": statute.strip(),
+                "version": props.get("version", "Consolidated"),
+                "last_verified": props.get("last_verified", "2026-07-04"),
+                "hash": f"SHA256:{h}",
+                "url": props.get("url")
+            })
+            
+    if not sources:
+        sources = [
+            { "id": "SRC-001", "tier": "Tier 1 - Binding Law", "jurisdiction": "Quebec, CA", "statute": "Law 25", "version": "2023 Edition", "last_verified": "2026-07-01", "hash": "SHA256:b8c983ea" },
+            { "id": "SRC-002", "tier": "Tier 1 - Binding Law", "jurisdiction": "Canada (Federal)", "statute": "PIPEDA", "version": "Consolidated", "last_verified": "2026-07-02", "hash": "SHA256:d9b2089f" }
+        ]
+        
+    sources.sort(key=lambda s: s["id"])
+    return sources
 
 @app.get("/api/sources/{id}/changes")
 def get_source_changes(id: str, scope: str = Depends(require_scopes(["expert"]))):
@@ -5731,6 +5843,120 @@ def get_source_changes(id: str, scope: str = Depends(require_scopes(["expert"]))
             "new": "if not payload.get('consent_bilingual'): return False"
         }
     }
+
+@app.get("/api/agents")
+def list_all_agents(scope: str = Depends(require_scopes(["expert"]))):
+    """Return the full canonical agent roster shown in the AI Agent Monitor."""
+    return [
+        # ── Core Orchestration ──────────────────────────────────────────────
+        {
+            "name": "Ingestion Agent",          "version": "v2.1.4", "stage": "active",
+            "category": "Core Orchestration",   "queue": 0,  "runtime": "1.2s",
+            "cost": "$0.004",  "success": "99.8%", "failure": "0.2%",
+            "memory": "124MB", "cpu": "4%",    "tokens": "1.5k",
+            "model": "gemma4:latest",           "schedule": "event-driven",
+            "description": "Parses and classifies inbound compliance signals from all channels."
+        },
+        {
+            "name": "Adaptation Coder",         "version": "v3.0.2", "stage": "active",
+            "category": "Core Orchestration",   "queue": 1,  "runtime": "4.8s",
+            "cost": "$0.015",  "success": "97.2%", "failure": "2.8%",
+            "memory": "512MB", "cpu": "68%",   "tokens": "8.4k",
+            "model": "qwen3-coder:30b",         "schedule": "event-driven",
+            "description": "Generates and validates compliance code patches via LangGraph routing."
+        },
+        {
+            "name": "Self-Critique Auditor",    "version": "v2.2.0", "stage": "active",
+            "category": "Core Orchestration",   "queue": 0,  "runtime": "2.5s",
+            "cost": "$0.008",  "success": "98.5%", "failure": "1.5%",
+            "memory": "256MB", "cpu": "12%",   "tokens": "3.2k",
+            "model": "reasoning-core:latest",   "schedule": "event-driven",
+            "description": "Reviews each adaptation output for legal soundness before HITL gate."
+        },
+        {
+            "name": "Deployment Controller",    "version": "v1.8.1", "stage": "active",
+            "category": "Core Orchestration",   "queue": 2,  "runtime": "0.8s",
+            "cost": "$0.002",  "success": "99.9%", "failure": "0.1%",
+            "memory": "96MB",  "cpu": "2%",    "tokens": "500",
+            "model": "gemma4:latest",           "schedule": "event-driven",
+            "description": "Manages safe deployment lifecycle with dual-authority rollback."
+        },
+        # ── Sensing Layer ────────────────────────────────────────────────────
+        {
+            "name": "Regulatory Sensing Agent", "version": "v1.3.0", "stage": "active",
+            "category": "Sensing",              "queue": 0,  "runtime": "8.4s",
+            "cost": "$0.006",  "success": "98.1%", "failure": "1.9%",
+            "memory": "188MB", "cpu": "8%",    "tokens": "4.1k",
+            "model": "gemma4:latest",           "schedule": "0 0 * * *",
+            "description": "Monitors regulatory feeds (OPC, FTC, EDPB) for new guidance and law changes."
+        },
+        {
+            "name": "Vendor Sensing Agent",     "version": "v1.1.2", "stage": "active",
+            "category": "Sensing",              "queue": 0,  "runtime": "3.1s",
+            "cost": "$0.003",  "success": "96.5%", "failure": "3.5%",
+            "memory": "140MB", "cpu": "5%",    "tokens": "2.0k",
+            "model": "gemma4:latest",           "schedule": "0 12 * * *",
+            "description": "Audits third-party vendor data processing agreements for non-compliance."
+        },
+        {
+            "name": "Internal Systems Sensing Agent", "version": "v2.0.1", "stage": "active",
+            "category": "Sensing",              "queue": 1,  "runtime": "1.9s",
+            "cost": "$0.002",  "success": "99.3%", "failure": "0.7%",
+            "memory": "112MB", "cpu": "3%",    "tokens": "900",
+            "model": "gemma4:latest",           "schedule": "*/30 * * * *",
+            "description": "Continuous internal telemetry monitoring and consent state verification."
+        },
+        {
+            "name": "Threat Sensing Agent",     "version": "v1.4.5", "stage": "active",
+            "category": "Sensing",              "queue": 0,  "runtime": "5.5s",
+            "cost": "$0.009",  "success": "97.8%", "failure": "2.2%",
+            "memory": "222MB", "cpu": "18%",   "tokens": "5.8k",
+            "model": "reasoning-core:latest",   "schedule": "0 */4 * * *",
+            "description": "Correlates threat intelligence with data exposure and breach risk vectors."
+        },
+        {
+            "name": "Web & Consent Sensing Agent", "version": "v1.2.3", "stage": "active",
+            "category": "Sensing",              "queue": 0,  "runtime": "2.8s",
+            "cost": "$0.004",  "success": "98.9%", "failure": "1.1%",
+            "memory": "160MB", "cpu": "6%",    "tokens": "2.3k",
+            "model": "gemma4:latest",           "schedule": "0 2 * * *",
+            "description": "Audits consent banners, cookie states, and opt-out mechanisms across web surfaces."
+        },
+        # ── Compliance Workflow Agents ────────────────────────────────────────
+        {
+            "name": "Risk Register Agent",      "version": "v1.0.5", "stage": "active",
+            "category": "Compliance Workflow",  "queue": 0,  "runtime": "3.6s",
+            "cost": "$0.007",  "success": "98.4%", "failure": "1.6%",
+            "memory": "175MB", "cpu": "9%",    "tokens": "3.7k",
+            "model": "reasoning-core:latest",   "schedule": "0 6 * * *",
+            "description": "Maintains and scores the live risk register across all active frameworks."
+        },
+        {
+            "name": "US DSAR Rights Agent",     "version": "v2.3.0", "stage": "active",
+            "category": "Compliance Workflow",  "queue": 0,  "runtime": "6.1s",
+            "cost": "$0.011",  "success": "99.1%", "failure": "0.9%",
+            "memory": "210MB", "cpu": "11%",   "tokens": "6.2k",
+            "model": "qwen3-coder:30b",         "schedule": "event-driven",
+            "description": "Handles US data subject access requests under CCPA/VCDPA with auto-response generation."
+        },
+        {
+            "name": "EU Data Transfer Auditor", "version": "v1.5.1", "stage": "active",
+            "category": "Compliance Workflow",  "queue": 0,  "runtime": "7.2s",
+            "cost": "$0.013",  "success": "97.6%", "failure": "2.4%",
+            "memory": "240MB", "cpu": "14%",   "tokens": "7.4k",
+            "model": "reasoning-core:latest",   "schedule": "event-driven",
+            "description": "Validates EU-US data transfers against DPF adequacy requirements and SCCs."
+        },
+        # ── Governance ────────────────────────────────────────────────────────
+        {
+            "name": "Ontology Sync Agent",      "version": "v1.0.0", "stage": "active",
+            "category": "Governance",           "queue": 0,  "runtime": "2.1s",
+            "cost": "$0.000",  "success": "100%",  "failure": "0.0%",
+            "memory": "64MB",  "cpu": "1%",    "tokens": "0",
+            "model": "system",                  "schedule": "on-demand",
+            "description": "Parses authoritative Sources.md and syncs URLs and entities to the ontology store."
+        },
+    ]
 
 @app.get("/api/agents/{name}/lifecycle")
 def get_agent_lifecycle(name: str, scope: str = Depends(require_scopes(["expert"]))):

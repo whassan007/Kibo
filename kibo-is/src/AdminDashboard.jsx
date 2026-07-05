@@ -4,11 +4,13 @@ import {
   Terminal, ShieldAlert, Cpu, BookOpen, Clock, Play, FileText, Check, CheckSquare,
   Square, Edit, Save, List, UserCheck, Shield, ChevronRight, X, ArrowRight, GitBranch,
   FileCode, CheckCircle, AlertOctagon, HelpCircle, HardDrive, RefreshCw, BarChart2,
-  Lock, RefreshCcw, Download, Info, Search, Filter, Users, Globe, Trash2, ArrowLeftRight
+  Lock, RefreshCcw, Download, Info, Search, Filter, Users, Globe, Trash2, ArrowLeftRight,
+  Network
 } from 'lucide-react';
 import { PRIVACY_GUIDE_DATA } from './privacy_guide_data';
 import UserGovernanceCockpit from './UserGovernanceCockpit';
 import ComplianceCoverageMap from './ComplianceCoverageMap';
+import OntologyVisualizer from './components/OntologyVisualizer';
 
 export default function AdminDashboard({
   API_BASE,
@@ -24,6 +26,66 @@ export default function AdminDashboard({
   setSimIsRunning
 }) {
   const [adminTab, setAdminTab] = useState('dashboard');
+  const [enforceCrossBorder, setEnforceCrossBorder] = useState(false);
+  const [sources, setSources] = useState([]);
+  const [loadingSources, setLoadingSources] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/sources`, {
+      headers: {
+        'x-kibo-scope': 'expert',
+        'Authorization': `Bearer ${localStorage.getItem('kibo_token') || 'mock-expert-token'}`
+      }
+    })
+      .then(r => {
+        if (!r.ok) {
+          console.error(`Sources API returned ${r.status}`);
+          return [];
+        }
+        return r.json();
+      })
+      .then(d => {
+        setSources(Array.isArray(d) ? d : []);
+        setLoadingSources(false);
+      })
+      .catch(err => {
+        console.error("Error fetching sources:", err);
+        setLoadingSources(false);
+      });
+  }, [API_BASE]);
+
+  useEffect(() => {
+    setLoadingAgents(true);
+    fetch(`${API_BASE}/api/agents`, {
+      headers: { 'x-kibo-scope': 'expert' }
+    })
+      .then(r => {
+        if (!r.ok) { console.error(`Agents API ${r.status}`); return []; }
+        return r.json();
+      })
+      .then(d => { setAgents(Array.isArray(d) ? d : []); setLoadingAgents(false); })
+      .catch(err => { console.error('Error fetching agents:', err); setLoadingAgents(false); });
+  }, [API_BASE]);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/settings/expert`)
+      .then(r => r.json())
+      .then(d => setEnforceCrossBorder(d.enforce_cross_border_agreements || false))
+      .catch(err => console.error("Error fetching settings:", err));
+  }, [API_BASE]);
+
+  const handleToggleEnforceCrossBorder = async (val) => {
+    setEnforceCrossBorder(val);
+    try {
+      await fetch(`${API_BASE}/api/settings/expert`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enforce_cross_border_agreements: val })
+      });
+    } catch (err) {
+      console.error("Error saving settings:", err);
+    }
+  };
   const [selectedNode, setSelectedNode] = useState('analysis');
   const [activeCycleStep, setActiveCycleStep] = useState(null);
   const [diffMode, setDiffMode] = useState(false);
@@ -58,12 +120,8 @@ export default function AdminDashboard({
     { id: 'TR-104', timestamp: '2026-07-02 22:15', priority: 'low', source: 'ISO Auditer', framework: 'ISO 27701', jurisdiction: 'Global', client: 'All', confidence: '95%', impact: 'Low', status: 'Completed' }
   ]);
 
-  const [agents, setAgents] = useState([
-    { name: 'Ingestion Agent', version: 'v2.1.4', status: 'idle', queue: 0, runtime: '1.2s', cost: '$0.004', success: '99.8%', failure: '0.2%', memory: '124MB', cpu: '4%', tokens: '1.5k', stage: 'active' },
-    { name: 'Adaptation Coder', version: 'v3.0.2', status: 'processing', queue: 1, runtime: '4.8s', cost: '$0.015', success: '97.2%', failure: '2.8%', memory: '512MB', cpu: '68%', tokens: '8.4k', stage: 'active' },
-    { name: 'Self-Critique Auditor', version: 'v2.2.0', status: 'idle', queue: 0, runtime: '2.5s', cost: '$0.008', success: '98.5%', failure: '1.5%', memory: '256MB', cpu: '12%', tokens: '3.2k', stage: 'active' },
-    { name: 'Deployment Controller', version: 'v1.8.1', status: 'waiting', queue: 2, runtime: '0.8s', cost: '$0.002', success: '99.9%', failure: '0.1%', memory: '96MB', cpu: '2%', tokens: '500', stage: 'active' }
-  ]);
+  const [agents, setAgents] = useState([]);
+  const [loadingAgents, setLoadingAgents] = useState(true);
 
   const [deployments, setDeployments] = useState([
     { version: 'v2.8.4-rel', environment: 'production', status: 'active', proposed_by: 'Adaptation Coder', approved_by: 'CPO (HITL)', timestamp: '2026-07-03 01:16', commit: '89a0fcdb', health: 'Healthy', rollbackAvailable: true },
@@ -181,14 +239,85 @@ export default function AdminDashboard({
     }
   };
 
+  // Group all RAG Documents dynamically from sources & static guide
+  const allRAGDocsGrouped = useMemo(() => {
+    const laws = [];
+    (legalLibrary || []).forEach(item => {
+      laws.push({
+        name: `${item.clause_id}: ${item.legislation.toUpperCase().replace('_', ' ')}`,
+        effective: "2026-07-01 (Current)",
+        details: item.clause_text,
+        scope: item.keywords
+      });
+    });
+    PRIVACY_GUIDE_DATA.sections.forEach(sec => {
+      if (sec.id !== 'enforcement') {
+        sec.items.forEach(item => {
+          laws.push({
+            name: item.name,
+            effective: item.effective,
+            details: item.details,
+            scope: item.scope
+          });
+        });
+      }
+    });
+
+    const enforcementSec = PRIVACY_GUIDE_DATA.sections.find(s => s.id === 'enforcement');
+    const guidance = [];
+    if (enforcementSec) {
+      enforcementSec.items.forEach(item => {
+        guidance.push({
+          name: item.name,
+          effective: item.effective,
+          details: item.details,
+          scope: item.scope
+        });
+      });
+    }
+    guidance.push({
+      name: "EDPB Guidelines 05/2020 on Consent",
+      effective: "May 2020",
+      details: "Guidelines clarify valid consent requirements under GDPR, specifically regarding cookie walls and clear affirmative actions.",
+      scope: "Consent, Cookies, EU"
+    });
+    guidance.push({
+      name: "OPC Guide to CASL Consent",
+      effective: "2024-11",
+      details: "Detailed guidance on implied vs express consent under CASL for commercial electronic messages.",
+      scope: "CASL, Consent, Canada"
+    });
+
+    const case_law = [
+      { name: "Schrems II (C-311/18)", effective: "July 16, 2020", details: "CJEU invalidated the EU-US Privacy Shield due to concerns over US surveillance laws and surveillance safeguards.", scope: "Data Transfers, EU-US, SCCs" },
+      { name: "Fashion ID (C-40/17)", effective: "July 29, 2019", details: "A website operator embedding a Facebook 'Like' button is a joint controller with Facebook for collection and transmission of data.", scope: "Joint Controller, Cookies, Plugins" },
+      { name: "Google Spain (C-131/12)", effective: "May 13, 2014", details: "Established the Right to be Forgotten (RTBF), allowing individuals to request removal of search results related to their name.", scope: "RTBF, Search, Privacy Rights" }
+    ];
+
+    const policies = [
+      { name: "Enterprise Privacy Policy v4.2", effective: "2026-06-15", details: "Defines organizational principles for data minimization, consent management, DSAR response SLAs, and data retention windows.", scope: "Global Privacy Policy, Data Governance" },
+      { name: "Incident Response Playbook v2.1", effective: "2026-01-10", details: "Operational procedures for security incident detection, logging, escalation, reporting to regulators (OPC/DPAs) within 72 hours.", scope: "Incident Management, Breach Notification" },
+      { name: "Vendor Management Standard", effective: "2026-04-01", details: "Mandates due diligence, security assessments (SOC 2 verification), and standard DPA execution before onboarding processors.", scope: "Vendor Risk, DPAs, Security Verification" }
+    ];
+
+    const ux_patterns = [
+      { name: "Bilingual Consent Banner Pattern", effective: "2026-07-02", details: "Bilingual opt-in consent templates designed for Quebec Law 25 campaigns, featuring clear yes/no toggles in French and English.", scope: "UX/UI, Consent, Bilingual, Law 25" },
+      { name: "DSAR Request Intake Form", effective: "2025-09-12", details: "User-friendly identity verification and request submission flow for exercising access, rectification, or deletion rights.", scope: "DSAR, User Rights, UX Flow" },
+      { name: "B2B Vendor Onboarding Wizard", effective: "2026-03-20", details: "B2B onboarding form collecting compliance attestations, certification details, and DPA agreements automatically.", scope: "Onboarding, Vendor UX, Automation" }
+    ];
+
+    return { laws, guidance, case_law, policies, ux_patterns };
+  }, [legalLibrary]);
+
   // Filtered RAG Documents
   const filteredRAGDocs = useMemo(() => {
-    const allItems = PRIVACY_GUIDE_DATA.sections.find(s => s.id === selectedRAGDomain)?.items || [];
-    return allItems.filter(doc => 
-      doc.name.toLowerCase().includes(ragSearchQuery.toLowerCase()) || 
-      doc.scope.toLowerCase().includes(ragSearchQuery.toLowerCase())
+    const docs = allRAGDocsGrouped[selectedRAGDomain] || [];
+    return docs.filter(doc => 
+      (doc.name || '').toLowerCase().includes(ragSearchQuery.toLowerCase()) || 
+      (doc.scope || '').toLowerCase().includes(ragSearchQuery.toLowerCase()) ||
+      (doc.details || '').toLowerCase().includes(ragSearchQuery.toLowerCase())
     );
-  }, [selectedRAGDomain, ragSearchQuery]);
+  }, [allRAGDocsGrouped, selectedRAGDomain, ragSearchQuery]);
 
   // Filtered Audits
   const filteredAuditsList = useMemo(() => {
@@ -227,7 +356,8 @@ export default function AdminDashboard({
               { id: 'agents', label: 'AI Agent Monitor', icon: Cpu },
               { id: 'audits', label: 'Audit History', icon: FileText },
               { id: 'user_governance', label: 'User Governance Cockpit', icon: Users },
-              { id: 'compliance_map', label: 'Compliance Coverage Map', icon: Globe }
+              { id: 'compliance_map', label: 'Compliance Coverage Map', icon: Globe },
+              { id: 'ontology', label: 'Compliance Net Ontology', icon: Network }
             ].map(tab => {
               const Icon = tab.icon;
               const isActive = adminTab === tab.id;
@@ -263,6 +393,29 @@ export default function AdminDashboard({
             <div>Vector Store: SQLite RAG</div>
           </div>
         </div>
+
+        {/* Expert Settings */}
+        <div className="bg-gray-50 border border-[#E5E7EB] rounded-xl p-3 space-y-2 mt-2 shadow-xs">
+          <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-[#E5E7EB] pb-1">
+            Expert Settings
+          </div>
+          <div className="flex items-center justify-between text-[10px]">
+            <div className="space-y-0.5">
+              <span className="font-bold text-gray-700 block leading-tight">Enforce Cross-Border</span>
+              <span className="text-[8px] text-gray-400 block leading-snug">Requires signed SCCs/DPAs</span>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={enforceCrossBorder}
+                onChange={(e) => handleToggleEnforceCrossBorder(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-8 h-4 bg-gray-250 rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-4"></div>
+            </label>
+          </div>
+        </div>
+
       </div>
 
       {/* Main Workspace */}
@@ -738,11 +891,11 @@ export default function AdminDashboard({
               {/* Five Domain Cards */}
               <div className="grid grid-cols-5 gap-3">
                 {[
-                  { id: 'laws', title: 'Laws & Regulations', count: 24, sync: '2m ago', confidence: 98, color: 'border-blue-300' },
-                  { id: 'guidance', title: 'Regulatory Guidance', count: 48, sync: '10m ago', confidence: 95, color: 'border-purple-300' },
-                  { id: 'case_law', title: 'Case Law & Precedent', count: 18, sync: '1h ago', confidence: 92, color: 'border-amber-300' },
-                  { id: 'policies', title: 'Internal Policies', count: 12, sync: '2h ago', confidence: 97, color: 'border-rose-300' },
-                  { id: 'ux_patterns', title: 'Approved UX Patterns', count: 36, sync: '1d ago', confidence: 96, color: 'border-emerald-300' }
+                  { id: 'laws', title: 'Laws & Regulations', count: allRAGDocsGrouped.laws.length, sync: '2m ago', confidence: 98, color: 'border-blue-300' },
+                  { id: 'guidance', title: 'Regulatory Guidance', count: allRAGDocsGrouped.guidance.length, sync: '10m ago', confidence: 95, color: 'border-purple-300' },
+                  { id: 'case_law', title: 'Case Law & Precedent', count: allRAGDocsGrouped.case_law.length, sync: '1h ago', confidence: 92, color: 'border-amber-300' },
+                  { id: 'policies', title: 'Internal Policies', count: allRAGDocsGrouped.policies.length, sync: '2h ago', confidence: 97, color: 'border-rose-300' },
+                  { id: 'ux_patterns', title: 'Approved UX Patterns', count: allRAGDocsGrouped.ux_patterns.length, sync: '1d ago', confidence: 96, color: 'border-emerald-300' }
                 ].map(domain => (
                   <div
                     key={domain.id}
@@ -811,20 +964,45 @@ export default function AdminDashboard({
                       </tr>
                     </thead>
                     <tbody>
-                      {[
-                        { id: 'SRC-001', tier: 'Tier 1 - Binding Law', statute: 'Law 25', jurisdiction: 'Quebec, CA', version: '2023 Edition', date: '2026-07-01', hash: 'SHA256:b8c983ea' },
-                        { id: 'SRC-002', tier: 'Tier 1 - Binding Law', statute: 'PIPEDA', jurisdiction: 'Canada (Federal)', version: 'Consolidated', date: '2026-07-02', hash: 'SHA256:d9b2089f' }
-                      ].map((src, i) => (
-                        <tr key={i} className="border-b border-gray-100 last:border-b-0">
-                          <td className="py-2.5 font-bold font-mono text-blue-600">{src.id}</td>
-                          <td className="py-2.5 text-purple-600">{src.tier}</td>
-                          <td className="py-2.5 font-semibold text-gray-900">{src.statute}</td>
-                          <td className="py-2.5">{src.jurisdiction}</td>
-                          <td className="py-2.5 font-mono">{src.version}</td>
-                          <td className="py-2.5">{src.date}</td>
-                          <td className="py-2.5 text-right font-mono text-gray-400">{src.hash}</td>
+                      {loadingSources ? (
+                        <tr>
+                          <td colSpan="7" className="text-center py-4 text-xs text-gray-400 font-bold uppercase tracking-wider">
+                            Loading Legal Sources Registry...
+                          </td>
                         </tr>
-                      ))}
+                      ) : sources.length === 0 ? (
+                        <tr>
+                          <td colSpan="7" className="text-center py-4 text-xs text-gray-450 italic">
+                            No sources registered in the ontology
+                          </td>
+                        </tr>
+                      ) : (
+                        sources.map((src, i) => (
+                          <tr key={i} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/50">
+                            <td className="py-2.5 font-bold font-mono text-blue-600">{src.id}</td>
+                            <td className="py-2.5 text-purple-600 text-[10px]">{src.tier}</td>
+                            <td className="py-2.5 font-semibold text-gray-900">
+                              {src.url ? (
+                                <a
+                                  href={src.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1"
+                                >
+                                  {src.statute}
+                                  <Globe size={11} className="text-blue-500 shrink-0" />
+                                </a>
+                              ) : (
+                                src.statute
+                              )}
+                            </td>
+                            <td className="py-2.5">{src.jurisdiction}</td>
+                            <td className="py-2.5 font-mono">{src.version}</td>
+                            <td className="py-2.5">{src.last_verified || src.date}</td>
+                            <td className="py-2.5 text-right font-mono text-gray-400">{src.hash}</td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -1119,13 +1297,14 @@ export default function AdminDashboard({
               <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden shadow-xs">
                 <div className="p-4 border-b border-[#E5E7EB] flex justify-between items-center">
                   <h3 className="text-xs font-bold uppercase text-gray-800 tracking-wider">Active Autonomous AI Agents</h3>
-                  <span className="text-[10px] text-gray-400 font-mono">Click agent row to audit full lifecycle drawer</span>
+                  <span className="text-[10px] text-gray-400 font-mono">Click agent row to audit full lifecycle drawer · {agents.length} agents online</span>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="bg-gray-50 border-b border-[#E5E7EB] text-gray-500 uppercase text-[9px] tracking-wider">
                         <th className="p-3">Agent Name</th>
+                        <th className="p-3">Category</th>
                         <th className="p-3">Version</th>
                         <th className="p-3">Lifecycle stage</th>
                         <th className="p-3 font-mono">Queue</th>
@@ -1133,27 +1312,54 @@ export default function AdminDashboard({
                         <th className="p-3">LLM Cost</th>
                         <th className="p-3">Success %</th>
                         <th className="p-3 font-mono">Memory</th>
+                        <th className="p-3">Model</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#E5E7EB] text-gray-700">
-                      {agents.map((a, idx) => (
-                        <tr
-                          key={idx}
-                          onClick={() => setSelectedAgent(a)}
-                          className="hover:bg-gray-50 cursor-pointer"
-                        >
-                          <td className="p-3 font-bold text-gray-900">{a.name}</td>
-                          <td className="p-3 font-mono text-[10px] text-gray-500">{a.version}</td>
-                          <td className="p-3">
-                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-blue-50 text-blue-700 border border-blue-200">{a.stage}</span>
-                          </td>
-                          <td className="p-3 font-mono">{a.queue}</td>
-                          <td className="p-3 font-mono">{a.runtime}</td>
-                          <td className="p-3 font-mono text-emerald-600">{a.cost}</td>
-                          <td className="p-3 font-mono text-emerald-600">{a.success}</td>
-                          <td className="p-3 font-mono">{a.memory}</td>
-                        </tr>
-                      ))}
+                      {loadingAgents ? (
+                        <tr><td colSpan="10" className="text-center py-6 text-xs text-gray-400 italic">Loading agent roster...</td></tr>
+                      ) : agents.length === 0 ? (
+                        <tr><td colSpan="10" className="text-center py-6 text-xs text-gray-400 italic">No agents registered</td></tr>
+                      ) : (
+                        (() => {
+                          const rows = [];
+                          let lastCat = null;
+                          agents.forEach((a, idx) => {
+                            if (a.category !== lastCat) {
+                              lastCat = a.category;
+                              rows.push(
+                                <tr key={`cat-${idx}`} className="bg-blue-50/60">
+                                  <td colSpan="10" className="px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-widest text-blue-700">
+                                    {a.category}
+                                  </td>
+                                </tr>
+                              );
+                            }
+                            rows.push(
+                              <tr
+                                key={idx}
+                                onClick={() => setSelectedAgent(a)}
+                                className="hover:bg-gray-50 cursor-pointer"
+                                title={a.description}
+                              >
+                                <td className="p-3 font-bold text-gray-900">{a.name}</td>
+                                <td className="p-3 text-[10px] text-gray-400">{a.category}</td>
+                                <td className="p-3 font-mono text-[10px] text-gray-500">{a.version}</td>
+                                <td className="p-3">
+                                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-blue-50 text-blue-700 border border-blue-200">{a.stage}</span>
+                                </td>
+                                <td className="p-3 font-mono">{a.queue}</td>
+                                <td className="p-3 font-mono">{a.runtime}</td>
+                                <td className="p-3 font-mono text-emerald-600">{a.cost}</td>
+                                <td className="p-3 font-mono text-emerald-600">{a.success}</td>
+                                <td className="p-3 font-mono">{a.memory}</td>
+                                <td className="p-3 font-mono text-[10px] text-purple-600">{a.model}</td>
+                              </tr>
+                            );
+                          });
+                          return rows;
+                        })()
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -1317,7 +1523,11 @@ export default function AdminDashboard({
           )}
 
           {adminTab === 'compliance_map' && (
-            <ComplianceCoverageMap API_BASE={API_BASE} />
+            <ComplianceCoverageMap API_BASE={API_BASE} enforceCrossBorder={enforceCrossBorder} />
+          )}
+
+          {adminTab === 'ontology' && (
+            <OntologyVisualizer API_BASE={API_BASE} />
           )}
 
         </div>

@@ -5,7 +5,7 @@ import {
   BookOpen, Terminal, Activity, HelpCircle
 } from 'lucide-react';
 
-export default function ComplianceCoverageMap({ API_BASE }) {
+export default function ComplianceCoverageMap({ API_BASE, enforceCrossBorder }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedCountry, setSelectedCountry] = useState('CA');
@@ -49,9 +49,11 @@ export default function ComplianceCoverageMap({ API_BASE }) {
   // Adequacy check
   const crossBorderAdequacy = useMemo(() => {
     if (crossBorderOrigin === 'Quebec' && crossBorderDest === 'EU_Union') return { status: 'Adequate', blocked: false };
-    if (crossBorderOrigin === 'Quebec' && crossBorderDest === 'California') return { status: 'Non-Adequate', blocked: !sccUploaded };
+    if (crossBorderOrigin === 'Quebec' && crossBorderDest === 'California') {
+      return { status: 'Non-Adequate', blocked: enforceCrossBorder ? !sccUploaded : false };
+    }
     return { status: 'Adequate', blocked: false };
-  }, [crossBorderOrigin, crossBorderDest, sccUploaded]);
+  }, [crossBorderOrigin, crossBorderDest, sccUploaded, enforceCrossBorder]);
 
 
   // Fetch coverage data from backend
@@ -60,12 +62,15 @@ export default function ComplianceCoverageMap({ API_BASE }) {
     try {
       const res = await fetch(`${API_BASE}/api/compliance/coverage`, {
         headers: {
+          'x-kibo-scope': 'expert',
           'Authorization': `Bearer ${localStorage.getItem('kibo_token') || 'mock-expert-token'}`
         }
       });
       if (res.ok) {
         const json = await res.json();
         setData(json);
+      } else {
+        console.error(`Coverage API returned ${res.status}`);
       }
     } catch (e) {
       console.error("Error fetching compliance coverage:", e);
@@ -84,6 +89,7 @@ export default function ComplianceCoverageMap({ API_BASE }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-kibo-scope': 'expert',
           'Authorization': `Bearer ${localStorage.getItem('kibo_token') || 'mock-expert-token'}`
         },
         body: JSON.stringify({
@@ -325,10 +331,28 @@ export default function ComplianceCoverageMap({ API_BASE }) {
     return selectedJurDetails.instruments.filter(inst => {
       const matchesSearch = inst.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             inst.citation.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            inst.keywords.toLowerCase().includes(searchQuery.toLowerCase());
+                            (inst.keywords || '').toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
     });
   }, [selectedJurDetails, searchQuery]);
+
+  // Coverage matrix cell data (status grid per country x industry)
+  const matrixData = useMemo(() => {
+    const industries = data?.industries || ['Healthcare', 'Financial Services', 'Technology', 'Non-Profit'];
+    const base = {
+      CA: { Healthcare: { status: '🟢 Supported', details: 'PHIPA + PIPEDA' }, 'Financial Services': { status: '🟡 Partial', details: 'PIPEDA' }, Technology: { status: '🟢 Supported', details: 'Law 25 + PIPEDA' }, 'Non-Profit': { status: '🟢 Supported', details: 'CASL + PIPEDA' } },
+      US: { Healthcare: { status: '🟢 Supported', details: 'HIPAA + CCPA' }, 'Financial Services': { status: '🟡 Partial', details: 'GLBA + FTC' }, Technology: { status: '🟢 Supported', details: 'CPRA + NIST' }, 'Non-Profit': { status: '🟠 Regulatory Only', details: 'FTC guidance' } },
+      EU: { Healthcare: { status: '🟢 Supported', details: 'GDPR Art 9' }, 'Financial Services': { status: '🟢 Supported', details: 'GDPR + DORA' }, Technology: { status: '🟢 Supported', details: 'GDPR + AI Act' }, 'Non-Profit': { status: '🟡 Partial', details: 'GDPR baseline' } },
+    };
+    // Augment with any extra industries from API
+    industries.forEach(ind => {
+      ['CA','US','EU'].forEach(code => {
+        if (!base[code]) base[code] = {};
+        if (!base[code][ind]) base[code][ind] = { status: '⚪ Unknown', details: 'N/A' };
+      });
+    });
+    return base;
+  }, [data]);
 
   if (loading) {
     return (
@@ -935,6 +959,22 @@ export default function ComplianceCoverageMap({ API_BASE }) {
                   className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-1 px-2.5 text-[9px] rounded uppercase cursor-pointer transition-all shadow-xs"
                 >
                   Upload & Verify Signed SCC Agreement
+                </button>
+              </div>
+            ) : crossBorderAdequacy.status === 'Non-Adequate' ? (
+              <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg flex flex-col space-y-2">
+                <div className="flex items-center space-x-2">
+                  <AlertOctagon size={14} className="text-amber-600" />
+                  <span className="text-[10px] font-black text-amber-700 uppercase tracking-wide">BYPASSED WARNING</span>
+                </div>
+                <p className="text-[9px] text-amber-700 leading-normal">
+                  Permissive Mode Active: Missing SCC/DPA detected, but hard block bypassed by Expert override.
+                </p>
+                <button
+                  onClick={() => { setSccUploaded(true); alert("SCC / DPA Agreement uploaded."); }}
+                  className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-1 px-2.5 text-[9px] rounded uppercase cursor-pointer transition-all shadow-xs"
+                >
+                  Upload SCC anyway
                 </button>
               </div>
             ) : (

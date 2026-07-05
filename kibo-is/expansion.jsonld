@@ -1,0 +1,3987 @@
+{
+  "@context": {
+    "kibo": "https://kibo.is/ontology#",
+    "label": "http://www.w3.org/2000/01/rdf-schema#label"
+  },
+  "@graph": [
+    {
+      "@id": "kibo:CA_Federal",
+      "@type": "kibo:Jurisdiction",
+      "label": "Canada Federal",
+      "kibo:region": "North America",
+      "kibo:level": "National"
+    },
+    {
+      "@id": "kibo:EU_Union",
+      "@type": "kibo:Jurisdiction",
+      "label": "European Union",
+      "kibo:region": "Europe",
+      "kibo:level": "National"
+    },
+    {
+      "@id": "kibo:Quebec",
+      "@type": "kibo:Jurisdiction",
+      "label": "Quebec",
+      "kibo:region": "North America",
+      "kibo:level": "Regional"
+    },
+    {
+      "@id": "kibo:Ontario",
+      "@type": "kibo:Jurisdiction",
+      "label": "Ontario",
+      "kibo:region": "North America",
+      "kibo:level": "Regional"
+    },
+    {
+      "@id": "kibo:California",
+      "@type": "kibo:Jurisdiction",
+      "label": "California",
+      "kibo:region": "North America",
+      "kibo:level": "Regional"
+    },
+    {
+      "@id": "kibo:Virginia",
+      "@type": "kibo:Jurisdiction",
+      "label": "Virginia",
+      "kibo:region": "North America",
+      "kibo:level": "Regional"
+    },
+    {
+      "@id": "kibo:Texas",
+      "@type": "kibo:Jurisdiction",
+      "label": "Texas",
+      "kibo:region": "North America",
+      "kibo:level": "Regional"
+    },
+    {
+      "@id": "kibo:PIPEDA",
+      "@type": "kibo:LegalFramework",
+      "label": "PIPEDA",
+      "kibo:status": "Active"
+    },
+    {
+      "@id": "kibo:GDPR",
+      "@type": "kibo:LegalFramework",
+      "label": "EU GDPR",
+      "kibo:status": "Active"
+    },
+    {
+      "@id": "kibo:Law_25",
+      "@type": "kibo:LegalFramework",
+      "label": "Quebec Law 25",
+      "kibo:status": "Active"
+    },
+    {
+      "@id": "kibo:PHIPA",
+      "@type": "kibo:LegalFramework",
+      "label": "Ontario PHIPA",
+      "kibo:status": "Active"
+    },
+    {
+      "@id": "kibo:FIPPA",
+      "@type": "kibo:LegalFramework",
+      "label": "Ontario FIPPA",
+      "kibo:status": "Active"
+    },
+    {
+      "@id": "kibo:CCPA",
+      "@type": "kibo:LegalFramework",
+      "label": "California CCPA/CPRA",
+      "kibo:status": "Active"
+    },
+    {
+      "@id": "kibo:VCDPA",
+      "@type": "kibo:LegalFramework",
+      "label": "Virginia VCDPA",
+      "kibo:status": "Active"
+    },
+    {
+      "@id": "kibo:TDPSA",
+      "@type": "kibo:LegalFramework",
+      "label": "Texas TDPSA",
+      "kibo:status": "Active"
+    },
+    {
+      "@id": "kibo:OPC",
+      "@type": "kibo:RegulatoryAuthority",
+      "label": "Office of the Privacy Commissioner of Canada"
+    },
+    {
+      "@id": "kibo:CAI",
+      "@type": "kibo:RegulatoryAuthority",
+      "label": "Commission d'acc\u00e8s \u00e0 l'information du Qu\u00e9bec"
+    },
+    {
+      "@id": "kibo:CPPA",
+      "@type": "kibo:RegulatoryAuthority",
+      "label": "California Privacy Protection Agency"
+    },
+    {
+      "@id": "kibo:IPC",
+      "@type": "kibo:RegulatoryAuthority",
+      "label": "Information and Privacy Commissioner of Ontario"
+    },
+    {
+      "@id": "kibo:PersonalInformation_PI",
+      "@type": "kibo:DataCategory",
+      "label": "Personal Information",
+      "kibo:isSensitive": false
+    },
+    {
+      "@id": "kibo:SensitiveData",
+      "@type": "kibo:DataCategory",
+      "label": "Sensitive Personal Data",
+      "kibo:isSensitive": true
+    },
+    {
+      "@id": "kibo:PHI",
+      "@type": "kibo:DataCategory",
+      "label": "Protected Health Information",
+      "kibo:isSensitive": true
+    },
+    {
+      "@id": "kibo:BiometricData",
+      "@type": "kibo:DataCategory",
+      "label": "Biometric Data",
+      "kibo:isSensitive": true
+    },
+    {
+      "@id": "kibo:ChildrensData",
+      "@type": "kibo:DataCategory",
+      "label": "Children's Data",
+      "kibo:isSensitive": true,
+      "kibo:child_age_limit_coppa": 13,
+      "kibo:child_age_limit_law25": 14
+    },
+    {
+      "@id": "kibo:FinancialData",
+      "@type": "kibo:DataCategory",
+      "label": "Financial Data",
+      "kibo:isSensitive": true
+    },
+    {
+      "@id": "kibo:Collection",
+      "@type": "kibo:ProcessingActivity",
+      "label": "Collection"
+    },
+    {
+      "@id": "kibo:Storage",
+      "@type": "kibo:ProcessingActivity",
+      "label": "Storage"
+    },
+    {
+      "@id": "kibo:Transfer",
+      "@type": "kibo:ProcessingActivity",
+      "label": "Transfer"
+    },
+    {
+      "@id": "kibo:Profiling",
+      "@type": "kibo:ProcessingActivity",
+      "label": "Profiling"
+    },
+    {
+      "@id": "kibo:AI_Training",
+      "@type": "kibo:ProcessingActivity",
+      "label": "AI Model Training"
+    },
+    {
+      "@id": "kibo:PHIPA_TRA",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "PHIPA Threat & Risk Assessment",
+      "kibo:hasSLAClock": 30
+    },
+    {
+      "@id": "kibo:Law25_TIA",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Quebec Law 25 Transfer Impact Assessment",
+      "kibo:hasSLAClock": 30
+    },
+    {
+      "@id": "kibo:Law25_PIA",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Quebec Law 25 Privacy Impact Assessment",
+      "kibo:hasSLAClock": 30
+    },
+    {
+      "@id": "kibo:Article35_DPIA",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "GDPR Article 35 Data Protection Impact Assessment",
+      "kibo:hasSLAClock": 30
+    },
+    {
+      "@id": "kibo:CPRA_ADMT",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "CPRA Automated Decision-Making Assessment",
+      "kibo:hasSLAClock": 45
+    },
+    {
+      "@id": "kibo:StandardReview",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Standard Compliance Review",
+      "kibo:hasSLAClock": 60
+    },
+    {
+      "@id": "kibo:New_York",
+      "@type": "kibo:Jurisdiction",
+      "label": "New York"
+    },
+    {
+      "@id": "kibo:UK",
+      "@type": "kibo:Jurisdiction",
+      "label": "United Kingdom"
+    },
+    {
+      "@id": "kibo:Australia",
+      "@type": "kibo:Jurisdiction",
+      "label": "Australia"
+    },
+    {
+      "@id": "kibo:Singapore",
+      "@type": "kibo:Jurisdiction",
+      "label": "Singapore"
+    },
+    {
+      "@id": "kibo:In_Data_PCI",
+      "@type": "kibo:DataCategory",
+      "label": "PCI / Cardholder"
+    },
+    {
+      "@id": "kibo:In_Data_IoT",
+      "@type": "kibo:DataCategory",
+      "label": "IoT Sensor"
+    },
+    {
+      "@id": "kibo:In_Act_Mktg",
+      "@type": "kibo:ProcessingActivity",
+      "label": "Direct Marketing"
+    },
+    {
+      "@id": "kibo:In_Act_IoT",
+      "@type": "kibo:ProcessingActivity",
+      "label": "IoT Data Collection"
+    },
+    {
+      "@id": "kibo:In_Act_ThirdParty",
+      "@type": "kibo:ProcessingActivity",
+      "label": "Vendor / Third-Party Sharing"
+    },
+    {
+      "@id": "kibo:In_Evt_Breach",
+      "@type": "kibo:EventTrigger",
+      "label": "Security Incident"
+    },
+    {
+      "@id": "kibo:In_Evt_DSAR",
+      "@type": "kibo:EventTrigger",
+      "label": "Consumer Request"
+    },
+    {
+      "@id": "kibo:In_Evt_RegAudit",
+      "@type": "kibo:EventTrigger",
+      "label": "Regulatory Audit / Inquiry"
+    },
+    {
+      "@id": "kibo:In_Evt_PolicyChg",
+      "@type": "kibo:EventTrigger",
+      "label": "Internal Policy Change"
+    },
+    {
+      "@id": "kibo:H1_UK_GDPR",
+      "@type": "kibo:LegalFramework",
+      "label": "UK-GDPR"
+    },
+    {
+      "@id": "kibo:H1_APP",
+      "@type": "kibo:LegalFramework",
+      "label": "APP (AU)"
+    },
+    {
+      "@id": "kibo:H1_PDPA",
+      "@type": "kibo:LegalFramework",
+      "label": "PDPA (SG)"
+    },
+    {
+      "@id": "kibo:H1_HIPAA",
+      "@type": "kibo:LegalFramework",
+      "label": "HIPAA (US Health)"
+    },
+    {
+      "@id": "kibo:H1_SOX",
+      "@type": "kibo:LegalFramework",
+      "label": "SOX (Financial Reporting)"
+    },
+    {
+      "@id": "kibo:H1_PCI_DSS",
+      "@type": "kibo:LegalFramework",
+      "label": "PCI-DSS (Card Data)"
+    },
+    {
+      "@id": "kibo:H1_NIST",
+      "@type": "kibo:LegalFramework",
+      "label": "NIST CSF (Cybersecurity)"
+    },
+    {
+      "@id": "kibo:H1_PIPA_AB",
+      "@type": "kibo:LegalFramework",
+      "label": "PIPA (AB)"
+    },
+    {
+      "@id": "kibo:H1_BIPA",
+      "@type": "kibo:LegalFramework",
+      "label": "BIPA (IL)"
+    },
+    {
+      "@id": "kibo:H1_NYDFS",
+      "@type": "kibo:LegalFramework",
+      "label": "NYDFS Part 500 (NY)"
+    },
+    {
+      "@id": "kibo:H1_NYC_AIBias",
+      "@type": "kibo:LegalFramework",
+      "label": "NYC Local Law 144 (AI Bias Audits)"
+    },
+    {
+      "@id": "kibo:H1_MHMDA",
+      "@type": "kibo:LegalFramework",
+      "label": "My Health My Data Act (WA)"
+    },
+    {
+      "@id": "kibo:H1_FERPA",
+      "@type": "kibo:LegalFramework",
+      "label": "FERPA (US Federal)"
+    },
+    {
+      "@id": "kibo:H1_FTCAct5",
+      "@type": "kibo:LegalFramework",
+      "label": "FTC Act Section 5 (US Federal)"
+    },
+    {
+      "@id": "kibo:H1_EU_AIAct",
+      "@type": "kibo:LegalFramework",
+      "label": "EU AI Act"
+    },
+    {
+      "@id": "kibo:H1_ISO27001",
+      "@type": "kibo:LegalFramework",
+      "label": "ISO/IEC 27001 (Global)"
+    },
+    {
+      "@id": "kibo:T_US_Intrusion",
+      "@type": "kibo:PrivacyTort",
+      "label": "Intrusion upon seclusion"
+    },
+    {
+      "@id": "kibo:T_US_PubDisc",
+      "@type": "kibo:PrivacyTort",
+      "label": "Public disclosure",
+      "kibo:description": "of private facts"
+    },
+    {
+      "@id": "kibo:T_US_FalseLight",
+      "@type": "kibo:PrivacyTort",
+      "label": "False light"
+    },
+    {
+      "@id": "kibo:T_US_Approp",
+      "@type": "kibo:PrivacyTort",
+      "label": "Appropriation",
+      "kibo:description": "of name/likeness"
+    },
+    {
+      "@id": "kibo:T_CA_Intrusion",
+      "@type": "kibo:PrivacyTort",
+      "label": "Intrusion upon seclusion"
+    },
+    {
+      "@id": "kibo:T_CA_PubDisc",
+      "@type": "kibo:PrivacyTort",
+      "label": "Public disclosure",
+      "kibo:description": "of private facts"
+    },
+    {
+      "@id": "kibo:T_CA_FalseLight",
+      "@type": "kibo:PrivacyTort",
+      "label": "False light"
+    },
+    {
+      "@id": "kibo:T_CA_Approp",
+      "@type": "kibo:PrivacyTort",
+      "label": "Appropriation"
+    },
+    {
+      "@id": "kibo:T_EU_Infringement",
+      "@type": "kibo:PrivacyTort",
+      "label": "Infringement of personality",
+      "kibo:description": "rights (GDPR Art.8)"
+    },
+    {
+      "@id": "kibo:T_EU_BreachConf",
+      "@type": "kibo:PrivacyTort",
+      "label": "Breach of confidentiality"
+    },
+    {
+      "@id": "kibo:T_EU_DataProtViol",
+      "@type": "kibo:PrivacyTort",
+      "label": "Data protection violation"
+    },
+    {
+      "@id": "kibo:T_EU_RTBF",
+      "@type": "kibo:PrivacyTort",
+      "label": "Right to be forgotten"
+    },
+    {
+      "@id": "kibo:H2_Gov_Policy",
+      "@type": "kibo:GovernanceControl",
+      "label": "Enterprise Privacy Policy"
+    },
+    {
+      "@id": "kibo:H2_Gov_Training",
+      "@type": "kibo:GovernanceControl",
+      "label": "Privacy & Security Training"
+    },
+    {
+      "@id": "kibo:H2_Gov_Vendor",
+      "@type": "kibo:GovernanceControl",
+      "label": "Vendor-Third-Party Management"
+    },
+    {
+      "@id": "kibo:H2_Gov_Monitoring",
+      "@type": "kibo:GovernanceControl",
+      "label": "Continuous Monitoring & Logging"
+    },
+    {
+      "@id": "kibo:H2_Gov_Incident",
+      "@type": "kibo:GovernanceControl",
+      "label": "Incident Response Plan"
+    },
+    {
+      "@id": "kibo:H2_Gov_Access",
+      "@type": "kibo:GovernanceControl",
+      "label": "Access Control & Least Privilege"
+    },
+    {
+      "@id": "kibo:H2_Gov_Encrypt",
+      "@type": "kibo:GovernanceControl",
+      "label": "Encryption (Data-at-Rest & In-Transit)"
+    },
+    {
+      "@id": "kibo:H2_Gov_RetPol",
+      "@type": "kibo:GovernanceControl",
+      "label": "Data Retention & Disposal Policy"
+    },
+    {
+      "@id": "kibo:Cert_SOC1",
+      "@type": "kibo:Certification",
+      "label": "SOC 1 (SSAE 18)"
+    },
+    {
+      "@id": "kibo:Cert_SOC2",
+      "@type": "kibo:Certification",
+      "label": "SOC 2 (Trust Services Criteria)"
+    },
+    {
+      "@id": "kibo:Cert_CHI",
+      "@type": "kibo:Certification",
+      "label": "Canada Health Infoway (CHI)"
+    },
+    {
+      "@id": "kibo:Cert_HIPAA",
+      "@type": "kibo:Certification",
+      "label": "HIPAA Compliance"
+    },
+    {
+      "@id": "kibo:Cert_EU_EQ",
+      "@type": "kibo:Certification",
+      "label": "EU-Equivalent",
+      "kibo:description": "(ISO 27001 / EU Cloud Code)"
+    },
+    {
+      "@id": "kibo:H3_Assessments",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Impact Assessments"
+    },
+    {
+      "@id": "kibo:H3_Gov_RoPA",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Data Mapping & Inventory (RoPA)"
+    },
+    {
+      "@id": "kibo:H3_Rights_Mgmt",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Data Subject Rights (DSAR)"
+    },
+    {
+      "@id": "kibo:H3_Breach_Resp",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Breach Triage & SLA"
+    },
+    {
+      "@id": "kibo:H3_Retention",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Data Lifecycle / Destruction"
+    },
+    {
+      "@id": "kibo:H3_AI_Gov",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Algorithmic Transparency"
+    },
+    {
+      "@id": "kibo:H3_Leadership",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Designated Privacy Officer"
+    },
+    {
+      "@id": "kibo:H3_Training",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Role-Based Privacy Training"
+    },
+    {
+      "@id": "kibo:H3_VendorMgmt",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Vendor Due-Diligence & Contracts"
+    },
+    {
+      "@id": "kibo:H3_Encrypt",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Encryption & Key Management"
+    },
+    {
+      "@id": "kibo:H3_AccessCtrl",
+      "@type": "kibo:ComplianceObligation",
+      "label": "RBAC / MFA & Least Privilege"
+    },
+    {
+      "@id": "kibo:H3_Monitoring",
+      "@type": "kibo:ComplianceObligation",
+      "label": "SIEM / Audit-Log Monitoring"
+    },
+    {
+      "@id": "kibo:H3_IncidentPlan",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Formal Incident Response Playbook"
+    },
+    {
+      "@id": "kibo:H3_RetentionLog",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Retention Schedule & Disposal Proof"
+    },
+    {
+      "@id": "kibo:H3_TRA_PHIPA",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Threat and Risk Assessment (TRA)",
+      "kibo:description": "Custodians must conduct a TRA prior to introducing new EHR systems or major architectural changes."
+    },
+    {
+      "@id": "kibo:H3_AgentAgreement_PHIPA",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Agent Agreements",
+      "kibo:description": "Written agreements with third-party agents restricting PHI use to authorized purposes."
+    },
+    {
+      "@id": "kibo:H3_FOI_Compliance_FIPPA",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Freedom of Information Compliance",
+      "kibo:description": "Public institutions must respond to formal access to information requests within 30 days, applying specific statutory exemptions where necessary."
+    },
+    {
+      "@id": "kibo:H3_TIA_Law25",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Transfer Impact Assessment (TIA)",
+      "kibo:description": "Formal assessment before transferring personal information outside Quebec."
+    },
+    {
+      "@id": "kibo:H3_DefaultPrivacy_Law25",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Default Highest Privacy Settings",
+      "kibo:description": "Technologies must ship with the highest confidentiality enabled by default."
+    },
+    {
+      "@id": "kibo:H3_BioDB_Reg_Law25",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Biometric Database Registration",
+      "kibo:description": "Notify CAI >=60 days before creating a biometric database."
+    },
+    {
+      "@id": "kibo:H3_BreachReport_PIPA",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Mandatory Breach Reporting",
+      "kibo:description": "Notify Commissioner & individuals of any breach posing a Real Risk of Significant Harm (RROSH)."
+    },
+    {
+      "@id": "kibo:H3_WrittenRelease_BIPA",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Written Release and Consent",
+      "kibo:description": "Obtain a legally binding written release before collecting biometric identifiers."
+    },
+    {
+      "@id": "kibo:H3_BioRetention_BIPA",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Biometric Retention Schedule",
+      "kibo:description": "Publish a written policy for retention & permanent destruction of biometric data."
+    },
+    {
+      "@id": "kibo:H3_CyberRiskAssessment_NYDFS",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Cybersecurity Risk Assessment",
+      "kibo:description": "Periodic, documented risk assessments that drive the cybersecurity program."
+    },
+    {
+      "@id": "kibo:H3_CISO_Appointment_NYDFS",
+      "@type": "kibo:ComplianceObligation",
+      "label": "CISO Appointment",
+      "kibo:description": "Designate a qualified Chief Information Security Officer."
+    },
+    {
+      "@id": "kibo:H3_AIBiasAudit_NYC",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Independent AI Bias Audit",
+      "kibo:description": "Subject AEDTs to an independent bias audit prior to use and publish a summary."
+    },
+    {
+      "@id": "kibo:H3_OptInHealth_MHMDA",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Strict Opt-In Consent for Health Data",
+      "kibo:description": "Affirmative opt-in required before collecting, sharing, or selling consumer health data (incl. geofencing near health facilities)."
+    },
+    {
+      "@id": "kibo:H3_StudentRecordConsent_FERPA",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Student Record Privacy",
+      "kibo:description": "Obtain written permission from parent/eligible student before releasing PII from education records."
+    },
+    {
+      "@id": "kibo:H3_NoDeceptive_FTC5",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Prohibition of Deceptive Practices",
+      "kibo:description": "Adhere to published privacy policies & security promises; failure = unfair/deceptive trade practice."
+    },
+    {
+      "@id": "kibo:H3_TransferMechanism_GDPR",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Transfer Mechanisms & Schrems II",
+      "kibo:description": "Implement valid transfer mechanisms (SCCs, BCRs, etc.) + Transfer Impact Assessment to validate destination surveillance law."
+    },
+    {
+      "@id": "kibo:H3_ConformityAssessment_AIAct",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Conformity Assessments (High-Risk AI)",
+      "kibo:description": "Providers must undergo conformity assessment, implement risk-management, and ensure human oversight before market deployment."
+    },
+    {
+      "@id": "kibo:H3_AITransparency_AIAct",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Transparency for AI Interactions",
+      "kibo:description": "Design AI so users know they are interacting with AI; label deep-fakes/artificial content."
+    },
+    {
+      "@id": "kibo:H3_UKRep_UKGDPR",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Appoint UK Representative",
+      "kibo:description": "Controllers/processors outside the UK must appoint a domestic representative if they target/monitor UK residents."
+    },
+    {
+      "@id": "kibo:H3_ISMS_ISO27001",
+      "@type": "kibo:ComplianceObligation",
+      "label": "Information Security Management System (ISMS)",
+      "kibo:description": "Establish, implement, maintain, and continually improve a documented ISMS covering people, processes, technology."
+    },
+    {
+      "@id": "kibo:Pen_OPC_Fed",
+      "@type": "kibo:PenaltyExposure",
+      "label": "OPC (Fed)",
+      "kibo:description": "Up to CAD 100k per violation"
+    },
+    {
+      "@id": "kibo:Pen_OPC_ON",
+      "@type": "kibo:PenaltyExposure",
+      "label": "IPC ON",
+      "kibo:description": "PHIPA fines up to CAD 200k (individual) / 1M (org)"
+    },
+    {
+      "@id": "kibo:Pen_OPC_QC",
+      "@type": "kibo:PenaltyExposure",
+      "label": "CAI QC \u2014 AMPs up to CAD 10M or 2% of turnover; penal up to CAD 25M or 4% (Law 25)",
+      "kibo:description": "AMPs up to CAD 10M or 2% turnover; penal up to 25M or 4%"
+    },
+    {
+      "@id": "kibo:Pen_FTC",
+      "@type": "kibo:PenaltyExposure",
+      "label": "FTC",
+      "kibo:description": "Civil penalties per violation (adjusted annually)"
+    },
+    {
+      "@id": "kibo:Pen_SEC",
+      "@type": "kibo:PenaltyExposure",
+      "label": "SEC",
+      "kibo:description": "Civil penalties + disgorgement"
+    },
+    {
+      "@id": "kibo:Pen_EU_DPA",
+      "@type": "kibo:PenaltyExposure",
+      "label": "EU DPA",
+      "kibo:description": "Up to 4% global turnover or EUR 20M (whichever higher)"
+    },
+    {
+      "@id": "kibo:Pen_HHS",
+      "@type": "kibo:PenaltyExposure",
+      "label": "HHS/HIPAA",
+      "kibo:description": "Up to USD 1.5M per violation category/year"
+    },
+    {
+      "@id": "kibo:Out_RoPA",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Article 30 RoPA /",
+      "kibo:description": "Data Flow Map"
+    },
+    {
+      "@id": "kibo:Out_DPO",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Register CPO/DPO with",
+      "kibo:description": "Regulatory Authority"
+    },
+    {
+      "@id": "kibo:Out_QC_PIA",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Law 25 Baseline PIA"
+    },
+    {
+      "@id": "kibo:Out_DPIA",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Article 35 DPIA"
+    },
+    {
+      "@id": "kibo:Out_TIA_SCC",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "TIA + Executed SCCs"
+    },
+    {
+      "@id": "kibo:Out_DSAR_Fill",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Fulfill Request",
+      "kibo:description": "(30-45 Day SLA)"
+    },
+    {
+      "@id": "kibo:Out_ADMT_OptOut",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "AI Profiling Opt-Out UI",
+      "kibo:description": "& Logic Map"
+    },
+    {
+      "@id": "kibo:Out_Breach_72h",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Regulator Notification",
+      "kibo:description": "(72-Hour SLA)"
+    },
+    {
+      "@id": "kibo:Out_Retention_Log",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Cryptographic Proof",
+      "kibo:description": "of Data Destruction"
+    },
+    {
+      "@id": "kibo:Out_PrivacyNotice",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Public Privacy Notice",
+      "kibo:description": "& Consent Records"
+    },
+    {
+      "@id": "kibo:Out_TrainingRecord",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Privacy & Security Training Log"
+    },
+    {
+      "@id": "kibo:Out_VendorAgreement",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Vendor DPA / SCC Addendum"
+    },
+    {
+      "@id": "kibo:Out_AccessReport",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Access-Control Review Report"
+    },
+    {
+      "@id": "kibo:Out_EncryptCert",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Encryption Key Management Certificate"
+    },
+    {
+      "@id": "kibo:Out_IncidentReport",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Formal Incident Report",
+      "kibo:description": "& Post-Mortem"
+    },
+    {
+      "@id": "kibo:Out_MonitoringLog",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Continuous Monitoring Log",
+      "kibo:description": "(SIEM / Audit)"
+    },
+    {
+      "@id": "kibo:Out_RetentionProof",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Retention Schedule & Disposal Proof"
+    },
+    {
+      "@id": "kibo:Out_AuditEvidence",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Regulatory Audit Evidence Pack"
+    },
+    {
+      "@id": "kibo:Out_CertReport",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Certification Evidence Pack",
+      "kibo:description": "(SOC 1/2, CHI, HIPAA, EU-Eq)"
+    },
+    {
+      "@id": "kibo:Out_FineNotice",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Fine / Penalty Notice",
+      "kibo:description": "issued by regulator"
+    },
+    {
+      "@id": "kibo:Out_CorrectiveOrder",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Corrective Action Order",
+      "kibo:description": "(e.g., remediation plan)"
+    },
+    {
+      "@id": "kibo:Out_PublicNaming",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Public Naming / Press Release",
+      "kibo:description": "by regulator"
+    },
+    {
+      "@id": "kibo:Out_CeaseDesist",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Cease-and-Desist / Injunction"
+    },
+    {
+      "@id": "kibo:Out_RemediationPlan",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Remediation & Improvement Plan",
+      "kibo:description": "required by regulator"
+    },
+    {
+      "@id": "kibo:Out_TRA_Report",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Threat and Risk Assessment Report"
+    },
+    {
+      "@id": "kibo:Out_AgentAgreement",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Signed Agent Agreement"
+    },
+    {
+      "@id": "kibo:Out_FOI_Compliance",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Freedom of Information Compliance Evidence"
+    },
+    {
+      "@id": "kibo:Out_TIA_Report",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Transfer Impact Assessment Report"
+    },
+    {
+      "@id": "kibo:Out_DefaultPrivacy",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Default-Privacy Configuration Evidence"
+    },
+    {
+      "@id": "kibo:Out_BioDB_Notice",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "CAI Biometric-Database Notification"
+    },
+    {
+      "@id": "kibo:Out_BreachNotice_PIPA",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Breach-Notice to Commissioner & Individuals"
+    },
+    {
+      "@id": "kibo:Out_WrittenRelease",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Signed Biometric Release Form"
+    },
+    {
+      "@id": "kibo:Out_BioRetentionPolicy",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Published Biometric Retention Schedule"
+    },
+    {
+      "@id": "kibo:Out_CyberRiskReport",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Documented Cybersecurity Risk Assessment"
+    },
+    {
+      "@id": "kibo:Out_CISO_Appointment",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Appointment Letter / CV of CISO"
+    },
+    {
+      "@id": "kibo:Out_AIBiasAuditReport",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Independent AI Bias Audit Summary"
+    },
+    {
+      "@id": "kibo:Out_OptInLog",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Opt-In Consent Log (timestamped)"
+    },
+    {
+      "@id": "kibo:Out_StudentRecordConsent",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Written Consent for Student Record Release"
+    },
+    {
+      "@id": "kibo:Out_ComplianceStatement",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Public Privacy & Security Statement (matching practices)"
+    },
+    {
+      "@id": "kibo:Out_TransferImpactAssessment",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Transfer Impact Assessment (TIA) + Executed SCCs"
+    },
+    {
+      "@id": "kibo:Out_ConformityCert",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "EU AI-Act Conformity Certificate (high-risk AI)"
+    },
+    {
+      "@id": "kibo:Out_AITransparencyNotice",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "AI-Interaction Transparency Notice (UI label, deep-fake watermark)"
+    },
+    {
+      "@id": "kibo:Out_UKRepAppointment",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "Appointment Letter of UK Representative"
+    },
+    {
+      "@id": "kibo:Out_ISMSCert",
+      "@type": "kibo:AssessmentArtifact",
+      "label": "ISO/IEC 27001 Certificate"
+    },
+    {
+      "@id": "kibo:Illinois",
+      "@type": "kibo:Jurisdiction",
+      "label": "Illinois",
+      "kibo:region": "North America",
+      "kibo:level": "Regional"
+    },
+    {
+      "@id": "kibo:Washington",
+      "@type": "kibo:Jurisdiction",
+      "label": "Washington",
+      "kibo:region": "North America",
+      "kibo:level": "Regional"
+    },
+    {
+      "@id": "kibo:Alberta",
+      "@type": "kibo:Jurisdiction",
+      "label": "Alberta",
+      "kibo:region": "North America",
+      "kibo:level": "Regional"
+    },
+    {
+      "@id": "kibo:US_Federal",
+      "@type": "kibo:Jurisdiction",
+      "label": "United States Federal",
+      "kibo:region": "North America",
+      "kibo:level": "National"
+    },
+    {
+      "@id": "kibo:H1_NY_SHIELD",
+      "@type": "kibo:LegalFramework",
+      "label": "New York SHIELD Act",
+      "kibo:status": "Active"
+    },
+    {
+      "@id": "kibo:Pen_NYDFS",
+      "@type": "kibo:PenaltyExposure",
+      "label": "NYDFS Part 500 enforcement (per-violation / per-day penalties)"
+    },
+    {
+      "@id": "kibo:Pen_OIPC_AB",
+      "@type": "kibo:PenaltyExposure",
+      "label": "OIPC Alberta \u2014 PIPA offences up to CAD 100k",
+      "kibo:max_fine_cad": 100000
+    },
+    {
+      "@id": "kibo:Pen_ED",
+      "@type": "kibo:PenaltyExposure",
+      "label": "US Dept of Education \u2014 FERPA federal funding conditions"
+    },
+    {
+      "@id": "kibo:Pen_CardBrands",
+      "@type": "kibo:PenaltyExposure",
+      "label": "Card brand / acquirer fines (PCI-DSS, contractual)"
+    },
+    {
+      "@id": "kibo:Pen_ILCourts",
+      "@type": "kibo:PenaltyExposure",
+      "label": "BIPA private right of action \u2014 USD 1k negligent / 5k willful per violation",
+      "kibo:per_violation_usd": 5000
+    },
+    {
+      "@id": "kibo:Pen_NYC_DCWP",
+      "@type": "kibo:PenaltyExposure",
+      "label": "NYC DCWP \u2014 Local Law 144 civil penalties"
+    },
+    {
+      "@id": "kibo:Pen_WA_AG",
+      "@type": "kibo:PenaltyExposure",
+      "label": "Washington AG enforcement + private right of action (MHMDA via CPA)"
+    },
+    {
+      "@id": "kibo:Pen_CivilCourts",
+      "@type": "kibo:PenaltyExposure",
+      "label": "Civil litigation \u2014 tort damages / class actions"
+    },
+    {
+      "@id": "kibo:AI_Training",
+      "kibo:mandatesArtifact": {
+        "@id": "kibo:CPRA_ADMT"
+      }
+    },
+    {
+      "@id": "kibo:Alberta",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:H1_PIPA_AB"
+      }
+    },
+    {
+      "@id": "kibo:Australia",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:H1_APP"
+      }
+    },
+    {
+      "@id": "kibo:BiometricData",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_Infringement"
+      }
+    },
+    {
+      "@id": "kibo:BiometricData",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:CA_Federal",
+      "kibo:isAdequate": {
+        "@id": "kibo:EU_Union"
+      }
+    },
+    {
+      "@id": "kibo:CA_Federal",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:PIPEDA"
+      }
+    },
+    {
+      "@id": "kibo:CCPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:CCPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:CCPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:CCPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_AI_Gov"
+      }
+    },
+    {
+      "@id": "kibo:CCPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_Retention"
+      }
+    },
+    {
+      "@id": "kibo:CCPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_Rights_Mgmt"
+      }
+    },
+    {
+      "@id": "kibo:CCPA",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_FTC"
+      }
+    },
+    {
+      "@id": "kibo:CCPA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Approp"
+      }
+    },
+    {
+      "@id": "kibo:CCPA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_FalseLight"
+      }
+    },
+    {
+      "@id": "kibo:CCPA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:CCPA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_PubDisc"
+      }
+    },
+    {
+      "@id": "kibo:California",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:CCPA"
+      }
+    },
+    {
+      "@id": "kibo:California",
+      "kibo:mandatesArtifact": {
+        "@id": "kibo:CPRA_ADMT"
+      }
+    },
+    {
+      "@id": "kibo:Cert_CHI",
+      "kibo:requiresControl": {
+        "@id": "kibo:H3_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:Cert_CHI",
+      "kibo:requiresControl": {
+        "@id": "kibo:H3_RetentionLog"
+      }
+    },
+    {
+      "@id": "kibo:Cert_CHI",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_CertReport"
+      }
+    },
+    {
+      "@id": "kibo:Cert_EU_EQ",
+      "kibo:requiresControl": {
+        "@id": "kibo:H3_Gov_RoPA"
+      }
+    },
+    {
+      "@id": "kibo:Cert_EU_EQ",
+      "kibo:requiresControl": {
+        "@id": "kibo:H3_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:Cert_EU_EQ",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_CertReport"
+      }
+    },
+    {
+      "@id": "kibo:Cert_HIPAA",
+      "kibo:requiresControl": {
+        "@id": "kibo:H3_AccessCtrl"
+      }
+    },
+    {
+      "@id": "kibo:Cert_HIPAA",
+      "kibo:requiresControl": {
+        "@id": "kibo:H3_Breach_Resp"
+      }
+    },
+    {
+      "@id": "kibo:Cert_HIPAA",
+      "kibo:requiresControl": {
+        "@id": "kibo:H3_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:Cert_HIPAA",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_CertReport"
+      }
+    },
+    {
+      "@id": "kibo:Cert_SOC1",
+      "kibo:requiresControl": {
+        "@id": "kibo:H3_Assessments"
+      }
+    },
+    {
+      "@id": "kibo:Cert_SOC1",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_CertReport"
+      }
+    },
+    {
+      "@id": "kibo:Cert_SOC2",
+      "kibo:requiresControl": {
+        "@id": "kibo:H3_AccessCtrl"
+      }
+    },
+    {
+      "@id": "kibo:Cert_SOC2",
+      "kibo:requiresControl": {
+        "@id": "kibo:H3_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:Cert_SOC2",
+      "kibo:requiresControl": {
+        "@id": "kibo:H3_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:Cert_SOC2",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_CertReport"
+      }
+    },
+    {
+      "@id": "kibo:Collection",
+      "kibo:mandatesArtifact": {
+        "@id": "kibo:Law25_PIA"
+      }
+    },
+    {
+      "@id": "kibo:EU_Union",
+      "kibo:mandatesArtifact": {
+        "@id": "kibo:Article35_DPIA"
+      }
+    },
+    {
+      "@id": "kibo:EU_Union",
+      "kibo:isAdequate": {
+        "@id": "kibo:CA_Federal"
+      }
+    },
+    {
+      "@id": "kibo:EU_Union",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:GDPR"
+      }
+    },
+    {
+      "@id": "kibo:EU_Union",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:H1_EU_AIAct"
+      }
+    },
+    {
+      "@id": "kibo:EU_Union",
+      "kibo:isAdequate": {
+        "@id": "kibo:Quebec"
+      }
+    },
+    {
+      "@id": "kibo:FIPPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:FIPPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:FIPPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:FIPPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:FIPPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_FOI_Compliance_FIPPA"
+      }
+    },
+    {
+      "@id": "kibo:FIPPA",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_OPC_ON"
+      }
+    },
+    {
+      "@id": "kibo:FIPPA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_Approp"
+      }
+    },
+    {
+      "@id": "kibo:FIPPA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_FalseLight"
+      }
+    },
+    {
+      "@id": "kibo:FIPPA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:FIPPA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_PubDisc"
+      }
+    },
+    {
+      "@id": "kibo:FinancialData",
+      "kibo:triggersFramework": {
+        "@id": "kibo:H1_SOX"
+      }
+    },
+    {
+      "@id": "kibo:FinancialData",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:GDPR",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Incident"
+      }
+    },
+    {
+      "@id": "kibo:GDPR",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:GDPR",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:GDPR",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:GDPR",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:GDPR",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_AI_Gov"
+      }
+    },
+    {
+      "@id": "kibo:GDPR",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_Assessments"
+      }
+    },
+    {
+      "@id": "kibo:GDPR",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_Breach_Resp"
+      }
+    },
+    {
+      "@id": "kibo:GDPR",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_Gov_RoPA"
+      }
+    },
+    {
+      "@id": "kibo:GDPR",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_Leadership"
+      }
+    },
+    {
+      "@id": "kibo:GDPR",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_Rights_Mgmt"
+      }
+    },
+    {
+      "@id": "kibo:GDPR",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_TransferMechanism_GDPR"
+      }
+    },
+    {
+      "@id": "kibo:GDPR",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_EU_DPA"
+      }
+    },
+    {
+      "@id": "kibo:GDPR",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_BreachConf"
+      }
+    },
+    {
+      "@id": "kibo:GDPR",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_DataProtViol"
+      }
+    },
+    {
+      "@id": "kibo:GDPR",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_Infringement"
+      }
+    },
+    {
+      "@id": "kibo:GDPR",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_RTBF"
+      }
+    },
+    {
+      "@id": "kibo:H1_APP",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:H1_APP",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_EU_DPA"
+      }
+    },
+    {
+      "@id": "kibo:H1_APP",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_Infringement"
+      }
+    },
+    {
+      "@id": "kibo:H1_BIPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:H1_BIPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:H1_BIPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:H1_BIPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_BioRetention_BIPA"
+      }
+    },
+    {
+      "@id": "kibo:H1_BIPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_WrittenRelease_BIPA"
+      }
+    },
+    {
+      "@id": "kibo:H1_BIPA",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_ILCourts"
+      }
+    },
+    {
+      "@id": "kibo:H1_BIPA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Approp"
+      }
+    },
+    {
+      "@id": "kibo:H1_BIPA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_FalseLight"
+      }
+    },
+    {
+      "@id": "kibo:H1_BIPA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:H1_BIPA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_PubDisc"
+      }
+    },
+    {
+      "@id": "kibo:H1_EU_AIAct",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:H1_EU_AIAct",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:H1_EU_AIAct",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:H1_EU_AIAct",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_AITransparency_AIAct"
+      }
+    },
+    {
+      "@id": "kibo:H1_EU_AIAct",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_ConformityAssessment_AIAct"
+      }
+    },
+    {
+      "@id": "kibo:H1_EU_AIAct",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_EU_DPA"
+      }
+    },
+    {
+      "@id": "kibo:H1_EU_AIAct",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_Infringement"
+      }
+    },
+    {
+      "@id": "kibo:H1_FERPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:H1_FERPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:H1_FERPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:H1_FERPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_StudentRecordConsent_FERPA"
+      }
+    },
+    {
+      "@id": "kibo:H1_FERPA",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_ED"
+      }
+    },
+    {
+      "@id": "kibo:H1_FERPA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:H1_FTCAct5",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:H1_FTCAct5",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:H1_FTCAct5",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:H1_FTCAct5",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_NoDeceptive_FTC5"
+      }
+    },
+    {
+      "@id": "kibo:H1_FTCAct5",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_FTC"
+      }
+    },
+    {
+      "@id": "kibo:H1_FTCAct5",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:H1_HIPAA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Access"
+      }
+    },
+    {
+      "@id": "kibo:H1_HIPAA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:H1_HIPAA",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_FTC"
+      }
+    },
+    {
+      "@id": "kibo:H1_HIPAA",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_HHS"
+      }
+    },
+    {
+      "@id": "kibo:H1_HIPAA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Approp"
+      }
+    },
+    {
+      "@id": "kibo:H1_HIPAA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_FalseLight"
+      }
+    },
+    {
+      "@id": "kibo:H1_HIPAA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:H1_HIPAA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_PubDisc"
+      }
+    },
+    {
+      "@id": "kibo:H1_ISO27001",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:H1_ISO27001",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:H1_ISO27001",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:H1_ISO27001",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_ISMS_ISO27001"
+      }
+    },
+    {
+      "@id": "kibo:H1_ISO27001",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:H1_MHMDA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:H1_MHMDA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:H1_MHMDA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:H1_MHMDA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_OptInHealth_MHMDA"
+      }
+    },
+    {
+      "@id": "kibo:H1_MHMDA",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_WA_AG"
+      }
+    },
+    {
+      "@id": "kibo:H1_NIST",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Access"
+      }
+    },
+    {
+      "@id": "kibo:H1_NIST",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:H1_NIST",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:H1_NIST",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:H1_NYC_AIBias",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:H1_NYC_AIBias",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:H1_NYC_AIBias",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:H1_NYC_AIBias",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_AIBiasAudit_NYC"
+      }
+    },
+    {
+      "@id": "kibo:H1_NYC_AIBias",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_NYC_DCWP"
+      }
+    },
+    {
+      "@id": "kibo:H1_NYDFS",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:H1_NYDFS",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:H1_NYDFS",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:H1_NYDFS",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_CISO_Appointment_NYDFS"
+      }
+    },
+    {
+      "@id": "kibo:H1_NYDFS",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_CyberRiskAssessment_NYDFS"
+      }
+    },
+    {
+      "@id": "kibo:H1_NYDFS",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_NYDFS"
+      }
+    },
+    {
+      "@id": "kibo:H1_PCI_DSS",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:H1_PCI_DSS",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:H1_PCI_DSS",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_CardBrands"
+      }
+    },
+    {
+      "@id": "kibo:H1_PCI_DSS",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:H1_PDPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:H1_PDPA",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_EU_DPA"
+      }
+    },
+    {
+      "@id": "kibo:H1_PDPA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_Infringement"
+      }
+    },
+    {
+      "@id": "kibo:H1_PIPA_AB",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:H1_PIPA_AB",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:H1_PIPA_AB",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:H1_PIPA_AB",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_BreachReport_PIPA"
+      }
+    },
+    {
+      "@id": "kibo:H1_PIPA_AB",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_OIPC_AB"
+      }
+    },
+    {
+      "@id": "kibo:H1_PIPA_AB",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_Approp"
+      }
+    },
+    {
+      "@id": "kibo:H1_PIPA_AB",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_FalseLight"
+      }
+    },
+    {
+      "@id": "kibo:H1_PIPA_AB",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:H1_PIPA_AB",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_PubDisc"
+      }
+    },
+    {
+      "@id": "kibo:H1_SOX",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Access"
+      }
+    },
+    {
+      "@id": "kibo:H1_SOX",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:H1_SOX",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_SEC"
+      }
+    },
+    {
+      "@id": "kibo:H1_SOX",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:H1_UK_GDPR",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:H1_UK_GDPR",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:H1_UK_GDPR",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_UKRep_UKGDPR"
+      }
+    },
+    {
+      "@id": "kibo:H1_UK_GDPR",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_EU_DPA"
+      }
+    },
+    {
+      "@id": "kibo:H1_UK_GDPR",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_BreachConf"
+      }
+    },
+    {
+      "@id": "kibo:H1_UK_GDPR",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_DataProtViol"
+      }
+    },
+    {
+      "@id": "kibo:H1_UK_GDPR",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_Infringement"
+      }
+    },
+    {
+      "@id": "kibo:H1_UK_GDPR",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_RTBF"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Access",
+      "kibo:supportsCertification": {
+        "@id": "kibo:Cert_HIPAA"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Access",
+      "kibo:supportsCertification": {
+        "@id": "kibo:Cert_SOC2"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Access",
+      "kibo:implementedBy": {
+        "@id": "kibo:H3_AccessCtrl"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Encrypt",
+      "kibo:supportsCertification": {
+        "@id": "kibo:Cert_CHI"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Encrypt",
+      "kibo:supportsCertification": {
+        "@id": "kibo:Cert_EU_EQ"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Encrypt",
+      "kibo:supportsCertification": {
+        "@id": "kibo:Cert_HIPAA"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Encrypt",
+      "kibo:supportsCertification": {
+        "@id": "kibo:Cert_SOC2"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Encrypt",
+      "kibo:implementedBy": {
+        "@id": "kibo:H3_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Incident",
+      "kibo:implementedBy": {
+        "@id": "kibo:H3_IncidentPlan"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Incident",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_AuditEvidence"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Monitoring",
+      "kibo:supportsCertification": {
+        "@id": "kibo:Cert_EU_EQ"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Monitoring",
+      "kibo:supportsCertification": {
+        "@id": "kibo:Cert_HIPAA"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Monitoring",
+      "kibo:supportsCertification": {
+        "@id": "kibo:Cert_SOC2"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Monitoring",
+      "kibo:implementedBy": {
+        "@id": "kibo:H3_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Monitoring",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_AuditEvidence"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Monitoring",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_CertReport"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Policy",
+      "kibo:supportsCertification": {
+        "@id": "kibo:Cert_EU_EQ"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Policy",
+      "kibo:supportsCertification": {
+        "@id": "kibo:Cert_HIPAA"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Policy",
+      "kibo:supportsCertification": {
+        "@id": "kibo:Cert_SOC1"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Policy",
+      "kibo:supportsCertification": {
+        "@id": "kibo:Cert_SOC2"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Policy",
+      "kibo:implementedBy": {
+        "@id": "kibo:H3_Assessments"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Policy",
+      "kibo:implementedBy": {
+        "@id": "kibo:H3_Gov_RoPA"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Policy",
+      "kibo:implementedBy": {
+        "@id": "kibo:H3_Rights_Mgmt"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Policy",
+      "kibo:implementedBy": {
+        "@id": "kibo:H3_Training"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Policy",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_PrivacyNotice"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_RetPol",
+      "kibo:implementedBy": {
+        "@id": "kibo:H3_RetentionLog"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Training",
+      "kibo:supportsCertification": {
+        "@id": "kibo:Cert_SOC1"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Training",
+      "kibo:supportsCertification": {
+        "@id": "kibo:Cert_SOC2"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Training",
+      "kibo:implementedBy": {
+        "@id": "kibo:H3_Training"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Vendor",
+      "kibo:supportsCertification": {
+        "@id": "kibo:Cert_CHI"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Vendor",
+      "kibo:supportsCertification": {
+        "@id": "kibo:Cert_SOC1"
+      }
+    },
+    {
+      "@id": "kibo:H2_Gov_Vendor",
+      "kibo:implementedBy": {
+        "@id": "kibo:H3_VendorMgmt"
+      }
+    },
+    {
+      "@id": "kibo:H3_AIBiasAudit_NYC",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_AIBiasAuditReport"
+      }
+    },
+    {
+      "@id": "kibo:H3_AITransparency_AIAct",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_AITransparencyNotice"
+      }
+    },
+    {
+      "@id": "kibo:H3_AI_Gov",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_ADMT_OptOut"
+      }
+    },
+    {
+      "@id": "kibo:H3_AccessCtrl",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_AccessReport"
+      }
+    },
+    {
+      "@id": "kibo:H3_AgentAgreement_PHIPA",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_AgentAgreement"
+      }
+    },
+    {
+      "@id": "kibo:H3_Assessments",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_DPIA"
+      }
+    },
+    {
+      "@id": "kibo:H3_Assessments",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_QC_PIA"
+      }
+    },
+    {
+      "@id": "kibo:H3_Assessments",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_TIA_SCC"
+      }
+    },
+    {
+      "@id": "kibo:H3_BioDB_Reg_Law25",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_BioDB_Notice"
+      }
+    },
+    {
+      "@id": "kibo:H3_BioRetention_BIPA",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_BioRetentionPolicy"
+      }
+    },
+    {
+      "@id": "kibo:H3_BreachReport_PIPA",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_BreachNotice_PIPA"
+      }
+    },
+    {
+      "@id": "kibo:H3_Breach_Resp",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_Breach_72h"
+      }
+    },
+    {
+      "@id": "kibo:H3_CISO_Appointment_NYDFS",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_CISO_Appointment"
+      }
+    },
+    {
+      "@id": "kibo:H3_ConformityAssessment_AIAct",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_ConformityCert"
+      }
+    },
+    {
+      "@id": "kibo:H3_CyberRiskAssessment_NYDFS",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_CyberRiskReport"
+      }
+    },
+    {
+      "@id": "kibo:H3_DefaultPrivacy_Law25",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_DefaultPrivacy"
+      }
+    },
+    {
+      "@id": "kibo:H3_Encrypt",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_EncryptCert"
+      }
+    },
+    {
+      "@id": "kibo:H3_FOI_Compliance_FIPPA",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_FOI_Compliance"
+      }
+    },
+    {
+      "@id": "kibo:H3_Gov_RoPA",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_RoPA"
+      }
+    },
+    {
+      "@id": "kibo:H3_ISMS_ISO27001",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_ISMSCert"
+      }
+    },
+    {
+      "@id": "kibo:H3_IncidentPlan",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_IncidentReport"
+      }
+    },
+    {
+      "@id": "kibo:H3_Leadership",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_DPO"
+      }
+    },
+    {
+      "@id": "kibo:H3_Monitoring",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_MonitoringLog"
+      }
+    },
+    {
+      "@id": "kibo:H3_NoDeceptive_FTC5",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_ComplianceStatement"
+      }
+    },
+    {
+      "@id": "kibo:H3_OptInHealth_MHMDA",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_OptInLog"
+      }
+    },
+    {
+      "@id": "kibo:H3_Retention",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_Retention_Log"
+      }
+    },
+    {
+      "@id": "kibo:H3_RetentionLog",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_RetentionProof"
+      }
+    },
+    {
+      "@id": "kibo:H3_Rights_Mgmt",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_DSAR_Fill"
+      }
+    },
+    {
+      "@id": "kibo:H3_StudentRecordConsent_FERPA",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_StudentRecordConsent"
+      }
+    },
+    {
+      "@id": "kibo:H3_TIA_Law25",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_TIA_Report"
+      }
+    },
+    {
+      "@id": "kibo:H3_TRA_PHIPA",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_TRA_Report"
+      }
+    },
+    {
+      "@id": "kibo:H3_Training",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_TrainingRecord"
+      }
+    },
+    {
+      "@id": "kibo:H3_TransferMechanism_GDPR",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_TransferImpactAssessment"
+      }
+    },
+    {
+      "@id": "kibo:H3_UKRep_UKGDPR",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_UKRepAppointment"
+      }
+    },
+    {
+      "@id": "kibo:H3_VendorMgmt",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_VendorAgreement"
+      }
+    },
+    {
+      "@id": "kibo:H3_WrittenRelease_BIPA",
+      "kibo:producesArtifact": {
+        "@id": "kibo:Out_WrittenRelease"
+      }
+    },
+    {
+      "@id": "kibo:Illinois",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:H1_BIPA"
+      }
+    },
+    {
+      "@id": "kibo:In_Act_Mktg",
+      "kibo:triggersFramework": {
+        "@id": "kibo:CCPA"
+      }
+    },
+    {
+      "@id": "kibo:In_Act_Mktg",
+      "kibo:triggersFramework": {
+        "@id": "kibo:GDPR"
+      }
+    },
+    {
+      "@id": "kibo:In_Act_Mktg",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_Infringement"
+      }
+    },
+    {
+      "@id": "kibo:In_Act_Mktg",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_PubDisc"
+      }
+    },
+    {
+      "@id": "kibo:In_Act_ThirdParty",
+      "kibo:triggersFramework": {
+        "@id": "kibo:CCPA"
+      }
+    },
+    {
+      "@id": "kibo:In_Act_ThirdParty",
+      "kibo:triggersFramework": {
+        "@id": "kibo:GDPR"
+      }
+    },
+    {
+      "@id": "kibo:In_Act_ThirdParty",
+      "kibo:triggersFramework": {
+        "@id": "kibo:PIPEDA"
+      }
+    },
+    {
+      "@id": "kibo:In_Act_ThirdParty",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_Infringement"
+      }
+    },
+    {
+      "@id": "kibo:In_Act_ThirdParty",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:In_Data_IoT",
+      "kibo:triggersFramework": {
+        "@id": "kibo:H1_NIST"
+      }
+    },
+    {
+      "@id": "kibo:In_Data_IoT",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_Infringement"
+      }
+    },
+    {
+      "@id": "kibo:In_Data_PCI",
+      "kibo:triggersFramework": {
+        "@id": "kibo:H1_PCI_DSS"
+      }
+    },
+    {
+      "@id": "kibo:In_Data_PCI",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_Breach",
+      "kibo:triggersFramework": {
+        "@id": "kibo:GDPR"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_Breach",
+      "kibo:triggersFramework": {
+        "@id": "kibo:H1_HIPAA"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_Breach",
+      "kibo:activatesControl": {
+        "@id": "kibo:H3_Breach_Resp"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_Breach",
+      "kibo:triggersFramework": {
+        "@id": "kibo:PIPEDA"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_Breach",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_Infringement"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_Breach",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_DSAR",
+      "kibo:triggersFramework": {
+        "@id": "kibo:CCPA"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_DSAR",
+      "kibo:triggersFramework": {
+        "@id": "kibo:GDPR"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_DSAR",
+      "kibo:activatesControl": {
+        "@id": "kibo:H3_Rights_Mgmt"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_DSAR",
+      "kibo:triggersFramework": {
+        "@id": "kibo:PIPEDA"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_DSAR",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_Infringement"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_DSAR",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_PubDisc"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_PolicyChg",
+      "kibo:triggersFramework": {
+        "@id": "kibo:CCPA"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_PolicyChg",
+      "kibo:triggersFramework": {
+        "@id": "kibo:GDPR"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_PolicyChg",
+      "kibo:triggersFramework": {
+        "@id": "kibo:PIPEDA"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_PolicyChg",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_Infringement"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_PolicyChg",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_RegAudit",
+      "kibo:triggersFramework": {
+        "@id": "kibo:GDPR"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_RegAudit",
+      "kibo:triggersFramework": {
+        "@id": "kibo:H1_PCI_DSS"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_RegAudit",
+      "kibo:triggersFramework": {
+        "@id": "kibo:H1_SOX"
+      }
+    },
+    {
+      "@id": "kibo:In_Evt_RegAudit",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_Infringement"
+      }
+    },
+    {
+      "@id": "kibo:Law_25",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Access"
+      }
+    },
+    {
+      "@id": "kibo:Law_25",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:Law_25",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:Law_25",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:Law_25",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_Assessments"
+      }
+    },
+    {
+      "@id": "kibo:Law_25",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_BioDB_Reg_Law25"
+      }
+    },
+    {
+      "@id": "kibo:Law_25",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_Breach_Resp"
+      }
+    },
+    {
+      "@id": "kibo:Law_25",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_DefaultPrivacy_Law25"
+      }
+    },
+    {
+      "@id": "kibo:Law_25",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_Gov_RoPA"
+      }
+    },
+    {
+      "@id": "kibo:Law_25",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_Leadership"
+      }
+    },
+    {
+      "@id": "kibo:Law_25",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_Retention"
+      }
+    },
+    {
+      "@id": "kibo:Law_25",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_TIA_Law25"
+      }
+    },
+    {
+      "@id": "kibo:Law_25",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_OPC_QC"
+      }
+    },
+    {
+      "@id": "kibo:Law_25",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_Approp"
+      }
+    },
+    {
+      "@id": "kibo:Law_25",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_FalseLight"
+      }
+    },
+    {
+      "@id": "kibo:Law_25",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:Law_25",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_PubDisc"
+      }
+    },
+    {
+      "@id": "kibo:New_York",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:H1_NYC_AIBias"
+      }
+    },
+    {
+      "@id": "kibo:New_York",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:H1_NYDFS"
+      }
+    },
+    {
+      "@id": "kibo:New_York",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:H1_NY_SHIELD"
+      }
+    },
+    {
+      "@id": "kibo:Ontario",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:FIPPA"
+      }
+    },
+    {
+      "@id": "kibo:Ontario",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:PHIPA"
+      }
+    },
+    {
+      "@id": "kibo:Ontario",
+      "kibo:mandatesArtifact": {
+        "@id": "kibo:PHIPA_TRA"
+      }
+    },
+    {
+      "@id": "kibo:PHI",
+      "kibo:triggersFramework": {
+        "@id": "kibo:H1_HIPAA"
+      }
+    },
+    {
+      "@id": "kibo:PHI",
+      "kibo:mandatesArtifact": {
+        "@id": "kibo:PHIPA_TRA"
+      }
+    },
+    {
+      "@id": "kibo:PHI",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:PHI",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_PubDisc"
+      }
+    },
+    {
+      "@id": "kibo:PHIPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:PHIPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:PHIPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:PHIPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:PHIPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_AgentAgreement_PHIPA"
+      }
+    },
+    {
+      "@id": "kibo:PHIPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_Assessments"
+      }
+    },
+    {
+      "@id": "kibo:PHIPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_Breach_Resp"
+      }
+    },
+    {
+      "@id": "kibo:PHIPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_Rights_Mgmt"
+      }
+    },
+    {
+      "@id": "kibo:PHIPA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_TRA_PHIPA"
+      }
+    },
+    {
+      "@id": "kibo:PHIPA",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_OPC_ON"
+      }
+    },
+    {
+      "@id": "kibo:PHIPA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_Approp"
+      }
+    },
+    {
+      "@id": "kibo:PHIPA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_FalseLight"
+      }
+    },
+    {
+      "@id": "kibo:PHIPA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:PHIPA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_PubDisc"
+      }
+    },
+    {
+      "@id": "kibo:PIPEDA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:PIPEDA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:PIPEDA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:PIPEDA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_Breach_Resp"
+      }
+    },
+    {
+      "@id": "kibo:PIPEDA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_Retention"
+      }
+    },
+    {
+      "@id": "kibo:PIPEDA",
+      "kibo:mandatesControl": {
+        "@id": "kibo:H3_Rights_Mgmt"
+      }
+    },
+    {
+      "@id": "kibo:PIPEDA",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_OPC_Fed"
+      }
+    },
+    {
+      "@id": "kibo:PIPEDA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_Approp"
+      }
+    },
+    {
+      "@id": "kibo:PIPEDA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_FalseLight"
+      }
+    },
+    {
+      "@id": "kibo:PIPEDA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:PIPEDA",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_CA_PubDisc"
+      }
+    },
+    {
+      "@id": "kibo:Pen_EU_DPA",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_CeaseDesist"
+      }
+    },
+    {
+      "@id": "kibo:Pen_EU_DPA",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_CorrectiveOrder"
+      }
+    },
+    {
+      "@id": "kibo:Pen_EU_DPA",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_FineNotice"
+      }
+    },
+    {
+      "@id": "kibo:Pen_EU_DPA",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_PublicNaming"
+      }
+    },
+    {
+      "@id": "kibo:Pen_EU_DPA",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_RemediationPlan"
+      }
+    },
+    {
+      "@id": "kibo:Pen_FTC",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_CeaseDesist"
+      }
+    },
+    {
+      "@id": "kibo:Pen_FTC",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_CorrectiveOrder"
+      }
+    },
+    {
+      "@id": "kibo:Pen_FTC",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_FineNotice"
+      }
+    },
+    {
+      "@id": "kibo:Pen_FTC",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_PublicNaming"
+      }
+    },
+    {
+      "@id": "kibo:Pen_FTC",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_RemediationPlan"
+      }
+    },
+    {
+      "@id": "kibo:Pen_HHS",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_CeaseDesist"
+      }
+    },
+    {
+      "@id": "kibo:Pen_HHS",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_CorrectiveOrder"
+      }
+    },
+    {
+      "@id": "kibo:Pen_HHS",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_FineNotice"
+      }
+    },
+    {
+      "@id": "kibo:Pen_HHS",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_PublicNaming"
+      }
+    },
+    {
+      "@id": "kibo:Pen_HHS",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_RemediationPlan"
+      }
+    },
+    {
+      "@id": "kibo:Pen_OPC_Fed",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_CeaseDesist"
+      }
+    },
+    {
+      "@id": "kibo:Pen_OPC_Fed",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_CorrectiveOrder"
+      }
+    },
+    {
+      "@id": "kibo:Pen_OPC_Fed",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_FineNotice"
+      }
+    },
+    {
+      "@id": "kibo:Pen_OPC_Fed",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_PublicNaming"
+      }
+    },
+    {
+      "@id": "kibo:Pen_OPC_Fed",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_RemediationPlan"
+      }
+    },
+    {
+      "@id": "kibo:Pen_OPC_ON",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_CeaseDesist"
+      }
+    },
+    {
+      "@id": "kibo:Pen_OPC_ON",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_CorrectiveOrder"
+      }
+    },
+    {
+      "@id": "kibo:Pen_OPC_ON",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_FineNotice"
+      }
+    },
+    {
+      "@id": "kibo:Pen_OPC_ON",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_PublicNaming"
+      }
+    },
+    {
+      "@id": "kibo:Pen_OPC_ON",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_RemediationPlan"
+      }
+    },
+    {
+      "@id": "kibo:Pen_OPC_QC",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_CeaseDesist"
+      }
+    },
+    {
+      "@id": "kibo:Pen_OPC_QC",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_CorrectiveOrder"
+      }
+    },
+    {
+      "@id": "kibo:Pen_OPC_QC",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_FineNotice"
+      }
+    },
+    {
+      "@id": "kibo:Pen_OPC_QC",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_PublicNaming"
+      }
+    },
+    {
+      "@id": "kibo:Pen_OPC_QC",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_RemediationPlan"
+      }
+    },
+    {
+      "@id": "kibo:Pen_SEC",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_CeaseDesist"
+      }
+    },
+    {
+      "@id": "kibo:Pen_SEC",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_CorrectiveOrder"
+      }
+    },
+    {
+      "@id": "kibo:Pen_SEC",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_FineNotice"
+      }
+    },
+    {
+      "@id": "kibo:Pen_SEC",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_PublicNaming"
+      }
+    },
+    {
+      "@id": "kibo:Pen_SEC",
+      "kibo:canIssue": {
+        "@id": "kibo:Out_RemediationPlan"
+      }
+    },
+    {
+      "@id": "kibo:PersonalInformation_PI",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:PersonalInformation_PI",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_PubDisc"
+      }
+    },
+    {
+      "@id": "kibo:Profiling",
+      "kibo:triggersFramework": {
+        "@id": "kibo:CCPA"
+      }
+    },
+    {
+      "@id": "kibo:Profiling",
+      "kibo:triggersFramework": {
+        "@id": "kibo:GDPR"
+      }
+    },
+    {
+      "@id": "kibo:Profiling",
+      "kibo:triggersFramework": {
+        "@id": "kibo:H1_UK_GDPR"
+      }
+    },
+    {
+      "@id": "kibo:Profiling",
+      "kibo:activatesControl": {
+        "@id": "kibo:H3_AI_Gov"
+      }
+    },
+    {
+      "@id": "kibo:Profiling",
+      "kibo:mandatesArtifact": {
+        "@id": "kibo:Law25_PIA"
+      }
+    },
+    {
+      "@id": "kibo:Profiling",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_Infringement"
+      }
+    },
+    {
+      "@id": "kibo:Profiling",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_FalseLight"
+      }
+    },
+    {
+      "@id": "kibo:Quebec",
+      "kibo:isAdequate": {
+        "@id": "kibo:EU_Union"
+      }
+    },
+    {
+      "@id": "kibo:Quebec",
+      "kibo:mandatesArtifact": {
+        "@id": "kibo:Law25_PIA"
+      }
+    },
+    {
+      "@id": "kibo:Quebec",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:Law_25"
+      }
+    },
+    {
+      "@id": "kibo:Singapore",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:H1_PDPA"
+      }
+    },
+    {
+      "@id": "kibo:Storage",
+      "kibo:mandatesArtifact": {
+        "@id": "kibo:Article35_DPIA"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_Approp",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Access"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_Approp",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_Approp",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Incident"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_Approp",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_Approp",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_Approp",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_RetPol"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_Approp",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_Approp",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_Approp",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_CivilCourts"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_FalseLight",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Access"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_FalseLight",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_FalseLight",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Incident"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_FalseLight",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_FalseLight",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_FalseLight",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_RetPol"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_FalseLight",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_FalseLight",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_FalseLight",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_CivilCourts"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_Intrusion",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Access"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_Intrusion",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_Intrusion",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Incident"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_Intrusion",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_Intrusion",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_Intrusion",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_RetPol"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_Intrusion",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_Intrusion",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_Intrusion",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_CivilCourts"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_PubDisc",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Access"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_PubDisc",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_PubDisc",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Incident"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_PubDisc",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_PubDisc",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_PubDisc",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_RetPol"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_PubDisc",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_PubDisc",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:T_CA_PubDisc",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_CivilCourts"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_BreachConf",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Access"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_BreachConf",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_BreachConf",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Incident"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_BreachConf",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_BreachConf",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_BreachConf",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_RetPol"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_BreachConf",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_BreachConf",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_BreachConf",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_CivilCourts"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_DataProtViol",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Access"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_DataProtViol",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_DataProtViol",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Incident"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_DataProtViol",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_DataProtViol",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_DataProtViol",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_RetPol"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_DataProtViol",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_DataProtViol",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_DataProtViol",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_CivilCourts"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_Infringement",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Access"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_Infringement",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_Infringement",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Incident"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_Infringement",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_Infringement",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_Infringement",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_RetPol"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_Infringement",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_Infringement",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_Infringement",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_CivilCourts"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_RTBF",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Access"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_RTBF",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_RTBF",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Incident"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_RTBF",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_RTBF",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_RTBF",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_RetPol"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_RTBF",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_RTBF",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:T_EU_RTBF",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_CivilCourts"
+      }
+    },
+    {
+      "@id": "kibo:T_US_Approp",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Access"
+      }
+    },
+    {
+      "@id": "kibo:T_US_Approp",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:T_US_Approp",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Incident"
+      }
+    },
+    {
+      "@id": "kibo:T_US_Approp",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:T_US_Approp",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:T_US_Approp",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_RetPol"
+      }
+    },
+    {
+      "@id": "kibo:T_US_Approp",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:T_US_Approp",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:T_US_Approp",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_CivilCourts"
+      }
+    },
+    {
+      "@id": "kibo:T_US_FalseLight",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Access"
+      }
+    },
+    {
+      "@id": "kibo:T_US_FalseLight",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:T_US_FalseLight",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Incident"
+      }
+    },
+    {
+      "@id": "kibo:T_US_FalseLight",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:T_US_FalseLight",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:T_US_FalseLight",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_RetPol"
+      }
+    },
+    {
+      "@id": "kibo:T_US_FalseLight",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:T_US_FalseLight",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:T_US_FalseLight",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_CivilCourts"
+      }
+    },
+    {
+      "@id": "kibo:T_US_Intrusion",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Access"
+      }
+    },
+    {
+      "@id": "kibo:T_US_Intrusion",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:T_US_Intrusion",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Incident"
+      }
+    },
+    {
+      "@id": "kibo:T_US_Intrusion",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:T_US_Intrusion",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:T_US_Intrusion",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_RetPol"
+      }
+    },
+    {
+      "@id": "kibo:T_US_Intrusion",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:T_US_Intrusion",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:T_US_Intrusion",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_CivilCourts"
+      }
+    },
+    {
+      "@id": "kibo:T_US_PubDisc",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Access"
+      }
+    },
+    {
+      "@id": "kibo:T_US_PubDisc",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Encrypt"
+      }
+    },
+    {
+      "@id": "kibo:T_US_PubDisc",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Incident"
+      }
+    },
+    {
+      "@id": "kibo:T_US_PubDisc",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Monitoring"
+      }
+    },
+    {
+      "@id": "kibo:T_US_PubDisc",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Policy"
+      }
+    },
+    {
+      "@id": "kibo:T_US_PubDisc",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_RetPol"
+      }
+    },
+    {
+      "@id": "kibo:T_US_PubDisc",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Training"
+      }
+    },
+    {
+      "@id": "kibo:T_US_PubDisc",
+      "kibo:mitigatedBy": {
+        "@id": "kibo:H2_Gov_Vendor"
+      }
+    },
+    {
+      "@id": "kibo:T_US_PubDisc",
+      "kibo:exposesToPenalty": {
+        "@id": "kibo:Pen_CivilCourts"
+      }
+    },
+    {
+      "@id": "kibo:Texas",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:TDPSA"
+      }
+    },
+    {
+      "@id": "kibo:Transfer",
+      "kibo:triggersFramework": {
+        "@id": "kibo:GDPR"
+      }
+    },
+    {
+      "@id": "kibo:Transfer",
+      "kibo:triggersFramework": {
+        "@id": "kibo:H1_APP"
+      }
+    },
+    {
+      "@id": "kibo:Transfer",
+      "kibo:triggersFramework": {
+        "@id": "kibo:H1_PDPA"
+      }
+    },
+    {
+      "@id": "kibo:Transfer",
+      "kibo:triggersFramework": {
+        "@id": "kibo:H1_UK_GDPR"
+      }
+    },
+    {
+      "@id": "kibo:Transfer",
+      "kibo:mandatesArtifact": {
+        "@id": "kibo:Law25_TIA"
+      }
+    },
+    {
+      "@id": "kibo:Transfer",
+      "kibo:mandatesArtifact": {
+        "@id": "kibo:Out_TIA_SCC"
+      }
+    },
+    {
+      "@id": "kibo:Transfer",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_EU_Infringement"
+      }
+    },
+    {
+      "@id": "kibo:Transfer",
+      "kibo:exposesToTort": {
+        "@id": "kibo:T_US_Intrusion"
+      }
+    },
+    {
+      "@id": "kibo:UK",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:H1_UK_GDPR"
+      }
+    },
+    {
+      "@id": "kibo:US_Federal",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:H1_FERPA"
+      }
+    },
+    {
+      "@id": "kibo:US_Federal",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:H1_FTCAct5"
+      }
+    },
+    {
+      "@id": "kibo:US_Federal",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:H1_HIPAA"
+      }
+    },
+    {
+      "@id": "kibo:Virginia",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:VCDPA"
+      }
+    },
+    {
+      "@id": "kibo:Washington",
+      "kibo:enforcesFramework": {
+        "@id": "kibo:H1_MHMDA"
+      }
+    }
+  ]
+}
