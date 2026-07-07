@@ -1,0 +1,7 @@
+from core.repositories.base_repository import BaseRepository
+from core.repositories.system_repository import SystemRepository
+from core.repositories.vendor_repository import VendorRepository
+from core.repositories.assessment_repository import AssessmentRepository
+from core.repositories.risk_repository import RiskRepository
+from core.repositories.control_repository import ControlRepository
+from core.repositories.tenant_repository import TenantRepository, TenantScopedRepository

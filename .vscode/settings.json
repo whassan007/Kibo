@@ -1,0 +1,8 @@
+{
+    "workbench.preferredDarkColorTheme": "Default Light+",
+    "workbench.preferredLightColorTheme": "Visual Studio Light",
+    "python.defaultInterpreterPath": "/Users/dr.wael/Library/Mobile Documents/com~apple~CloudDocs/Documents/Code/Kibo/.venv/bin/python",
+    "python.analysis.extraPaths": [
+        "/Users/dr.wael/Library/Mobile Documents/com~apple~CloudDocs/Documents/Code/Kibo/kibo-is"
+    ]
+}

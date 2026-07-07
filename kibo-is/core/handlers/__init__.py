@@ -1,0 +1,2 @@
+from core.handlers.assessment_handlers import register_assessment_handlers
+from core.handlers.risk_handlers import register_risk_handlers

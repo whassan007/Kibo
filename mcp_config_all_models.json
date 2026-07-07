@@ -1,0 +1,114 @@
+{
+  "mcpServers": {
+    "ollama-local": {
+      "command": "npx",
+      "args": ["-y", "@iflow-mcp/ollama-mcp"],
+      "env": {
+        "OLLAMA_HOST": "http://localhost:11434"
+      }
+    },
+    "ollama-local-gemma": {
+      "command": "npx",
+      "args": ["-y", "@iflow-mcp/ollama-mcp"],
+      "env": {
+        "OLLAMA_HOST": "http://localhost:11434",
+        "OLLAMA_MODEL": "gemma4:latest"
+      }
+    },
+    "ollama-local-coding": {
+      "command": "npx",
+      "args": ["-y", "@iflow-mcp/ollama-mcp"],
+      "env": {
+        "OLLAMA_HOST": "http://localhost:11434",
+        "OLLAMA_MODEL": "qwen3-coder:latest"
+      }
+    },
+    "ollama-spark": {
+      "command": "npx",
+      "args": ["-y", "@iflow-mcp/ollama-mcp"],
+      "env": {
+        "OLLAMA_HOST": "http://dgx-spark.tail16d8d9.ts.net:11434"
+      }
+    },
+    "ollama-spark-reasoning": {
+      "command": "npx",
+      "args": ["-y", "@iflow-mcp/ollama-mcp"],
+      "env": {
+        "OLLAMA_HOST": "http://dgx-spark.tail16d8d9.ts.net:11434",
+        "OLLAMA_MODEL": "reasoning-core:latest"
+      }
+    },
+    "ollama-spark-deepseek": {
+      "command": "npx",
+      "args": ["-y", "@iflow-mcp/ollama-mcp"],
+      "env": {
+        "OLLAMA_HOST": "http://dgx-spark.tail16d8d9.ts.net:11434",
+        "OLLAMA_MODEL": "deepseek-r1:671b"
+      }
+    },
+    "ollama-spark-coding": {
+      "command": "npx",
+      "args": ["-y", "@iflow-mcp/ollama-mcp"],
+      "env": {
+        "OLLAMA_HOST": "http://dgx-spark.tail16d8d9.ts.net:11434",
+        "OLLAMA_MODEL": "qwen3-coder:30b"
+      }
+    },
+    "ollama-spark-qwen": {
+      "command": "npx",
+      "args": ["-y", "@iflow-mcp/ollama-mcp"],
+      "env": {
+        "OLLAMA_HOST": "http://dgx-spark.tail16d8d9.ts.net:11434",
+        "OLLAMA_MODEL": "qwen3.6:35b-a3b-bf16"
+      }
+    },
+    "ollama-spark-nemotron": {
+      "command": "npx",
+      "args": ["-y", "@iflow-mcp/ollama-mcp"],
+      "env": {
+        "OLLAMA_HOST": "http://dgx-spark.tail16d8d9.ts.net:11434",
+        "OLLAMA_MODEL": "nemotron-3-super:latest"
+      }
+    },
+    "ollama-spark-llama": {
+      "command": "npx",
+      "args": ["-y", "@iflow-mcp/ollama-mcp"],
+      "env": {
+        "OLLAMA_HOST": "http://dgx-spark.tail16d8d9.ts.net:11434",
+        "OLLAMA_MODEL": "llama4:scout"
+      }
+    },
+    "ollama-spark-gpt-oss": {
+      "command": "npx",
+      "args": ["-y", "@iflow-mcp/ollama-mcp"],
+      "env": {
+        "OLLAMA_HOST": "http://dgx-spark.tail16d8d9.ts.net:11434",
+        "OLLAMA_MODEL": "gpt-oss:120b"
+      }
+    },
+    "ollama-spark-devstral": {
+      "command": "npx",
+      "args": ["-y", "@iflow-mcp/ollama-mcp"],
+      "env": {
+        "OLLAMA_HOST": "http://dgx-spark.tail16d8d9.ts.net:11434",
+        "OLLAMA_MODEL": "devstral:24b"
+      }
+    },
+    "ollama-spark-gemma": {
+      "command": "npx",
+      "args": ["-y", "@iflow-mcp/ollama-mcp"],
+      "env": {
+        "OLLAMA_HOST": "http://dgx-spark.tail16d8d9.ts.net:11434",
+        "OLLAMA_MODEL": "gemma4:26b"
+      }
+    },
+    "ollama-spark-multimodal": {
+      "command": "npx",
+      "args": ["-y", "@iflow-mcp/ollama-mcp"],
+      "env": {
+        "OLLAMA_HOST": "http://dgx-spark.tail16d8d9.ts.net:11434",
+        "OLLAMA_MODEL": "qwen2.5vl:72b"
+      }
+    }
+  }
+}

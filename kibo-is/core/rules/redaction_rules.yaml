@@ -1,0 +1,88 @@
+# DSAR Redaction Rules Configuration
+# These rules are loaded as defaults when no DB-configured rules exist.
+# Fields listed under `applies_to_fields` will be matched by exact key name.
+
+version: "1.0"
+rules:
+  - name: "Email Address Masking"
+    type: "email_mask"
+    pattern: '(\w[\w.+-]*)@([\w.-]+\.\w+)'
+    replacement: '\1***@\2'
+    applies_to_fields:
+      - email
+      - sender
+      - recipient
+      - reply_to
+      - from_address
+      - to_address
+    applies_to_categories:
+      - PersonalInformation
+      - ContactDetails
+    priority: high
+
+  - name: "Phone Number Masking"
+    type: "phone_mask"
+    pattern: '(\+?[\d\s\-().]{7,})(?=\s|$)'
+    replacement: '***-****'
+    applies_to_fields:
+      - phone
+      - mobile
+      - telephone
+      - fax
+      - contact_number
+    applies_to_categories:
+      - PersonalInformation
+      - ContactDetails
+    priority: high
+
+  - name: "Social Security / SIN Number Masking"
+    type: "ssn_mask"
+    pattern: '\d{3}-\d{2}-(\d{4})'
+    replacement: '***-**-\1'
+    applies_to_fields:
+      - ssn
+      - social_security
+      - sin
+    applies_to_categories:
+      - SensitivePersonalData
+    priority: high
+
+  - name: "Credit Card Number Masking"
+    type: "credit_card_mask"
+    pattern: '\b(?:\d[ -]?){13,15}\d\b'
+    replacement: '****-****-****-XXXX'
+    applies_to_fields:
+      - card_number
+      - credit_card
+      - payment_card
+      - pan
+    applies_to_categories:
+      - PaymentInfo
+      - FinancialData
+    priority: high
+
+  - name: "Date of Birth Redaction"
+    type: "full_redact"
+    pattern: '.*'
+    replacement: '[REDACTED - DOB]'
+    applies_to_fields:
+      - date_of_birth
+      - dob
+      - birth_date
+    applies_to_categories:
+      - SensitivePersonalData
+    priority: normal
+
+  - name: "Health Data Redaction"
+    type: "full_redact"
+    pattern: '.*'
+    replacement: '[REDACTED - HEALTH DATA]'
+    applies_to_fields:
+      - diagnosis
+      - medication
+      - health_condition
+      - medical_record
+    applies_to_categories:
+      - HealthData
+      - SensitivePersonalData
+    priority: high

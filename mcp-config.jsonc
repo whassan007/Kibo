@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "ollama-local": {
+      "command": "npx",
+      "args": ["-y", "@iflow-mcp/ollama-mcp"],
+      "env": {
+        "OLLAMA_HOST": "http://localhost:11434"
+      }
+    },
+    "ollama-spark": {
+      "command": "npx",
+      "args": ["-y", "@iflow-mcp/ollama-mcp"],
+      "env": {
+        "OLLAMA_HOST": "http://dgx-spark.tail16d8d9.ts.net:11434"
+      }
+    }
+  }
+}

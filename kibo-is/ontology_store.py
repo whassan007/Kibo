@@ -74,6 +74,7 @@ def seed_ontology():
         ("PrivacyTort", None),
         ("PenaltyExposure", None),
         ("CrossBorderFramework", None),
+        ("TrainingMaterial", None),
     ]
     cursor.executemany("INSERT INTO ontology_classes VALUES (?, ?)", classes)
     
@@ -98,7 +99,11 @@ def seed_ontology():
         ("VCDPA", "LegalFramework", "Virginia VCDPA", json.dumps({"status": "Active"})),
         ("TDPSA", "LegalFramework", "Texas TDPSA", json.dumps({"status": "Active"})),
         
-        # Regulatory Authorities
+        # Training Materials
+        ("AnnualSecurityTraining", "TrainingMaterial", "Annual Security Awareness Training", json.dumps({"url": "/assets/Policies/AnnualSecurityTraining.pdf"})),
+        ("DataRetentionTraining", "TrainingMaterial", "Data Retention Policy Training", json.dumps({"url": "/assets/Policies/DataRetentionTraining.pdf"})),
+        ("PrivacyImpactAssessment", "TrainingMaterial", "Privacy Impact Assessment Workshop", json.dumps({"url": "/assets/Policies/PrivacyImpactAssessment.pdf"})),
+                # Regulatory Authorities
         ("OPC", "RegulatoryAuthority", "Office of the Privacy Commissioner of Canada", json.dumps({})),
         ("CAI", "RegulatoryAuthority", "Commission d'accès à l'information du Québec", json.dumps({})),
         ("CPPA", "RegulatoryAuthority", "California Privacy Protection Agency", json.dumps({})),

@@ -160,9 +160,20 @@ def start_sources_sync_loop():
     t = threading.Thread(target=loop, daemon=True)
     t.start()
 
+# Initialize Event Bus
+from core.events import InMemoryEventBus
+from core.services.event_processor import EventProcessor
+import asyncio
+
+event_bus = InMemoryEventBus()
+
 @app.on_event("startup")
-def on_startup():
+async def on_startup():
     start_sources_sync_loop()
+    # Bootstrap event processor
+    processor = EventProcessor(event_bus, SessionLocal)
+    asyncio.create_task(processor.start())
+    app.state.event_bus = event_bus
 
 
 # Setup CORS for local React dashboard development
@@ -176,6 +187,35 @@ app.add_middleware(
 
 # SQLite file locations
 DB_FILE = os.path.join(os.path.dirname(__file__), "kibo_state.db")
+
+# SQLAlchemy setup for Audit Logging
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from core.models.base import Base
+import core.models
+from core.middleware.audit_middleware import AuditMiddleware
+
+sqlalchemy_engine = create_engine(f"sqlite:///{DB_FILE}", connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sqlalchemy_engine)
+
+# Create tables
+Base.metadata.create_all(bind=sqlalchemy_engine)
+
+# Add Audit middleware to FastAPI app
+from core.middleware.tenant_isolation import TenantIsolationMiddleware
+from core.middleware.audit_logging import AuditLoggingMiddleware
+
+app.add_middleware(AuditMiddleware, db_session_factory=SessionLocal)
+app.add_middleware(TenantIsolationMiddleware, db_session_factory=SessionLocal)
+app.add_middleware(AuditLoggingMiddleware, db_session_factory=SessionLocal)
+
+# DB Dependency for routes
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 # In-memory checkpointer connection for LangGraph (or file-based checkpointer)
 conn = sqlite3.connect(DB_FILE, check_same_thread=False)
@@ -1061,10 +1101,15 @@ def seed_mock_data():
             original_risk_level TEXT,
             status_note TEXT,
             status TEXT DEFAULT 'open',
+            residual_risk_score REAL,
             created_at TEXT,
             updated_at TEXT
         )
     """)
+    try:
+        cursor.execute("ALTER TABLE risks ADD COLUMN residual_risk_score REAL")
+    except Exception:
+        pass
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS risk_log (
             log_id TEXT PRIMARY KEY,
@@ -1108,6 +1153,7 @@ def seed_mock_data():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS assessments (
             assessment_id TEXT PRIMARY KEY,
+            tenant_id TEXT DEFAULT 'default',
             title TEXT NOT NULL,
             type TEXT NOT NULL,
             output_type TEXT NOT NULL,
@@ -1135,6 +1181,10 @@ def seed_mock_data():
             docx_path TEXT
         )
     """)
+    try:
+        cursor.execute("ALTER TABLE assessments ADD COLUMN tenant_id TEXT DEFAULT 'default'")
+    except Exception:
+        pass
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS assessment_versions (
             version_id TEXT PRIMARY KEY,
@@ -1678,7 +1728,7 @@ def get_transactions(scope: str = Depends(require_scopes(["expert"]))):
     return transactions
 
 @app.post("/api/transactions/{thread_id}/decision")
-def post_decision(thread_id: str, payload: DecisionPayload, scope: str = Depends(require_scopes(["expert"]))):
+def post_decision(thread_id: str, payload: DecisionPayload, scope: str = Depends(require_scopes(["expert"])), db = Depends(get_db)):
     """
     Accepts decision payload, handles rule learning if 'approve_always' or 'reject',
     updates graph state, and resumes thread.
@@ -1697,6 +1747,8 @@ def post_decision(thread_id: str, payload: DecisionPayload, scope: str = Depends
     }
     
     decision = action_map.get(payload.action, "pending")
+    
+    previous_state = dict(state_vals) if state_vals else None
     
     # Handle Rule Learning
     if payload.action in ["approve_always", "reject"]:
@@ -1720,6 +1772,22 @@ def post_decision(thread_id: str, payload: DecisionPayload, scope: str = Depends
     if payload.action != "review_later":
         # Resume the thread - LangGraph will execute the human_approval_node and finalize
         graph.invoke(None, config)
+
+    new_state = get_thread_state(thread_id)
+
+    # Log to audit trail
+    from core.audit.audit_service import AuditService
+    import asyncio
+    audit_service = AuditService(db)
+    asyncio.run(audit_service.log_change(
+        action=decision.upper(),
+        entity_type="Transaction",
+        entity_id=thread_id,
+        previous_state=previous_state,
+        new_state=dict(new_state) if new_state else None,
+        user_id="user_expert",
+        reason=payload.reasoning
+    ))
 
     return {"status": "success", "resolved_decision": decision}
 
@@ -2491,6 +2559,27 @@ def get_risk_level_from_score(score: int) -> str:
     else:
         return "Low"
 
+def get_assessment_as_dict(assessment_id: str) -> Optional[dict]:
+    from core.context.tenant_context import get_tenant_id
+    tenant_id = get_tenant_id()
+    conn_db = sqlite3.connect(DB_FILE)
+    conn_db.row_factory = sqlite3.Row
+    cursor = conn_db.cursor()
+    cursor.execute("SELECT * FROM assessments WHERE assessment_id = ? AND tenant_id = ?", (assessment_id, tenant_id))
+    row = cursor.fetchone()
+    conn_db.close()
+    if row:
+        d = dict(row)
+        for field in ["jurisdictions", "roles_in_scope", "departments_in_scope", "services_in_scope", "data_types", "cross_border_jurisdictions", "sections", "linked_risks"]:
+            if field in d and d[field]:
+                try:
+                    d[field] = json.loads(d[field])
+                except:
+                    pass
+        return d
+    return None
+
+
 @app.get("/api/pias")
 def get_pias(scope: str = Depends(require_scopes(["expert"]))):
     conn_db = sqlite3.connect(DB_FILE)
@@ -2872,10 +2961,12 @@ from reportlab.lib import colors
 
 @app.get("/api/assessments")
 def list_assessments(scope: str = Depends(require_scopes(["expert"]))):
+    from core.context.tenant_context import get_tenant_id
+    tenant_id = get_tenant_id()
     conn_db = sqlite3.connect(DB_FILE)
     conn_db.row_factory = sqlite3.Row
     cursor = conn_db.cursor()
-    cursor.execute("SELECT * FROM assessments ORDER BY created_at DESC")
+    cursor.execute("SELECT * FROM assessments WHERE tenant_id = ? ORDER BY created_at DESC", (tenant_id,))
     rows = cursor.fetchall()
     conn_db.close()
     
@@ -2895,10 +2986,12 @@ def list_assessments(scope: str = Depends(require_scopes(["expert"]))):
 
 @app.get("/api/assessments/{assessment_id}")
 def get_assessment(assessment_id: str, scope: str = Depends(require_scopes(["expert"]))):
+    from core.context.tenant_context import get_tenant_id
+    tenant_id = get_tenant_id()
     conn_db = sqlite3.connect(DB_FILE)
     conn_db.row_factory = sqlite3.Row
     cursor = conn_db.cursor()
-    cursor.execute("SELECT * FROM assessments WHERE assessment_id = ?", (assessment_id,))
+    cursor.execute("SELECT * FROM assessments WHERE assessment_id = ? AND tenant_id = ?", (assessment_id, tenant_id))
     row = cursor.fetchone()
     conn_db.close()
     if not row:
@@ -2916,19 +3009,20 @@ def get_assessment(assessment_id: str, scope: str = Depends(require_scopes(["exp
     return d
 
 @app.post("/api/assessments")
-def create_assessment(payload: AssessmentCreatePayload, scope: str = Depends(require_scopes(["expert"]))):
+def create_assessment(payload: AssessmentCreatePayload, scope: str = Depends(require_scopes(["expert"])), db = Depends(get_db)):
     conn_db = sqlite3.connect(DB_FILE)
     cursor = conn_db.cursor()
     
     # Generate ID: PIA-YYYY-XXX
     current_year = dt.date.today().year
-    cursor.execute("SELECT assessment_id FROM assessments ORDER BY created_at DESC LIMIT 1")
+    cursor.execute("SELECT assessment_id FROM assessments ORDER BY assessment_id DESC LIMIT 1")
     last_row = cursor.fetchone()
     next_num = 1
     if last_row:
         try:
             last_id = last_row[0]
             last_num = int(last_id.split("-")[-1]) + 1
+            next_num = last_num
         except:
             pass
     new_id = f"PIA-{current_year}-{next_num:03d}"
@@ -2975,15 +3069,18 @@ def create_assessment(payload: AssessmentCreatePayload, scope: str = Depends(req
     
     now_str = dt.datetime.utcnow().isoformat() + "Z"
     
+    from core.context.tenant_context import get_tenant_id
+    tenant_id = get_tenant_id()
+    
     cursor.execute("""
         INSERT INTO assessments (
-            assessment_id, title, type, output_type, level, version, version_notes, status, risk_level, 
+            assessment_id, tenant_id, title, type, output_type, level, version, version_notes, status, risk_level, 
             source, source_id, prepared_by, jurisdictions, roles_in_scope, departments_in_scope, 
             services_in_scope, data_types, cross_border, cross_border_jurisdictions, sections, linked_risks, created_at, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'draft', 'Low', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draft', 'Low', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
-        new_id, payload.title, payload.type, payload.output_type, payload.level, "0.1", "Initial draft",
+        new_id, tenant_id, payload.title, payload.type, payload.output_type, payload.level, "0.1", "Initial draft",
         payload.source, payload.source_id, payload.prepared_by,
         json.dumps(payload.jurisdictions), json.dumps(payload.roles_in_scope), json.dumps(payload.departments_in_scope),
         json.dumps(payload.services_in_scope), json.dumps(payload.data_types), 1 if payload.cross_border else 0,
@@ -2992,10 +3089,28 @@ def create_assessment(payload: AssessmentCreatePayload, scope: str = Depends(req
     
     conn_db.commit()
     conn_db.close()
+    
+    # Audit Logging
+    from core.audit.audit_service import AuditService
+    import asyncio
+    
+    assessment_dict = get_assessment_as_dict(new_id)
+    audit_service = AuditService(db)
+    asyncio.run(audit_service.log_change(
+        action="CREATE",
+        entity_type="Assessment",
+        entity_id=new_id,
+        previous_state=None,
+        new_state=assessment_dict,
+        user_id="user_expert",
+        reason="Initial creation"
+    ))
+    
     return {"status": "success", "assessment_id": new_id}
 
 @app.put("/api/assessments/{assessment_id}")
-def update_assessment(assessment_id: str, payload: AssessmentUpdatePayload, scope: str = Depends(require_scopes(["expert"]))):
+def update_assessment(assessment_id: str, payload: AssessmentUpdatePayload, scope: str = Depends(require_scopes(["expert"])), db = Depends(get_db)):
+    previous_state = get_assessment_as_dict(assessment_id)
     conn_db = sqlite3.connect(DB_FILE)
     cursor = conn_db.cursor()
     now_str = dt.datetime.utcnow().isoformat() + "Z"
@@ -3015,10 +3130,28 @@ def update_assessment(assessment_id: str, payload: AssessmentUpdatePayload, scop
     
     conn_db.commit()
     conn_db.close()
+    
+    # Audit Logging
+    from core.audit.audit_service import AuditService
+    import asyncio
+    
+    new_state = get_assessment_as_dict(assessment_id)
+    audit_service = AuditService(db)
+    asyncio.run(audit_service.log_change(
+        action="UPDATE",
+        entity_type="Assessment",
+        entity_id=assessment_id,
+        previous_state=previous_state,
+        new_state=new_state,
+        user_id="user_expert",
+        reason="API Update"
+    ))
+    
     return {"status": "success"}
 
 @app.patch("/api/assessments/{assessment_id}/status")
-def patch_assessment_status(assessment_id: str, payload: AssessmentStatusPayload, scope: str = Depends(require_scopes(["expert"]))):
+def patch_assessment_status(assessment_id: str, payload: AssessmentStatusPayload, scope: str = Depends(require_scopes(["expert"])), db = Depends(get_db)):
+    previous_state = get_assessment_as_dict(assessment_id)
     conn_db = sqlite3.connect(DB_FILE)
     cursor = conn_db.cursor()
     now_str = dt.datetime.utcnow().isoformat() + "Z"
@@ -3058,6 +3191,49 @@ def patch_assessment_status(assessment_id: str, payload: AssessmentStatusPayload
                         
     conn_db.commit()
     conn_db.close()
+    
+    # Audit Logging
+    from core.audit.audit_service import AuditService
+    import asyncio
+    
+    new_state = get_assessment_as_dict(assessment_id)
+    audit_service = AuditService(db)
+    asyncio.run(audit_service.log_change(
+        action="UPDATE_STATUS",
+        entity_type="Assessment",
+        entity_id=assessment_id,
+        previous_state=previous_state,
+        new_state=new_state,
+        user_id="user_expert",
+        reason=f"Status updated to {payload.status}"
+    ))
+    
+    # Emit AssessmentApproved event to EventBus
+    if payload.status in ["good_to_go", "approved"]:
+        try:
+            from core.events.domain_events import AssessmentApproved
+            from core.context.tenant_context import get_tenant_id
+            import uuid
+            
+            event = AssessmentApproved(
+                event_id=str(uuid.uuid4()),
+                event_type='AssessmentApproved',
+                tenant_id=get_tenant_id(),
+                aggregate_id=assessment_id,
+                aggregate_type='Assessment',
+                approved_by='user_expert',
+                risk_score=8.5,
+                findings='High risk identified in assessment',
+                mitigations=[],
+                timestamp=dt.datetime.utcnow()
+            )
+            
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                loop.create_task(event_bus.publish(event))
+        except Exception as e:
+            print(f"Error publishing AssessmentApproved: {e}")
+            
     return {"status": "success"}
 
 @app.post("/api/assessments/{assessment_id}/version")
@@ -6021,4 +6197,698 @@ def get_telemetry_friction(scope: str = Depends(require_scopes(["expert"]))):
     ]
 
 
+# API endpoints for audit trails
+from core.audit.audit_service import AuditService
+from core.audit.temporal_query import TemporalQuery
+from core.audit.evidence_export import EvidenceExporter
+
+@app.get("/api/audit/assessment/{assessment_id}/trail")
+async def get_assessment_audit_trail(
+    assessment_id: str,
+    db = Depends(get_db)
+):
+    """Get complete audit trail for assessment"""
+    service = AuditService(db)
+    return await service.get_entity_audit_trail('Assessment', assessment_id)
+
+@app.get("/api/audit/assessment/{assessment_id}/version/{timestamp}")
+async def get_assessment_at_time(
+    assessment_id: str,
+    timestamp: str,
+    db = Depends(get_db)
+):
+    """Get assessment state at specific point in time"""
+    try:
+        dt_val = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid timestamp format. Use ISO-8601.")
+    temporal_query = TemporalQuery(db)
+    state = await temporal_query.get_entity_as_of('Assessment', assessment_id, dt_val)
+    if not state:
+        raise HTTPException(status_code=404, detail="No version found at this timestamp")
+    return state
+
+@app.post("/api/audit/export/compliance-report")
+async def export_compliance_report(
+    start_date: str,
+    end_date: str,
+    db = Depends(get_db)
+):
+    """Export compliance evidence report"""
+    try:
+        start_dt = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+        end_dt = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use ISO-8601.")
+    service = AuditService(db)
+    exporter = EvidenceExporter(service)
+    return await exporter.generate_compliance_report(start_dt, end_dt)
+
+@app.get("/api/audit/integrity/verify/{log_id}")
+async def verify_audit_log_integrity(
+    log_id: str,
+    db = Depends(get_db)
+):
+    """Verify audit log hasn't been tampered with"""
+    service = AuditService(db)
+    is_valid = await service.verify_integrity(log_id)
+    return {'log_id': log_id, 'is_valid': is_valid}
+
+
+# =============================================================================
+# MODULE 5 – VENDOR RISK MANAGEMENT ENDPOINTS
+# =============================================================================
+
+from core.services.vendor_risk_service import (
+    create_vendor, get_vendor, list_vendors, update_vendor, delete_vendor,
+    create_assessment as create_vendor_assessment_legacy,
+    list_assessments as list_vendor_assessments_legacy,
+    create_subprocessor, list_subprocessors, get_vendor_dashboard,
+)
+from core.services.vendor_assessment_service import VendorAssessmentService
+from core.services.dpa_management_service import DPAManagementService
+from core.services.subprocessor_service import SubprocessorService
+from core.modules.vendor_risk.schemas import (
+    VendorCreate, VendorRead, VendorUpdate,
+    VendorAssessmentCreate, VendorAssessmentRead,
+    SubprocessorCreate, SubprocessorRead,
+)
+
+
+# ── Vendors ───────────────────────────────────────────────────────────────────
+
+@app.post("/api/v1/vendors", tags=["Vendor Risk"], response_model=VendorRead)
+def api_create_vendor(payload: VendorCreate, db=Depends(get_db)):
+    """Create a new vendor record."""
+    return create_vendor(db, payload)
+
+
+@app.get("/api/v1/vendors", tags=["Vendor Risk"])
+def api_list_vendors(skip: int = 0, limit: int = 100, db=Depends(get_db)):
+    """List all vendors."""
+    return list_vendors(db, skip=skip, limit=limit)
+
+
+@app.get("/api/v1/vendors/dashboard/heatmap", tags=["Vendor Risk"])
+def api_vendor_heatmap(db=Depends(get_db)):
+    """Return risk heatmap data for all vendors (name + risk_score)."""
+    return get_vendor_dashboard(db)
+
+
+@app.get("/api/v1/vendors/{vendor_id}", tags=["Vendor Risk"])
+def api_get_vendor(vendor_id: str, db=Depends(get_db)):
+    """Get a single vendor by ID."""
+    vendor = get_vendor(db, vendor_id)
+    if not vendor:
+        raise HTTPException(status_code=404, detail="Vendor not found")
+    return vendor
+
+
+@app.put("/api/v1/vendors/{vendor_id}", tags=["Vendor Risk"])
+def api_update_vendor(vendor_id: str, payload: VendorUpdate, db=Depends(get_db)):
+    """Update vendor details."""
+    vendor = update_vendor(db, vendor_id, payload)
+    if not vendor:
+        raise HTTPException(status_code=404, detail="Vendor not found")
+    return vendor
+
+
+@app.delete("/api/v1/vendors/{vendor_id}", tags=["Vendor Risk"])
+def api_delete_vendor(vendor_id: str, db=Depends(get_db)):
+    """Delete a vendor record."""
+    if not delete_vendor(db, vendor_id):
+        raise HTTPException(status_code=404, detail="Vendor not found")
+    return {"deleted": vendor_id}
+
+
+# ── Vendor Risk Summary ───────────────────────────────────────────────────────
+
+@app.get("/api/v1/vendors/{vendor_id}/risk-summary", tags=["Vendor Risk"])
+def api_vendor_risk_summary(vendor_id: str, tenant_id: str = "default", db=Depends(get_db)):
+    """Get multi-dimensional risk summary (security/privacy/financial) for a vendor."""
+    svc = VendorAssessmentService(db)
+    summary = svc.get_vendor_risk_summary(vendor_id=vendor_id, tenant_id=tenant_id)
+    if not summary:
+        raise HTTPException(status_code=404, detail="No completed assessments found for this vendor")
+    return summary
+
+
+# ── Vendor Assessments ────────────────────────────────────────────────────────
+
+@app.post("/api/v1/vendors/{vendor_id}/assessments", tags=["Vendor Risk"])
+def api_create_assessment(
+    vendor_id: str,
+    assessment_type: str,
+    framework: str = "Custom",
+    tenant_id: str = "default",
+    assessor_id: Optional[str] = None,
+    db=Depends(get_db),
+):
+    """Create a new vendor risk assessment."""
+    svc = VendorAssessmentService(db)
+    return svc.create_assessment(
+        vendor_id=vendor_id,
+        assessment_type=assessment_type,
+        framework=framework,
+        tenant_id=tenant_id,
+        assessor_id=assessor_id,
+    )
+
+
+@app.get("/api/v1/vendors/{vendor_id}/assessments", tags=["Vendor Risk"])
+def api_list_assessments(vendor_id: str, tenant_id: str = "default", db=Depends(get_db)):
+    """List all assessments for a vendor."""
+    svc = VendorAssessmentService(db)
+    return svc.list_by_vendor(vendor_id=vendor_id, tenant_id=tenant_id)
+
+
+@app.post("/api/v1/assessments/{assessment_id}/score", tags=["Vendor Risk"])
+def api_score_assessment(assessment_id: str, db=Depends(get_db)):
+    """Calculate and persist the risk score for an assessment."""
+    svc = VendorAssessmentService(db)
+    result = svc.calculate_risk_score(assessment_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Assessment not found or has no results")
+    return result
+
+
+@app.post("/api/v1/assessments/{assessment_id}/approve", tags=["Vendor Risk"])
+def api_approve_assessment(assessment_id: str, approved_by: str, db=Depends(get_db)):
+    """Approve (or block/conditionally approve) an assessment."""
+    svc = VendorAssessmentService(db)
+    assessment = svc.approve_assessment(assessment_id=assessment_id, approved_by=approved_by)
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+    return {"id": assessment.id, "status": assessment.status, "risk_level": assessment.risk_level}
+
+
+# ── DPAs ──────────────────────────────────────────────────────────────────────
+
+class DPACreateRequest(BaseModel):
+    vendor_id: str
+    tenant_id: str = "default"
+    dpa_type: str
+    effective_date: datetime
+    expiry_date: datetime
+    document_path: str
+    cross_border: bool = False
+    source_jurisdiction: Optional[str] = None
+    destination_jurisdiction: Optional[str] = None
+    sccs: bool = False
+    sccs_version: Optional[str] = None
+
+
+@app.post("/api/v1/dpas", tags=["Vendor Risk – DPAs"])
+def api_create_dpa(payload: DPACreateRequest, db=Depends(get_db)):
+    """Create a new Data Processing Agreement."""
+    svc = DPAManagementService(db)
+    return svc.create_dpa(**payload.dict())
+
+
+@app.get("/api/v1/vendors/{vendor_id}/dpas", tags=["Vendor Risk – DPAs"])
+def api_list_dpas(vendor_id: str, tenant_id: str = "default", db=Depends(get_db)):
+    """List all DPAs for a vendor."""
+    svc = DPAManagementService(db)
+    return svc.list_by_vendor(vendor_id=vendor_id, tenant_id=tenant_id)
+
+
+@app.post("/api/v1/dpas/{dpa_id}/approve", tags=["Vendor Risk – DPAs"])
+def api_approve_dpa(dpa_id: str, approved_by: str, db=Depends(get_db)):
+    """Approve / execute a DPA."""
+    svc = DPAManagementService(db)
+    dpa = svc.approve_dpa(dpa_id=dpa_id, approved_by=approved_by)
+    if not dpa:
+        raise HTTPException(status_code=404, detail="DPA not found")
+    return {"id": dpa.id, "status": dpa.status, "approved_at": dpa.approved_at}
+
+
+@app.post("/api/v1/dpas/check-expiry", tags=["Vendor Risk – DPAs"])
+def api_check_dpa_expiry(tenant_id: str = "default", db=Depends(get_db)):
+    """Run expiry check and trigger 30/7-day notifications. Returns triggered items."""
+    svc = DPAManagementService(db)
+    return svc.check_dpa_expiry(tenant_id=tenant_id)
+
+
+@app.get("/api/v1/dpas/expiring", tags=["Vendor Risk – DPAs"])
+def api_list_expiring_dpas(tenant_id: str = "default", within_days: int = 30, db=Depends(get_db)):
+    """List DPAs expiring within the specified number of days."""
+    svc = DPAManagementService(db)
+    return svc.list_expiring(tenant_id=tenant_id, within_days=within_days)
+
+
+# ── Subprocessors ─────────────────────────────────────────────────────────────
+
+class SubprocessorRegisterRequest(BaseModel):
+    vendor_id: str
+    tenant_id: str = "default"
+    name: str
+    service: str
+    country_of_processing: str
+    data_categories: List[str] = []
+    risk_rating: str = "medium"
+    dpa_in_place: bool = False
+    dpa_reference: Optional[str] = None
+    notes: Optional[str] = None
+
+
+@app.post("/api/v1/subprocessors", tags=["Vendor Risk – Subprocessors"])
+def api_register_subprocessor(payload: SubprocessorRegisterRequest, db=Depends(get_db)):
+    """Register a new sub-processor in the registry."""
+    svc = SubprocessorService(db)
+    return svc.register_subprocessor(**payload.dict())
+
+
+@app.get("/api/v1/vendors/{vendor_id}/subprocessors", tags=["Vendor Risk – Subprocessors"])
+def api_list_subprocessors_by_vendor(vendor_id: str, tenant_id: str = "default", db=Depends(get_db)):
+    """List all sub-processors for a vendor."""
+    svc = SubprocessorService(db)
+    return svc.list_by_vendor(vendor_id=vendor_id, tenant_id=tenant_id)
+
+
+@app.delete("/api/v1/subprocessors/{subprocessor_id}", tags=["Vendor Risk – Subprocessors"])
+def api_terminate_subprocessor(subprocessor_id: str, db=Depends(get_db)):
+    """Terminate a sub-processor relationship."""
+    svc = SubprocessorService(db)
+    sp = svc.terminate_subprocessor(subprocessor_id=subprocessor_id)
+    if not sp:
+        raise HTTPException(status_code=404, detail="Subprocessor not found")
+    return {"id": sp.id, "status": sp.status, "terminated_at": sp.terminated_at}
+
+
+# =============================================================================
+# MODULE 6 – DSAR WORKFLOW ENDPOINTS
+# =============================================================================
+
+from core.services.dsar_intake_service import DsarIntakeService
+from core.services.dsar_scope_service import DsarScopeService
+from core.services.dsar_collection_service import DsarCollectionService
+from core.services.dsar_redaction_service import DsarRedactionService
+from core.services.dsar_delivery_service import DsarDeliveryService
+
+
+# ── DSAR Intake ───────────────────────────────────────────────────────────────
+
+class DSARIntakeRequest(BaseModel):
+    tenant_id: str = "default"
+    request_type: str                    # access, deletion, portability, object
+    jurisdiction: str                    # GDPR, CCPA, PIPEDA, Law25, …
+    identifier_type: str                 # email, user_id, phone
+    identifier_value: str
+    requestor_email: str
+    received_via: str = "web_form"
+    preferred_delivery: str = "email"
+    assigned_to: Optional[str] = None
+
+
+@app.post("/api/v1/dsar/requests", tags=["DSAR Workflows"])
+def api_receive_dsar(payload: DSARIntakeRequest, db=Depends(get_db)):
+    """
+    Register a new Data Subject Access Request.
+    Auto-calculates deadline based on jurisdiction (GDPR=30d, CCPA=45d, etc.).
+    """
+    svc = DsarIntakeService(db)
+    request = svc.receive_request(**payload.dict())
+    return {
+        "id": request.id,
+        "status": request.status,
+        "jurisdiction": request.jurisdiction,
+        "deadline": request.deadline.isoformat(),
+        "days_remaining": request.days_remaining,
+    }
+
+
+@app.get("/api/v1/dsar/requests", tags=["DSAR Workflows"])
+def api_list_dsar_requests(
+    tenant_id: str = "default",
+    status: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50,
+    db=Depends(get_db),
+):
+    """List DSAR requests, optionally filtered by status."""
+    svc = DsarIntakeService(db)
+    return svc.list_requests(tenant_id=tenant_id, status=status, skip=skip, limit=limit)
+
+
+@app.get("/api/v1/dsar/requests/overdue", tags=["DSAR Workflows"])
+def api_overdue_dsar(tenant_id: str = "default", db=Depends(get_db)):
+    """Return all non-terminal DSAR requests past their legal deadline."""
+    svc = DsarIntakeService(db)
+    return svc.get_overdue_requests(tenant_id=tenant_id)
+
+
+@app.get("/api/v1/dsar/requests/approaching-deadline", tags=["DSAR Workflows"])
+def api_approaching_deadline_dsar(
+    tenant_id: str = "default",
+    within_days: int = 5,
+    db=Depends(get_db),
+):
+    """Return non-terminal DSAR requests with deadline within `within_days` days."""
+    svc = DsarIntakeService(db)
+    return svc.get_approaching_deadline(tenant_id=tenant_id, within_days=within_days)
+
+
+@app.get("/api/v1/dsar/requests/{request_id}", tags=["DSAR Workflows"])
+def api_get_dsar_request(request_id: str, db=Depends(get_db)):
+    """Get a single DSAR request by ID."""
+    svc = DsarIntakeService(db)
+    req = svc.get_request(request_id)
+    if not req:
+        raise HTTPException(status_code=404, detail="DSAR request not found")
+    return req
+
+
+@app.post("/api/v1/dsar/requests/{request_id}/verify", tags=["DSAR Workflows"])
+def api_verify_dsar_subject(
+    request_id: str,
+    verification_method: str,
+    verified_by: Optional[str] = None,
+    db=Depends(get_db),
+):
+    """Mark the data subject as verified and advance to scoping."""
+    svc = DsarIntakeService(db)
+    req = svc.mark_verified(request_id, verification_method, verified_by)
+    if not req:
+        raise HTTPException(status_code=404, detail="DSAR request not found")
+    return {"id": req.id, "status": req.status}
+
+
+@app.post("/api/v1/dsar/requests/{request_id}/refuse", tags=["DSAR Workflows"])
+def api_refuse_dsar(
+    request_id: str,
+    reason: str,
+    justification: str,
+    db=Depends(get_db),
+):
+    """Refuse a DSAR with documented reason and justification."""
+    svc = DsarIntakeService(db)
+    req = svc.refuse_request(request_id, reason, justification)
+    if not req:
+        raise HTTPException(status_code=404, detail="DSAR request not found")
+    return {"id": req.id, "status": req.status, "refuse_reason": req.refuse_reason}
+
+
+# ── DSAR Scope ────────────────────────────────────────────────────────────────
+
+class DSARScopeRequest(BaseModel):
+    systems_override: Optional[List[str]] = None
+    categories_override: Optional[List[str]] = None
+    from_date: Optional[datetime] = None
+    to_date: Optional[datetime] = None
+    scope_determined_by: Optional[str] = None
+
+
+@app.post("/api/v1/dsar/requests/{request_id}/scope", tags=["DSAR Workflows"])
+def api_determine_dsar_scope(
+    request_id: str,
+    payload: DSARScopeRequest,
+    db=Depends(get_db),
+):
+    """Determine data scope and create collection tasks for a DSAR."""
+    svc = DsarScopeService(db)
+    scope = svc.determine_scope(
+        request_id=request_id,
+        **payload.dict(),
+    )
+    if not scope:
+        raise HTTPException(status_code=404, detail="DSAR request not found")
+    return {
+        "scope_id": scope.id,
+        "systems": scope.systems_in_scope,
+        "categories": scope.data_categories,
+        "scope_determined_at": scope.scope_determined_at,
+    }
+
+
+@app.get("/api/v1/dsar/requests/{request_id}/scope", tags=["DSAR Workflows"])
+def api_get_dsar_scope(request_id: str, db=Depends(get_db)):
+    """Get scope definition for a DSAR."""
+    svc = DsarScopeService(db)
+    scope = svc.get_scope(request_id)
+    if not scope:
+        raise HTTPException(status_code=404, detail="Scope not yet determined")
+    return scope
+
+
+# ── DSAR Collection ───────────────────────────────────────────────────────────
+
+@app.get("/api/v1/dsar/requests/{request_id}/collection-tasks", tags=["DSAR Workflows"])
+def api_list_collection_tasks(request_id: str, db=Depends(get_db)):
+    """List all collection tasks for a DSAR request."""
+    svc = DsarCollectionService(db)
+    return svc.list_tasks(request_id)
+
+
+@app.post("/api/v1/dsar/collection-tasks/{task_id}/complete", tags=["DSAR Workflows"])
+def api_complete_collection_task(
+    task_id: str,
+    records_found: int,
+    data_size_mb: float,
+    db=Depends(get_db),
+):
+    """Mark a collection task as completed with result metadata."""
+    svc = DsarCollectionService(db)
+    task = svc.complete_task(
+        task_id=task_id,
+        records_found=records_found,
+        data_size_mb=data_size_mb,
+        collection_output={"records_found": records_found},
+    )
+    if not task:
+        raise HTTPException(status_code=404, detail="Collection task not found")
+    return {"id": task.id, "status": task.status, "records_found": task.records_found}
+
+
+# ── DSAR Package & Delivery ───────────────────────────────────────────────────
+
+@app.post("/api/v1/dsar/requests/{request_id}/package", tags=["DSAR Workflows"])
+def api_prepare_dsar_package(request_id: str, tenant_id: str = "default", db=Depends(get_db)):
+    """
+    Collect, redact, and package a DSAR response.
+    Returns the package ID and secure download token.
+    """
+    collection_svc = DsarCollectionService(db)
+    redaction_svc = DsarRedactionService(db)
+    delivery_svc = DsarDeliveryService(db)
+
+    # Aggregate collected data
+    collected = collection_svc.aggregate_collected_data(request_id)
+
+    # Apply redactions
+    redacted = redaction_svc.apply_redactions(
+        request_id=request_id,
+        tenant_id=tenant_id,
+        data=collected,
+    )
+    # Commit redaction logs
+    db.commit()
+
+    # Prepare package
+    package = delivery_svc.prepare_package(
+        request_id=request_id,
+        tenant_id=tenant_id,
+        redacted_data=redacted,
+    )
+    return {
+        "package_id": package.id,
+        "status": package.status,
+        "file_hash": package.file_hash,
+        "record_count": package.record_count,
+        "download_token": package.download_token,
+        "expires_at": package.expires_at,
+    }
+
+
+@app.get("/api/v1/dsar/requests/{request_id}/package", tags=["DSAR Workflows"])
+def api_get_dsar_package(request_id: str, db=Depends(get_db)):
+    """Get delivery package metadata for a DSAR."""
+    svc = DsarDeliveryService(db)
+    package = svc.get_package(request_id)
+    if not package:
+        raise HTTPException(status_code=404, detail="Package not yet prepared")
+    return package
+
+
+@app.post("/api/v1/dsar/requests/{request_id}/deliver", tags=["DSAR Workflows"])
+def api_deliver_dsar_package(
+    request_id: str,
+    delivery_method: str,
+    delivery_address: str,
+    db=Depends(get_db),
+):
+    """Mark the DSAR package as delivered via specified method."""
+    svc = DsarDeliveryService(db)
+    package = svc.deliver_package(
+        request_id=request_id,
+        delivery_method=delivery_method,
+        delivery_address=delivery_address,
+    )
+    if not package:
+        raise HTTPException(status_code=404, detail="Package not found")
+    return {
+        "package_id": package.id,
+        "status": package.status,
+        "delivered_at": package.delivered_at,
+    }
+
+
+@app.get("/api/v1/dsar/download/{request_id}", tags=["DSAR Workflows"])
+def api_download_dsar_package(request_id: str, token: str, db=Depends(get_db)):
+    """
+    Validate the one-time download token and return package metadata.
+    Actual file streaming would be implemented with FileResponse in production.
+    """
+    svc = DsarDeliveryService(db)
+    package = svc.validate_download_token(request_id=request_id, token=token)
+    if not package:
+        raise HTTPException(status_code=403, detail="Invalid or expired download token")
+    return {
+        "package_id": package.id,
+        "file_hash": package.file_hash,
+        "file_size_bytes": package.file_size_bytes,
+        "file_path": package.file_path,
+        "record_count": package.record_count,
+    }
+
+
+# ── DSAR Fulfillment Workflow (end-to-end) ────────────────────────────────────
+
+@app.post("/api/v1/dsar/requests/{request_id}/fulfill", tags=["DSAR Workflows"])
+def api_fulfill_dsar(request_id: str, tenant_id: str = "default", db=Depends(get_db)):
+    """
+    Run the end-to-end DSAR fulfillment pipeline (verify → scope → collect → redact → package → deliver).
+    Returns the final workflow state.
+    """
+    from core.workflows.dsar_fulfillment import DsarFulfillmentWorkflow
+
+    workflow = DsarFulfillmentWorkflow(
+        intake_service=DsarIntakeService(db),
+        scope_service=DsarScopeService(db),
+        collection_service=DsarCollectionService(db),
+        redaction_service=DsarRedactionService(db),
+        delivery_service=DsarDeliveryService(db),
+    )
+    state = workflow.run(request_id=request_id, tenant_id=tenant_id)
+    return state
+
+
+# ── DSAR Redaction Rules ──────────────────────────────────────────────────────
+
+@app.get("/api/v1/dsar/redaction-rules", tags=["DSAR Workflows"])
+def api_list_redaction_rules(tenant_id: str = "default", db=Depends(get_db)):
+    """List all configured redaction rules for a tenant."""
+    svc = DsarRedactionService(db)
+    return svc.list_rules(tenant_id=tenant_id)
+
+
+@app.get("/api/v1/dsar/requests/{request_id}/redactions", tags=["DSAR Workflows"])
+def api_list_applied_redactions(request_id: str, db=Depends(get_db)):
+    """List all redactions applied to a DSAR request (audit trail)."""
+    svc = DsarRedactionService(db)
+    return svc.list_applied_redactions(request_id=request_id)
+
+
+
+
+
+# ── Privacy Inbox (Redesign) ──────────────────────────────────────────────────
+
+import sqlite3
+import json
+from pydantic import BaseModel
+from typing import Optional
+from fastapi import HTTPException
+
+def get_inbox_db():
+    conn = sqlite3.connect("inbox.db")
+    conn.row_factory = sqlite3.Row
+    return conn
+
+@app.get("/api/inbox", tags=["Privacy Inbox"])
+def api_list_inbox(sort: str = "sla", type: str = "", q: str = "", page: int = 1, size: int = 20):
+    conn = get_inbox_db()
+    c = conn.cursor()
+    
+    query = "SELECT * FROM privacy_inbox WHERE status = 'pending'"
+    params = []
+    
+    if type:
+        query += " AND type = ?"
+        params.append(type)
+    if q:
+        query += " AND (subject LIKE ? OR sender LIKE ?)"
+        params.extend([f"%{q}%", f"%{q}%"])
+        
+    if sort == "sla":
+        query += " ORDER BY sla_deadline ASC"
+        
+    c.execute(query, params)
+    rows = c.fetchall()
+    
+    total = len(rows)
+    start = (page - 1) * size
+    paginated = rows[start:start+size]
+    
+    items = []
+    for r in paginated:
+        d = dict(r)
+        d["statute_json"] = json.loads(d["statute_json"])
+        d["decision_json"] = json.loads(d["decision_json"])
+        items.append(d)
+        
+    conn.close()
+    return {"items": items, "total": total, "sla_at_risk": sum(1 for i in items if i["sla_deadline"].endswith("h"))}
+
+@app.get("/api/inbox/{item_id}", tags=["Privacy Inbox"])
+def api_get_inbox_item(item_id: str):
+    conn = get_inbox_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM privacy_inbox WHERE id = ?", (item_id,))
+    row = c.fetchone()
+    conn.close()
+    
+    if not row:
+        raise HTTPException(status_code=404, detail="Item not found")
+        
+    d = dict(row)
+    d["statute_json"] = json.loads(d["statute_json"])
+    d["decision_json"] = json.loads(d["decision_json"])
+    return d
+
+class DecisionPayload(BaseModel):
+    action: str
+    reclassify_to: Optional[str] = None
+    reasoning: str
+
+@app.post("/api/inbox/{item_id}/decision", tags=["Privacy Inbox"])
+def api_inbox_decision(item_id: str, payload: DecisionPayload):
+    if not payload.action in ["accept", "reclassify", "flag_legal", "defer", "spam"]:
+        raise HTTPException(status_code=400, detail="Invalid action")
+        
+    conn = get_inbox_db()
+    c = conn.cursor()
+    
+    # TODO(R-3): synchronous sqlite write blocks async loop
+    c.execute("SELECT * FROM privacy_inbox WHERE id = ?", (item_id,))
+    if not c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Item not found")
+        
+    c.execute(
+        "UPDATE privacy_inbox SET status = ?, decision_json = ? WHERE id = ?",
+        ("decided", payload.model_dump_json(), item_id)
+    )
+    conn.commit()
+    conn.close()
+    
+    audit_ref = f"AUDIT-INBOX-{item_id}-DECISION"
+    return {"status": "success", "audit_ref": audit_ref}
+
+def classify_inbox_item(text: str):
+    # Stub calling LOCAL Ollama router. If unreachable, return flagged fallback (R-7 check)
+    return {
+        "type": "Unclassified",
+        "confidence": 0.0,
+        "why": "model offline"
+    }
 

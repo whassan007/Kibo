@@ -1,0 +1,156 @@
+[
+  {
+    "name": "Personal Health Information Protection Act",
+    "jurisdiction": "Ontario, Canada",
+    "type": "Privacy Law",
+    "source_url": "https://www.ontario.ca/laws/statute/17p05",
+    "description": "Protects personal health information of individuals in Ontario"
+  },
+  {
+    "name": "Act to Secure the Protection of Personal Information in the Private Sector",
+    "jurisdiction": "Quebec, Canada",
+    "type": "Privacy Law",
+    "source_url": "https://www.legisquebec.gouv.qc.ca/en/ShowDoc/cs/A-21.1",
+    "description": "Quebec's private sector privacy legislation"
+  },
+  {
+    "name": "Personal Information Protection and Electronic Documents Act",
+    "jurisdiction": "Canada (Federal)",
+    "type": "Privacy Law",
+    "source_url": "https://www.priv.gc.ca/en/privacy-topics/privacy-laws-in-canada/the-pipeda/",
+    "description": "Canada's federal privacy law for private sector organizations"
+  },
+  {
+    "name": "California Consumer Privacy Act / California Privacy Rights Act",
+    "jurisdiction": "California, US",
+    "type": "Privacy Law",
+    "source_url": "https://oag.ca.gov/privacy/ccpa",
+    "description": "California's comprehensive privacy legislation"
+  },
+  {
+    "name": "General Data Protection Regulation",
+    "jurisdiction": "European Union",
+    "type": "Privacy Law",
+    "source_url": "https://gdpr-info.eu/",
+    "description": "EU regulation governing data protection and privacy"
+  },
+  {
+    "name": "UK General Data Protection Regulation",
+    "jurisdiction": "United Kingdom",
+    "type": "Privacy Law",
+    "source_url": "https://ico.org.uk/for-organisations/guide-to-the-general-data-protection-regulation-gdpr/",
+    "description": "UK implementation of GDPR"
+  },
+  {
+    "name": "Australian Privacy Principles",
+    "jurisdiction": "Australia",
+    "type": "Privacy Law",
+    "source_url": "https://www.oaic.gov.au/privacy/privacy-act/",
+    "description": "Australian privacy law principles"
+  },
+  {
+    "name": "Personal Data Protection Act",
+    "jurisdiction": "Singapore",
+    "type": "Privacy Law",
+    "source_url": "https://www.pdpa.gov.sg/",
+    "description": "Singapore's data protection legislation"
+  },
+  {
+    "name": "Health Insurance Portability and Accountability Act",
+    "jurisdiction": "United States",
+    "type": "Healthcare Law",
+    "source_url": "https://www.hhs.gov/hipaa/index.html",
+    "description": "US healthcare privacy and security law"
+  },
+  {
+    "name": "Sarbanes-Oxley Act",
+    "jurisdiction": "United States",
+    "type": "Financial Law",
+    "source_url": "https://www.sec.gov/spotlight/sarbanes-oxley/index.shtml",
+    "description": "US financial reporting and corporate governance law"
+  },
+  {
+    "name": "Payment Card Industry Data Security Standard",
+    "jurisdiction": "Global",
+    "type": "Security Standard",
+    "source_url": "https://www.pcisecuritystandards.org/",
+    "description": "Data security standard for organizations processing card payments"
+  },
+  {
+    "name": "National Institute of Standards and Technology Cybersecurity Framework",
+    "jurisdiction": "United States",
+    "type": "Cybersecurity Standard",
+    "source_url": "https://www.nist.gov/cyberframework",
+    "description": "Framework for improving cybersecurity risk management"
+  },
+  {
+    "name": "Freedom of Information and Protection of Privacy Act",
+    "jurisdiction": "Ontario, Canada",
+    "type": "Freedom of Information Law",
+    "source_url": "https://www.ontario.ca/laws/statute/05f17",
+    "description": "Ontario's freedom of information and privacy legislation"
+  },
+  {
+    "name": "Personal Information Protection Act",
+    "jurisdiction": "Alberta, Canada",
+    "type": "Privacy Law",
+    "source_url": "https://www.alberta.ca/personal-information-protection-act.aspx",
+    "description": "Alberta's privacy legislation"
+  },
+  {
+    "name": "Biometric Information Privacy Act",
+    "jurisdiction": "Illinois, US",
+    "type": "Privacy Law",
+    "source_url": "https://www.illinoiscourts.gov/Content/Issues/Biometric-Information-Privacy-Act-BIPA.aspx",
+    "description": "Illinois law governing biometric data collection"
+  },
+  {
+    "name": "New York Department of Financial Services Cybersecurity Requirements",
+    "jurisdiction": "New York, US",
+    "type": "Financial Cybersecurity Law",
+    "source_url": "https://www.dfs.ny.gov/about/press/press_releases/2021/pr20210930",
+    "description": "NYDFS cybersecurity requirements for financial institutions"
+  },
+  {
+    "name": "Local Law 144 of 2023 - AI Bias Audit Requirement",
+    "jurisdiction": "New York City, US",
+    "type": "AI Regulation",
+    "source_url": "https://council.nyc.gov/legislation/l-144-2023/",
+    "description": "New York City law requiring AI bias audits for certain systems"
+  },
+  {
+    "name": "My Health My Data Act",
+    "jurisdiction": "Washington, US",
+    "type": "Health Privacy Law",
+    "source_url": "https://app.leg.wa.gov/Code/Display.aspx?code=43.20.100",
+    "description": "Washington state law governing health data privacy"
+  },
+  {
+    "name": "Family Educational Rights and Privacy Act",
+    "jurisdiction": "United States",
+    "type": "Educational Privacy Law",
+    "source_url": "https://www2.ed.gov/policy/gen/guid/fpco/ferpa/index.html",
+    "description": "US federal law protecting student education records"
+  },
+  {
+    "name": "Federal Trade Commission Act Section 5",
+    "jurisdiction": "United States",
+    "type": "Consumer Protection Law",
+    "source_url": "https://www.ftc.gov/tips-advice/business-center/guidance/ftc-act-section-5-unfair-or-deceptive-acts-or-practices",
+    "description": "FTC law prohibiting unfair or deceptive acts or practices"
+  },
+  {
+    "name": "European Union Artificial Intelligence Act",
+    "jurisdiction": "European Union",
+    "type": "AI Regulation",
+    "source_url": "https://digital-strategy.ec.europa.eu/en/policies/artificial-intelligence-act",
+    "description": "EU legislation governing artificial intelligence systems"
+  },
+  {
+    "name": "Information Security Management System Standard",
+    "jurisdiction": "Global",
+    "type": "Security Standard",
+    "source_url": "https://www.iso.org/isoiec-27001-information-security.html",
+    "description": "International standard for information security management"
+  }
+]
