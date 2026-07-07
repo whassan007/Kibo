@@ -1,0 +1,83 @@
+{
+  "id": "ca-federal-pipeda",
+  "meta": {
+    "displayName": "Canada — Federal (PIPEDA)",
+    "country": "Canada",
+    "region": "Federal",
+    "flag": "🇨🇦",
+    "sector": "general",
+    "language": ["en", "fr"]
+  },
+  "legislation": {
+    "primaryStatute": "PIPEDA",
+    "supportingStatutes": [],
+    "regulator": "Office of the Privacy Commissioner of Canada (OPC)",
+    "regulatorUrl": "https://www.priv.gc.ca",
+    "citationStyle": "PIPEDA S.C. 2000, c. 5, s. xx"
+  },
+  "terminology": {
+    "individual": "Individual",
+    "individualPlural": "Individuals",
+    "accessRequest": "Access Request",
+    "accessRequestAbbr": "AR",
+    "requestPortalTitle": "Submit a Privacy Request",
+    "breachEvent": "Privacy Breach",
+    "assessmentGeneric": "Privacy Impact Assessment",
+    "consentModel": "opt-in",
+    "personalDataTerm": "Personal Information"
+  },
+  "requestTypes": [
+    { "id": "access", "label": "Access my personal information", "statutoryBasis": "PIPEDA Principle 4.9", "slaDays": 30, "extensionDays": 30, "feeAllowed": true, "workflowId": "wf-pipeda-standard" },
+    { "id": "correction", "label": "Correct my personal information", "statutoryBasis": "PIPEDA Principle 4.9.5", "slaDays": 30, "extensionDays": 30, "feeAllowed": false, "workflowId": "wf-pipeda-standard" },
+    { "id": "withdraw-consent", "label": "Withdraw consent", "statutoryBasis": "PIPEDA Principle 4.3.8", "slaDays": 30, "feeAllowed": false, "workflowId": "wf-withdraw-consent" }
+  ],
+  "workflows": {
+    "wf-pipeda-standard": [
+      { "step": "receive", "label": "Request received", "gate": "auto" },
+      { "step": "verify_identity", "label": "Verify identity", "gate": "human" },
+      { "step": "search_records", "label": "Search & retrieve records", "gate": "auto" },
+      { "step": "sever_exemptions", "label": "Sever / redact under exemptions (PIPEDA s. 9)", "gate": "human" },
+      { "step": "respond", "label": "Respond to individual", "gate": "human" }
+    ],
+    "wf-withdraw-consent": [
+      { "step": "receive", "label": "Withdrawal received", "gate": "auto" },
+      { "step": "inform_implications", "label": "Inform individual of implications", "gate": "human" },
+      { "step": "stop_processing", "label": "Cease processing operations", "gate": "human" },
+      { "step": "confirm", "label": "Confirm withdrawal", "gate": "human" }
+    ]
+  },
+  "timelines": {
+    "accessDeadlineDays": 30,
+    "breachNotificationWindow": "As soon as feasible (RROSH)",
+    "breachAuthority": "OPC + affected individuals"
+  },
+  "assessments": [
+    { "id": "pipeda-pia", "label": "Privacy Impact Assessment (PIA)", "trigger": "New or significantly changed processing of personal information" }
+  ],
+  "forms": {
+    "intake": [
+      { "field": "name", "label": "Full name", "type": "text", "required": true },
+      { "field": "email", "label": "Email", "type": "email", "required": true },
+      { "field": "requestType", "label": "Type of request", "type": "select", "required": true, "options": ["access", "correction", "withdraw-consent"] },
+      { "field": "details", "label": "Details to help us locate your information", "type": "textarea", "required": true }
+    ]
+  },
+  "navigation": [
+    { "id": "requests", "label": "Privacy Requests", "visible": true },
+    { "id": "assessments", "label": "Privacy Impact Assessments", "visible": true },
+    { "id": "foi", "label": "Freedom of Information", "visible": false },
+    { "id": "optouts", "label": "Opt-Out Signals", "visible": false }
+  ],
+  "reports": [
+    { "id": "opc-breach-log", "name": "Breach Record Log (PIPEDA s. 10.3)" }
+  ],
+  "notifications": {
+    "requestAcknowledged": { "subject": "We received your request", "body": "We will respond within 30 days under PIPEDA." }
+  },
+  "dashboardWidgets": [
+    { "id": "ar-clock", "label": "30-Day Response Clock", "metricKey": "active_requests", "help": "PIPEDA statutory response deadline." }
+  ],
+  "help": {
+    "accessRequest": "Under PIPEDA, organizations must provide individuals with access to their personal information and the right to correct inaccuracies."
+  }
+}

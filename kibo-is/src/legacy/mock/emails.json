@@ -1,0 +1,29 @@
+[
+  {
+    "id": "email-1",
+    "subject": "Request for personal data access",
+    "sender": "john.doe@example.com",
+    "date": "2023-08-15T10:23:00Z",
+    "type": "DSR",
+    "body": "Hello, I would like to request a copy of all personal data you hold about me under the FOI regulations.",
+    "attachments": []
+  },
+  {
+    "id": "email-2",
+    "subject": "Privacy policy FAQ",
+    "sender": "privacy@company.com",
+    "date": "2023-08-14T08:00:00Z",
+    "type": "FAQ",
+    "body": "Our privacy policy states that we retain data for 7 years. Let me know if you have more questions.",
+    "attachments": []
+  },
+  {
+    "id": "email-3",
+    "subject": "Former employee data deletion request",
+    "sender": "alice.smith@example.com",
+    "date": "2023-08-13T14:45:00Z",
+    "type": "FormerEmployee",
+    "body": "I have left the company and request removal of my personal records.",
+    "attachments": []
+  }
+]

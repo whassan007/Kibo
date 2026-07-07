@@ -1,0 +1,91 @@
+{
+  "id": "ca-on-fippa",
+  "meta": {
+    "displayName": "Canada — Ontario Public Sector (FIPPA/MFIPPA)",
+    "country": "Canada",
+    "region": "Ontario",
+    "flag": "🇨🇦",
+    "sector": "public-sector",
+    "language": ["en", "fr"]
+  },
+  "legislation": {
+    "primaryStatute": "FIPPA / MFIPPA",
+    "supportingStatutes": ["PIPEDA (commercial activity)", "PHIPA (health)"],
+    "regulator": "Information and Privacy Commissioner of Ontario (IPC)",
+    "regulatorUrl": "https://www.ipc.on.ca",
+    "citationStyle": "FIPPA, R.S.O. 1990, c. F.31, s. xx"
+  },
+  "terminology": {
+    "individual": "Requester",
+    "individualPlural": "Requesters",
+    "accessRequest": "Freedom of Information Request",
+    "accessRequestAbbr": "FOI",
+    "requestPortalTitle": "Submit a Freedom of Information (FOI) Request",
+    "breachEvent": "Privacy Breach",
+    "assessmentGeneric": "Privacy Impact Assessment",
+    "consentModel": "opt-in",
+    "personalDataTerm": "Personal Information"
+  },
+  "requestTypes": [
+    { "id": "foi-general", "label": "General records request", "statutoryBasis": "FIPPA s. 24", "slaDays": 30, "extensionDays": 30, "feeAllowed": true, "workflowId": "wf-foi" },
+    { "id": "foi-personal", "label": "Own personal information request", "statutoryBasis": "FIPPA s. 47", "slaDays": 30, "extensionDays": 30, "feeAllowed": false, "workflowId": "wf-foi" },
+    { "id": "correction", "label": "Correction of personal information", "statutoryBasis": "FIPPA s. 47(2)", "slaDays": 30, "feeAllowed": false, "workflowId": "wf-correction" }
+  ],
+  "workflows": {
+    "wf-foi": [
+      { "step": "receive", "label": "Request received", "gate": "auto" },
+      { "step": "clarify_scope", "label": "Clarify scope of records", "gate": "human" },
+      { "step": "fee_estimate", "label": "Issue fee estimate / deposit", "gate": "human" },
+      { "step": "search_records", "label": "Search & retrieve records", "gate": "auto" },
+      { "step": "third_party_notice", "label": "Third-party notification (s. 28)", "gate": "human", "optional": true },
+      { "step": "sever_exemptions", "label": "Sever / redact under exemptions", "gate": "human" },
+      { "step": "decision_letter", "label": "Issue decision letter", "gate": "human" },
+      { "step": "appeal_rights", "label": "Advise of appeal rights to IPC", "gate": "auto" }
+    ],
+    "wf-correction": [
+      { "step": "receive", "label": "Request received", "gate": "auto" },
+      { "step": "locate_record", "label": "Locate record", "gate": "auto" },
+      { "step": "assess_correction", "label": "Assess correction / attach statement of disagreement", "gate": "human" },
+      { "step": "respond", "label": "Respond to requester", "gate": "human" }
+    ]
+  },
+  "timelines": {
+    "accessDeadlineDays": 30,
+    "breachNotificationWindow": "At first reasonable opportunity",
+    "breachAuthority": "IPC Ontario + affected individuals"
+  },
+  "assessments": [
+    { "id": "pia", "label": "Privacy Impact Assessment (PIA)", "trigger": "New or changed program collecting personal information" },
+    { "id": "phipa-tra", "label": "PHIPA Threat Risk Assessment", "trigger": "Handling of personal health information" }
+  ],
+  "forms": {
+    "intake": [
+      { "field": "name", "label": "Full name", "type": "text", "required": true },
+      { "field": "email", "label": "Email", "type": "email", "required": true },
+      { "field": "requestType", "label": "Type of request", "type": "select", "required": true, "options": ["foi-general", "foi-personal", "correction"] },
+      { "field": "recordsDescription", "label": "Describe the records you are seeking", "type": "textarea", "required": true, "helpKey": "foiScope" },
+      { "field": "feeAck", "label": "I understand fees may apply and a fee estimate may be issued", "type": "checkbox", "required": true }
+    ]
+  },
+  "navigation": [
+    { "id": "requests", "label": "FOI Requests", "visible": true },
+    { "id": "foi", "label": "Freedom of Information", "visible": true },
+    { "id": "assessments", "label": "Privacy Impact Assessments", "visible": true },
+    { "id": "optouts", "label": "Opt-Out Signals", "visible": false }
+  ],
+  "reports": [
+    { "id": "ipc-annual", "name": "IPC Annual Statistical Report" },
+    { "id": "fee-log", "name": "FOI Fee & Deposit Log" }
+  ],
+  "notifications": {
+    "requestAcknowledged": { "subject": "We received your FOI request", "body": "We will respond within 30 days under FIPPA. A fee estimate may be issued if applicable." }
+  },
+  "dashboardWidgets": [
+    { "id": "transfer-restrictions", "label": "Provincial Transfer Restrictions", "metricKey": "pia_pending", "help": "PHIPA & FIPPA restrict transfer routes." },
+    { "id": "foi-clock", "label": "30-Day FOI Clock", "metricKey": "active_requests", "help": "FIPPA statutory response deadline." },
+    { "id": "fee-estimates", "label": "Outstanding Fee Estimates", "metricKey": "fee_pending", "help": "FOI requests awaiting deposit before processing." }
+  ],
+  "help": {
+    "accessRequest": "In Ontario's public sector, individuals submit Freedom of Information (FOI) requests under FIPPA/MFIPPA. Fees and third-party notice may apply, and requesters may appeal to the IPC."
+  }
+}

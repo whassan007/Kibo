@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "title": "Data Transfer Anomaly",
+    "description": "Large volume of data transferred to external endpoint.",
+    "severity": "high",
+    "timestamp": "2026-07-05T12:30:00Z"
+  },
+  {
+    "id": 2,
+    "title": "Policy Violation",
+    "description": "User accessed restricted document without proper clearance.",
+    "severity": "medium",
+    "timestamp": "2026-07-04T09:15:00Z"
+  },
+  {
+    "id": 3,
+    "title": "Minor Alert",
+    "description": "Unusual login time detected for admin account.",
+    "severity": "low",
+    "timestamp": "2026-07-03T22:45:00Z"
+  }
+]

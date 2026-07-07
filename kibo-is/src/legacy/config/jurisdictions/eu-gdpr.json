@@ -1,0 +1,85 @@
+{
+  "id": "eu-gdpr",
+  "meta": {
+    "displayName": "European Union — General Data Protection Regulation (GDPR)",
+    "country": "European Union",
+    "region": "EU",
+    "flag": "🇪🇺",
+    "sector": "general",
+    "language": ["en"]
+  },
+  "legislation": {
+    "primaryStatute": "GDPR",
+    "supportingStatutes": ["Member State National Laws"],
+    "regulator": "Lead Supervisory Authority / DPA",
+    "regulatorUrl": "https://edpb.europa.eu",
+    "citationStyle": "GDPR Art. xx"
+  },
+  "terminology": {
+    "individual": "Data Subject",
+    "individualPlural": "Data Subjects",
+    "accessRequest": "Data Subject Access Request",
+    "accessRequestAbbr": "DSAR",
+    "requestPortalTitle": "Submit a Privacy Request",
+    "breachEvent": "Personal Data Breach",
+    "assessmentGeneric": "Data Protection Impact Assessment",
+    "consentModel": "opt-in",
+    "personalDataTerm": "Personal Data"
+  },
+  "requestTypes": [
+    { "id": "access", "label": "Access my data", "statutoryBasis": "GDPR Art. 15", "slaDays": 30, "extensionDays": 60, "feeAllowed": false, "workflowId": "wf-dsar-standard" },
+    { "id": "rectification", "label": "Rectify my data", "statutoryBasis": "GDPR Art. 16", "slaDays": 30, "extensionDays": 60, "feeAllowed": false, "workflowId": "wf-dsar-standard" },
+    { "id": "erasure", "label": "Erase my data", "statutoryBasis": "GDPR Art. 17", "slaDays": 30, "extensionDays": 60, "feeAllowed": false, "workflowId": "wf-dsar-standard" },
+    { "id": "restriction", "label": "Restrict processing", "statutoryBasis": "GDPR Art. 18", "slaDays": 30, "extensionDays": 60, "feeAllowed": false, "workflowId": "wf-dsar-standard" },
+    { "id": "portability", "label": "Data portability", "statutoryBasis": "GDPR Art. 20", "slaDays": 30, "extensionDays": 60, "feeAllowed": false, "workflowId": "wf-dsar-standard" },
+    { "id": "objection", "label": "Object to processing", "statutoryBasis": "GDPR Art. 21", "slaDays": 30, "extensionDays": 60, "feeAllowed": false, "workflowId": "wf-dsar-standard" }
+  ],
+  "workflows": {
+    "wf-dsar-standard": [
+      { "step": "receive", "label": "Request received", "gate": "auto" },
+      { "step": "verify_identity", "label": "Verify data subject identity", "gate": "auto" },
+      { "step": "assess_complex", "label": "Assess complexity & extension", "gate": "human", "optional": true },
+      { "step": "search_records", "label": "Search & compile personal data", "gate": "auto" },
+      { "step": "apply_exemptions", "label": "Apply Article 23 restrictions", "gate": "human" },
+      { "step": "respond", "label": "Respond to data subject", "gate": "human" }
+    ]
+  },
+  "timelines": {
+    "accessDeadlineDays": 30,
+    "breachNotificationWindow": "Within 72 hours of becoming aware",
+    "breachAuthority": "Lead Supervisory Authority"
+  },
+  "assessments": [
+    { "id": "gdpr-dpia", "label": "Data Protection Impact Assessment (DPIA)", "trigger": "Processing likely to result in high risk (Art 35)" },
+    { "id": "gdpr-tia", "label": "Transfer Impact Assessment (TIA)", "trigger": "Data transfer to a third country" },
+    { "id": "gdpr-lia", "label": "Legitimate Interests Assessment (LIA)", "trigger": "Relying on legitimate interests basis" }
+  ],
+  "forms": {
+    "intake": [
+      { "field": "name", "label": "Full name", "type": "text", "required": true },
+      { "field": "email", "label": "Email", "type": "email", "required": true },
+      { "field": "requestType", "label": "What is your request?", "type": "select", "required": true, "options": ["access", "rectification", "erasure", "restriction", "portability", "objection"] },
+      { "field": "country", "label": "Country of Residence", "type": "text", "required": true }
+    ]
+  },
+  "navigation": [
+    { "id": "requests", "label": "DSARs", "visible": true },
+    { "id": "assessments", "label": "DPIAs & Assessments", "visible": true },
+    { "id": "ropa", "label": "Record of Processing Activities", "visible": true },
+    { "id": "foi", "label": "Freedom of Information", "visible": false }
+  ],
+  "reports": [
+    { "id": "gdpr-ropa", "name": "Article 30 RoPA" },
+    { "id": "dsar-metrics", "name": "DSAR Metrics Report" }
+  ],
+  "notifications": {
+    "requestAcknowledged": { "subject": "We received your DSAR", "body": "We will respond within 1 month as required under the GDPR." }
+  },
+  "dashboardWidgets": [
+    { "id": "dsar-clock", "label": "1-Month DSAR Clock", "metricKey": "active_requests", "help": "GDPR statutory response deadline." },
+    { "id": "dpia-pending", "label": "Pending DPIAs", "metricKey": "pia_pending", "help": "High risk processing operations requiring assessment." }
+  ],
+  "help": {
+    "accessRequest": "Under the GDPR, individuals are 'Data Subjects' and submit Data Subject Access Requests (DSARs). Organizations must respond without undue delay and within one month."
+  }
+}

@@ -5,6 +5,9 @@ import fs from 'fs'
 import path from 'path'
 import { IncomingMessage, ServerResponse } from 'http'
 
+// Kibo workspace root = parent of this app dir (portable; no hardcoded user path)
+const KIBO_ROOT = path.resolve(process.cwd(), '..')
+
 // Vite plugin to read/write .kibo files directly for local dev cockpit
 const kiboDevApi = () => ({
   name: 'kibo-dev-api',
@@ -17,10 +20,10 @@ const kiboDevApi = () => ({
           res.statusCode = 400
           return res.end('Path parameter is required')
         }
-        
+
         // Ensure path stays inside Kibo workspace
-        const resolvedPath = path.resolve('/Users/iceman/Documents/Code/Kibo', filepath)
-        if (!resolvedPath.startsWith('/Users/iceman/Documents/Code/Kibo')) {
+        const resolvedPath = path.resolve(KIBO_ROOT, filepath)
+        if (!resolvedPath.startsWith(KIBO_ROOT)) {
           res.statusCode = 403
           return res.end('Access Denied')
         }

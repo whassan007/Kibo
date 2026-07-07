@@ -1,0 +1,92 @@
+{
+  "id": "us-ca-cpra",
+  "meta": {
+    "displayName": "United States — California (CCPA/CPRA)",
+    "country": "United States",
+    "region": "California",
+    "flag": "🇺🇸",
+    "sector": "general",
+    "language": ["en"]
+  },
+  "legislation": {
+    "primaryStatute": "CCPA/CPRA",
+    "supportingStatutes": ["State comprehensive privacy laws (VA, CO, CT, etc.)"],
+    "regulator": "California Privacy Protection Agency (CPPA)",
+    "regulatorUrl": "https://cppa.ca.gov",
+    "citationStyle": "Cal. Civ. Code § 1798.xxx"
+  },
+  "terminology": {
+    "individual": "Consumer",
+    "individualPlural": "Consumers",
+    "accessRequest": "Data Subject Request",
+    "accessRequestAbbr": "DSR",
+    "requestPortalTitle": "Submit a Privacy Request",
+    "breachEvent": "Security Incident",
+    "assessmentGeneric": "Risk Assessment",
+    "consentModel": "opt-out",
+    "personalDataTerm": "Personal Information (PI)"
+  },
+  "requestTypes": [
+    { "id": "know", "label": "Know what data is collected", "statutoryBasis": "§ 1798.110", "slaDays": 45, "extensionDays": 45, "feeAllowed": false, "workflowId": "wf-dsr-standard" },
+    { "id": "access", "label": "Access my data (portability)", "statutoryBasis": "§ 1798.100", "slaDays": 45, "extensionDays": 45, "feeAllowed": false, "workflowId": "wf-dsr-standard" },
+    { "id": "delete", "label": "Delete my data", "statutoryBasis": "§ 1798.105", "slaDays": 45, "extensionDays": 45, "feeAllowed": false, "workflowId": "wf-dsr-standard" },
+    { "id": "correct", "label": "Correct my data", "statutoryBasis": "§ 1798.106", "slaDays": 45, "extensionDays": 45, "feeAllowed": false, "workflowId": "wf-dsr-standard" },
+    { "id": "opt-out", "label": "Opt out of sale/sharing", "statutoryBasis": "§ 1798.120", "slaDays": 15, "feeAllowed": false, "workflowId": "wf-optout" },
+    { "id": "limit-spi", "label": "Limit use of sensitive PI", "statutoryBasis": "§ 1798.121", "slaDays": 15, "feeAllowed": false, "workflowId": "wf-optout" }
+  ],
+  "workflows": {
+    "wf-dsr-standard": [
+      { "step": "receive", "label": "Request received", "gate": "auto" },
+      { "step": "verify_identity", "label": "Verify consumer identity", "gate": "auto" },
+      { "step": "authorized_agent", "label": "Validate authorized agent (if applicable)", "gate": "human", "optional": true },
+      { "step": "compile", "label": "Compile personal information", "gate": "auto" },
+      { "step": "apply_exemptions", "label": "Apply exemptions", "gate": "human" },
+      { "step": "respond", "label": "Respond to consumer", "gate": "human" }
+    ],
+    "wf-optout": [
+      { "step": "receive", "label": "Opt-out received", "gate": "auto" },
+      { "step": "apply_signal", "label": "Honor GPC / opt-out preference signal", "gate": "auto" },
+      { "step": "propagate", "label": "Propagate to service providers", "gate": "auto" },
+      { "step": "confirm", "label": "Confirm to consumer", "gate": "auto" }
+    ]
+  },
+  "timelines": {
+    "accessDeadlineDays": 45,
+    "breachNotificationWindow": "Without unreasonable delay (state-specific)",
+    "breachAuthority": "State Attorney General / affected consumers"
+  },
+  "assessments": [
+    { "id": "cpra-risk", "label": "Risk Assessment", "trigger": "Processing that presents significant risk" },
+    { "id": "cpra-admt", "label": "Automated Decision-Making (ADMT) Assessment", "trigger": "Use of ADMT / profiling" }
+  ],
+  "forms": {
+    "intake": [
+      { "field": "name", "label": "Full name", "type": "text", "required": true },
+      { "field": "email", "label": "Email", "type": "email", "required": true },
+      { "field": "requestType", "label": "What is your request?", "type": "select", "required": true, "options": ["know", "access", "delete", "correct", "opt-out", "limit-spi"] },
+      { "field": "resident", "label": "I am a California resident", "type": "checkbox", "required": true },
+      { "field": "agent", "label": "I am submitting on behalf of someone (authorized agent)", "type": "checkbox", "required": false }
+    ]
+  },
+  "navigation": [
+    { "id": "requests", "label": "Privacy Requests", "visible": true },
+    { "id": "optouts", "label": "Opt-Out Signals", "visible": true },
+    { "id": "assessments", "label": "Risk Assessments", "visible": true },
+    { "id": "foi", "label": "Freedom of Information", "visible": false }
+  ],
+  "reports": [
+    { "id": "cpra-metrics", "name": "CPRA Metrics Report (§ 1798.185)" },
+    { "id": "optout-rate", "name": "Do-Not-Sell/Share Rate" }
+  ],
+  "notifications": {
+    "requestAcknowledged": { "subject": "We received your privacy request", "body": "We will respond within 45 days as required under the CCPA/CPRA." }
+  },
+  "dashboardWidgets": [
+    { "id": "optout-rate", "label": "Opt-Out of Sale/Sharing", "metricKey": "optout_rate", "help": "CCPA/CPRA Do-Not-Sell/Share signals parsed from CMP." },
+    { "id": "spi-discovery", "label": "Sensitive PI (SPI) Discovery", "metricKey": "spi_fields", "help": "Automated classification of sensitive personal information." },
+    { "id": "sla-45", "label": "45-Day Response Clock", "metricKey": "active_requests", "help": "US state privacy response deadlines." }
+  ],
+  "help": {
+    "accessRequest": "In the U.S., individuals are 'consumers' and submit Data Subject Requests (DSRs) such as Know, Delete, Correct, and Opt-Out of Sale/Sharing."
+  }
+}
