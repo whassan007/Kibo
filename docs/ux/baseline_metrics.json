@@ -1,0 +1,76 @@
+{
+  "captured_at": "2026-10-25T13:56:00-07:00",
+  "baseline_tag": "v2026.10.1",
+  "bundle_js_bytes": 776692,
+  "bundle_css_bytes": 105921,
+  "post_mutations_on_mount": [
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/v1/compliance/applicability/evaluate"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/v1/office/incidents"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/v1/office/assessments/recommend"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/v1/office/rights/evaluate-request"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8000/api/v1/office/assistant/query"
+    }
+  ],
+  "get_requests_on_mount": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/compliance/jurisdictions"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/office/ropa/records"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/v1/integrations/status"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/jurisdictions"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8000/api/company/jurisdiction"
+    }
+  ],
+  "tabs": {
+    "2. Multi-Jurisdiction Breach War Room": {
+      "switch_ms": 194.46
+    },
+    "3. Privacy Assessments (PIA/DPIA/TRA/TIA/FRIA) & DSAR": {
+      "switch_ms": 171.65
+    },
+    "4. Global Coverage Matrix (US / CA / EU)": {
+      "switch_ms": 181.88
+    },
+    "5. Corporate AI Hubs & Governed Assistant": {
+      "switch_ms": 177.17
+    },
+    "6. Regulatory Intelligence & Citation Verification": {
+      "switch_ms": 168.42
+    }
+  },
+  "initial_page_load_ms": 641.34,
+  "navigation_timing": {
+    "domContentLoadedMs": 59,
+    "loadEventEndMs": 62,
+    "firstContentfulPaintMs": 132,
+    "domNodes": 903,
+    "hasEditableTenantHeaderInput": true,
+    "hasEditableUserHeaderInput": true
+  }
+}
