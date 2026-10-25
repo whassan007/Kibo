@@ -102,6 +102,10 @@ class ProvisionSegment:
         }
 
 
+# Backwards-compatible alias for ProvisionSegment
+ParsedLegalPassage = ProvisionSegment
+
+
 @dataclass
 class TranslationAlignmentResult:
     """Aligned original and translated legal passages with explicit authority status."""

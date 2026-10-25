@@ -175,10 +175,15 @@ class OfficialRegulatoryConnector:
 
         # Step 3: Sanitize against prompt injection & verify size (RD-14)
         sanitized = self.guard.sanitize_document_text(raw_text)
-        clean_text = sanitized["sanitized_text"] if isinstance(sanitized, dict) else str(sanitized)
+        clean_text = (
+            sanitized.get("sanitized_text") or sanitized.get("text") or str(sanitized)
+            if isinstance(sanitized, dict)
+            else str(sanitized)
+        )
         security_flags = sanitized.get("security_flags", []) if isinstance(sanitized, dict) else []
 
         norm_res = self.parser.normalize_document(clean_text)
+        norm_dict = norm_res.to_dict() if hasattr(norm_res, "to_dict") else dict(norm_res)
         now = datetime.utcnow()
         source.last_successful_retrieval = now
         source.health_status = SourceHealthStatus.HEALTHY
@@ -198,12 +203,12 @@ class OfficialRegulatoryConnector:
             retrieved_at=now,
             language=language,
             raw_document_sha256=compute_sha256_hex(raw_text),
-            normalized_text_sha256=norm_res["normalized_text_sha256"],
+            normalized_text_sha256=norm_dict["normalized_text_sha256"],
             document_version=document_version,
             review_status=LegalPromotionState.VERIFIED_SOURCE,
             license=source.licensing_and_reuse,
             source_snapshot_reference=f"kibo-snapshot://sha256/{compute_sha256_hex(raw_text)}",
-            normalized_text=norm_res["normalized_text"],
+            normalized_text=norm_dict["normalized_text"],
         )
         stored = self.store.store_document(doc, raw_text)
         return {

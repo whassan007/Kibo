@@ -30,6 +30,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 from sqlalchemy import Boolean, Column, Date, DateTime, Integer, String, Text, create_engine
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from core.models.base import Base
 from core.regulatory_intelligence import compute_sha256_hex
@@ -245,7 +246,8 @@ class TemporalRegulatoryKnowledgeGraph:
 
         self.db_url = db_url
         connect_args = {"check_same_thread": False} if db_url.startswith("sqlite") else {}
-        self.engine = create_engine(db_url, connect_args=connect_args, future=True)
+        pool_kwargs = {"poolclass": StaticPool} if db_url in ("sqlite:///:memory:", "sqlite://") else {}
+        self.engine = create_engine(db_url, connect_args=connect_args, future=True, **pool_kwargs)
         self._SessionLocal = sessionmaker(bind=self.engine, expire_on_commit=False, future=True)
 
         # Ensure `kg_*` tables exist in the relational store
