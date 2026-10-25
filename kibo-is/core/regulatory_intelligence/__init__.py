@@ -14,11 +14,15 @@ from pydantic import BaseModel, Field
 
 class DiscoveryStatusCode(str, Enum):
     OK = "OK"
+    VERIFIED = "OK"
     SOURCE_UNAVAILABLE = "SOURCE_UNAVAILABLE"
     UNVERIFIED = "UNVERIFIED"
     REQUIRES_LEGAL_REVIEW = "REQUIRES_LEGAL_REVIEW"
     QUARANTINED = "QUARANTINED"
     BLOCKED_SECURITY = "BLOCKED_SECURITY"
+
+
+VerificationStatus = DiscoveryStatusCode
 
 
 class LegalPromotionState(str, Enum):
@@ -261,3 +265,118 @@ def compute_sha256_hex(content: str | bytes) -> str:
     if isinstance(content, str):
         content = content.encode("utf-8")
     return hashlib.sha256(content).hexdigest()
+
+
+# Canonical aliases used by Applicability, Impact Analysis, and Promotion Workflow engines (G21)
+StatutoryAnnotation = LegalPassageAnnotation
+DecisionAnnotation = DecisionVerdictAnnotation
+
+
+class RemediationTaskSpec(BaseModel):
+    """Section 9 & RD-09 — Prioritized remediation task with statutory deadline and human approval gate."""
+    task_id: str
+    jurisdiction_id: str
+    priority: str = Field(..., description="P0, P1, or P2")
+    title: str
+    description: str
+    statutory_deadline: str
+    owner_role: str = Field(default="DPO", description="CPO, DPO, or LEGAL")
+    affected_artifacts: List[str] = Field(default_factory=list)
+    citation_reference: str = ""
+    requires_human_approval: bool = True
+
+
+class JurisdictionBlastRadius(BaseModel):
+    """Section 9 & RD-09 — Per-jurisdiction blast radius breakdown for a tenant."""
+    jurisdiction_id: str
+    jurisdiction_name: str
+    applicable: bool = True
+    competent_authority: str
+    triggered_by_facts: List[str] = Field(default_factory=list)
+    affected_organizations: List[Dict[str, Any]] = Field(default_factory=list)
+    affected_establishments: List[str] = Field(default_factory=list)
+    affected_processing_activities: List[Dict[str, Any]] = Field(default_factory=list)
+    affected_data_categories: List[str] = Field(default_factory=list)
+    affected_data_subjects: List[str] = Field(default_factory=list)
+    triggered_assessments: List[str] = Field(default_factory=list)
+    affected_contracts_dpas_sccs: List[Dict[str, Any]] = Field(default_factory=list)
+    affected_retention_schedules: List[Dict[str, Any]] = Field(default_factory=list)
+    affected_notices: List[Dict[str, Any]] = Field(default_factory=list)
+    affected_dsar_workflows: List[Dict[str, Any]] = Field(default_factory=list)
+    affected_controls: List[str] = Field(default_factory=list)
+    affected_evidence_artifacts: List[str] = Field(default_factory=list)
+    remediation_tasks: List[RemediationTaskSpec] = Field(default_factory=list)
+    required_human_approvals: List[str] = Field(default_factory=lambda: ["CPO", "DPO", "LEGAL"])
+
+    def __getitem__(self, key: str) -> Any:
+        return getattr(self, key)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        return getattr(self, key, default)
+
+
+class ImpactAssessmentReport(BaseModel):
+    """Section 9 & RD-09 — Multi-jurisdictional tenant blast radius and impact analysis report."""
+    report_id: str
+    tenant_id: str = "enterprise-multi-jurisdiction-tenant"
+    organization_name: str
+    trigger_record_id: str
+    trigger_record_type: str = Field(
+        default="regulatory_change",
+        description="statutory_annotation, decision_annotation, provision_diff, canonical_document",
+    )
+    trigger_title: str
+    trigger_citation: str
+    generated_at: datetime = Field(default_factory=datetime.utcnow)
+    evaluated_jurisdictions: List[str] = Field(default_factory=list)
+    affected_jurisdictions: List[str] = Field(default_factory=list)
+    per_jurisdiction_blast_radius: Dict[str, JurisdictionBlastRadius] = Field(default_factory=dict)
+    affected_organizations: List[Dict[str, Any]] = Field(default_factory=list)
+    affected_establishments: List[str] = Field(default_factory=list)
+    affected_processing_activities: List[Dict[str, Any]] = Field(default_factory=list)
+    affected_data_categories: List[str] = Field(default_factory=list)
+    affected_data_subjects: List[str] = Field(default_factory=list)
+    triggered_assessments: List[str] = Field(default_factory=list)
+    affected_contracts: List[Dict[str, Any]] = Field(default_factory=list)
+    affected_retention_schedules: List[Dict[str, Any]] = Field(default_factory=list)
+    affected_notices: List[Dict[str, Any]] = Field(default_factory=list)
+    affected_dsar_workflows: List[Dict[str, Any]] = Field(default_factory=list)
+    affected_controls: List[str] = Field(default_factory=list)
+    affected_evidence_artifacts: List[str] = Field(default_factory=list)
+    recommended_remediation_tasks: List[RemediationTaskSpec] = Field(default_factory=list)
+    required_human_approvals: List[str] = Field(default_factory=lambda: ["CPO", "DPO", "LEGAL"])
+    requires_legal_review: bool = True
+    summary: str = ""
+
+    def __getitem__(self, key: str) -> Any:
+        return getattr(self, key)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        return getattr(self, key, default)
+
+
+class PromotionTransitionAuditRecord(BaseModel):
+    """Section 10 & RD-16 — Immutable audit trail record of a legal promotion state transition."""
+    audit_id: str
+    candidate_id: str
+    from_state: Optional[LegalPromotionState] = None
+    to_state: LegalPromotionState
+    transitioned_at: datetime = Field(default_factory=datetime.utcnow)
+    actor_id: str
+    actor_role: str
+    review_notes: str = ""
+    source_hash: str = ""
+    verbatim_quote: str = ""
+    citation_verification_status: Optional[str] = None
+    citation_verified: bool = False
+    superseded_by_id: Optional[str] = None
+    emergency_reason: Optional[str] = None
+    previous_audit_hash: str = "GENESIS"
+    record_sha256: str = ""
+
+    def __getitem__(self, key: str) -> Any:
+        return getattr(self, key)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        return getattr(self, key, default)
+

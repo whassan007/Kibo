@@ -23,6 +23,7 @@ from core.regulatory_intelligence import (
     DiscoveryStatusCode,
     LegalPassageAnnotation,
     LegalPromotionState,
+    VerificationStatus,
 )
 from core.regulatory_intelligence.citations.verifier import (
     CitationVerificationService,
@@ -283,4 +284,5 @@ __all__ = [
     "CandidatePromotionVerificationReport",
     "CitationVerificationService",
     "FABRICATED_NEGATIVE_TEST_FIXTURES",
+    "VerificationStatus",
 ]
