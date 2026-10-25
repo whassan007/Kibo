@@ -1,0 +1,108 @@
+{
+  "worker_id": "D01",
+  "benchmark_name": "DGX Spark Legal Annotation & Passage Grounding Benchmark",
+  "executed_at": "2026-10-25T20:20:17.296989+00:00",
+  "dgx_host": "waelbot",
+  "dgx_arch": "aarch64",
+  "models_tested": [
+    "gemma4:26b",
+    "qwen3.8:27b"
+  ],
+  "model_results": [
+    {
+      "model": "gemma4:26b",
+      "cases_evaluated": 3,
+      "cases_passed": 1,
+      "pass_rate": 0.3333,
+      "outcomes": [
+        {
+          "case_id": "D01-US-STAT-HIPAA",
+          "jurisdiction_code": "US-FED",
+          "task_type": "statutory_annotation",
+          "status": "OK",
+          "elapsed_ms": 10490.01,
+          "eval_tokens": 116,
+          "quote_grounded": true,
+          "citation_preserved": true,
+          "passed": true,
+          "extracted_annotation": {
+            "citation": "45 C.F.R. \u00a7 164.404(b)",
+            "verbatim_quote": "a covered entity shall provide the notification required by paragraph (a) of this section without unreasonable delay and in no case later than 60 calendar days after discovery of a breach.",
+            "deontic_modality": "mandatory",
+            "holding_summary": "A covered entity must provide breach notification without unreasonable delay and no later than 60 calendar days after discovery.",
+            "dicta_summary": null
+          }
+        },
+        {
+          "case_id": "D01-CA-STAT-LAW25",
+          "jurisdiction_code": "CA-QC",
+          "task_type": "bilingual_statutory_annotation",
+          "status": "PARSE_ERROR",
+          "elapsed_ms": 2024.6,
+          "eval_tokens": 0,
+          "quote_grounded": false,
+          "citation_preserved": false,
+          "passed": false,
+          "extracted_annotation": {}
+        },
+        {
+          "case_id": "D01-EU-DEC-SCHUFA",
+          "jurisdiction_code": "EU-DE",
+          "task_type": "judicial_holding_vs_dicta",
+          "status": "PARSE_ERROR",
+          "elapsed_ms": 3416.03,
+          "eval_tokens": 0,
+          "quote_grounded": false,
+          "citation_preserved": false,
+          "passed": false,
+          "extracted_annotation": {}
+        }
+      ]
+    },
+    {
+      "model": "qwen3.8:27b",
+      "cases_evaluated": 3,
+      "cases_passed": 0,
+      "pass_rate": 0.0,
+      "outcomes": [
+        {
+          "case_id": "D01-US-STAT-HIPAA",
+          "jurisdiction_code": "US-FED",
+          "task_type": "statutory_annotation",
+          "status": "PARSE_ERROR",
+          "elapsed_ms": 14050.24,
+          "eval_tokens": 0,
+          "quote_grounded": false,
+          "citation_preserved": false,
+          "passed": false,
+          "extracted_annotation": {}
+        },
+        {
+          "case_id": "D01-CA-STAT-LAW25",
+          "jurisdiction_code": "CA-QC",
+          "task_type": "bilingual_statutory_annotation",
+          "status": "PARSE_ERROR",
+          "elapsed_ms": 5916.92,
+          "eval_tokens": 0,
+          "quote_grounded": false,
+          "citation_preserved": false,
+          "passed": false,
+          "extracted_annotation": {}
+        },
+        {
+          "case_id": "D01-EU-DEC-SCHUFA",
+          "jurisdiction_code": "EU-DE",
+          "task_type": "judicial_holding_vs_dicta",
+          "status": "PARSE_ERROR",
+          "elapsed_ms": 8090.6,
+          "eval_tokens": 0,
+          "quote_grounded": false,
+          "citation_preserved": false,
+          "passed": false,
+          "extracted_annotation": {}
+        }
+      ]
+    }
+  ],
+  "artifact_sha256": "37824b09e5f6161d87454bbaf1f9c94c4545090c0f5878e99778e5fb491da333"
+}
