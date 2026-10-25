@@ -754,8 +754,9 @@ class JudicialAndEnforcementAnnotator:
             DocumentClassType.REGULATORY_ENFORCEMENT_DECISION,
             DocumentClassType.ADMINISTRATIVE_TRIBUNAL_RULING,
         ):
-            if any(k in authority_key for k in KNOWN_AUTHORITY_BINDING_MAP):
-                return KNOWN_AUTHORITY_BINDING_MAP[authority_key], False
+            for k, val in KNOWN_AUTHORITY_BINDING_MAP.items():
+                if k in authority_key:
+                    return val, False
             return "requires_legal_review", True
 
         if doc_binding == "persuasive_guidance":

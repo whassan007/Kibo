@@ -9,7 +9,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 
 
 @dataclass(frozen=True)
@@ -154,3 +154,21 @@ def resolve_verified_role(request, fallback="EMPLOYEE") -> str:
     if principal.authenticated and principal.roles:
         return principal.roles[0]
     return "EMPLOYEE"
+
+
+def get_current_user_optional(request: Request) -> PrincipalContext | None:
+    """FastAPI dependency / helper returning PrincipalContext if available, or None/unauthenticated fallback."""
+    try:
+        return principal_from_request(request)
+    except HTTPException as exc:
+        if exc.status_code == 401 and not strict_auth_enabled():
+            return None
+        raise
+
+
+def require_authenticated_user(request: Request) -> PrincipalContext:
+    """FastAPI dependency / helper enforcing authenticated/verified principal context for mutating endpoints."""
+    principal = principal_from_request(request)
+    if strict_auth_enabled() and not principal.authenticated:
+        raise HTTPException(status_code=401, detail="Verified enterprise token required")
+    return principal

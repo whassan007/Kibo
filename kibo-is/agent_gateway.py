@@ -6928,4 +6928,11 @@ try:
 except Exception as _e:
     print(f"[Router Mount Warning] hub_router: {_e}")
 
+try:
+    from core.regulatory_intelligence.api import router as regulatory_intelligence_router
+    app.include_router(regulatory_intelligence_router)
+except Exception as _e:
+    print(f"[Router Mount Warning] regulatory_intelligence_router: {_e}")
+
+
 

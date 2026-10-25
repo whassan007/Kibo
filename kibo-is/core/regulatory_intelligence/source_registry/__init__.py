@@ -95,6 +95,11 @@ def get_all_regulatory_sources() -> List[RegulatorySourceEntry]:
     return combined
 
 
+def get_all_curated_sources() -> List[RegulatorySourceEntry]:
+    """Alias for `get_all_regulatory_sources()` returning all curated official sources."""
+    return get_all_regulatory_sources()
+
+
 def get_sources_by_jurisdiction(jurisdiction_id: str) -> List[RegulatorySourceEntry]:
     jur = jurisdiction_id.strip().upper()
     return [
