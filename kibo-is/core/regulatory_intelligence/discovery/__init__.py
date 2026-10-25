@@ -1,12 +1,17 @@
-"""Scheduled regulatory discovery and its persistent ingestion outbox."""
+"""
+Continuous Scheduled Regulatory Discovery Engine (X03).
+"""
+
 from .scheduler import (
-    DEFAULT_CADENCES, DiscoveryCheckpoint, DiscoveryDocument,
-    DiscoveryRunAuditLog, DiscoveryStore, IngestionTaskRecord,
     ScheduledDiscoveryEngine,
+    DiscoveryCheckpoint,
+    DiscoveryRunAuditLog,
+    IngestionTaskRecord,
 )
 
 __all__ = [
-    "DEFAULT_CADENCES", "DiscoveryCheckpoint", "DiscoveryDocument",
-    "DiscoveryRunAuditLog", "DiscoveryStore", "IngestionTaskRecord",
     "ScheduledDiscoveryEngine",
+    "DiscoveryCheckpoint",
+    "DiscoveryRunAuditLog",
+    "IngestionTaskRecord",
 ]
