@@ -293,7 +293,7 @@ AUTHENTIC_EURLEX_FIXTURES: List[Dict[str, Any]] = [
             "on measures for a high common level of cybersecurity across the Union, amending Regulation "
             "(EU) No 910/2014 and Directive (EU) 2018/1972, and repealing Directive (EU) 2016/1148 (NIS 2 Directive)"
         ),
-        "eli_or_celex_identifier": "CELEX:32022R2555",
+        "eli_or_celex_identifier": "CELEX:32022L2555",
         "celex_id": "32022L2555",
         "eli_path": "eli/dir/2022/2555/oj",
         "official_source_url": "https://eur-lex.europa.eu/eli/dir/2022/2555/oj",
@@ -390,6 +390,8 @@ AUTHENTIC_EURLEX_FIXTURES: List[Dict[str, Any]] = [
         ),
         "eli_or_celex_identifier": "CELEX:32002L0058",
         "celex_id": "32002L0058",
+        "consolidated_celex_id": "02002L0058-20091219",
+        "amending_celex_ids": ["32009L0136"],
         "eli_path": "eli/dir/2002/58/oj",
         "official_source_url": "https://eur-lex.europa.eu/eli/dir/2002/58/oj",
         "cellar_uri": "http://publications.europa.eu/resource/celex/32002L0058",

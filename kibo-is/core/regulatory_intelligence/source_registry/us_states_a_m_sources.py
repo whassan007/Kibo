@@ -865,7 +865,7 @@ def _build_diff_fixture(
         current_effective_date=current_effective_date,
         previous_text=previous_text,
         current_text=current_text,
-        Previous_sha256=prev_sha,
+        previous_sha256=prev_sha,
         current_sha256=curr_sha,
         change_type=change_type,
         is_substantive=True,

@@ -696,8 +696,8 @@ class StatutoryProvisionAnnotator:
         return {
             "annotation_type": default_type,
             "normalized_legal_concept": concept,
-            "plain_language_explanation": f"Provision {source_section} in {doc.canonical_title} ({jur}): {first_sentence}.",
-            "legal_requirement": f"Comply with statutory provision {source_section} of {doc.canonical_title}: {first_sentence}.",
+            "plain_language_explanation": f"Provision {sec_lower} in {doc.canonical_title} ({jur}): {first_sentence}.",
+            "legal_requirement": f"Comply with statutory provision {sec_lower} of {doc.canonical_title}: {first_sentence}.",
             "applicability_conditions": [f"Subject to jurisdiction {jur} and scope of {doc.canonical_title}"],
             "exemptions": [],
             "base_thresholds": {},
@@ -708,7 +708,7 @@ class StatutoryProvisionAnnotator:
             "affected_processing_activities": ["personal_data_processing"],
             "required_controls": ["CTRL-STATUTORY-COMPLIANCE-VERIFICATION"],
             "required_assessments": ["ASSESS-REGULATORY-APPLICABILITY-REVIEW"],
-            "related_regulations": [doc.official_citation] if doc.official_citation else [source_section],
+            "related_regulations": [doc.official_citation] if doc.official_citation else [sec_lower],
             "is_ambiguous": not (has_obligation or has_prohibition or has_definition),
         }
 
