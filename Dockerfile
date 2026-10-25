@@ -18,12 +18,17 @@ RUN pip install --no-cache-dir -r /app/kibo-is/requirements.txt \
     mcp \
     pydantic-settings
 
+RUN groupadd --system kibo && useradd --system --uid 10001 --gid kibo kibo
+
 COPY . /app
+RUN chown -R kibo:kibo /app
 
 WORKDIR /app/kibo-is
 EXPOSE 8000
 
 HEALTHCHECK --interval=15s --timeout=5s --retries=3 \
   CMD curl -f http://localhost:8000/api/system/health || exit 1
+
+USER kibo
 
 CMD ["uvicorn", "agent_gateway:app", "--host", "0.0.0.0", "--port", "8000"]
