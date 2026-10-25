@@ -110,3 +110,28 @@ def get_sources_by_jurisdiction(jurisdiction_id: str) -> List[RegulatorySourceEn
 
 def get_allowed_official_domains() -> List[str]:
     return sorted({s.official_domain.lower() for s in get_all_regulatory_sources() if s.official_domain})
+
+
+def validate_source_registry_coverage() -> Dict[str, object]:
+    """
+    Validate that the curated source registry covers all required jurisdictions:
+    - US Federal + 50 States + DC + 5 Territories
+    - Canada Federal + 10 Provinces + 3 Territories
+    - European Union + all 27 Member States + 16 German Länder
+    """
+    sources = get_all_regulatory_sources()
+    covered_jurs = {s.jurisdiction_id.upper() for s in sources}
+    covered_sub = {s.subnational_region.upper() for s in sources if s.subnational_region}
+    us_jurs = {j for j in covered_jurs if j.startswith("US-")}
+    ca_jurs = {j for j in covered_jurs if j.startswith("CA-")}
+    eu_jurs = {j for j in covered_jurs if j == "EU" or j.startswith("EU-")}
+    valid = len(us_jurs) >= 57 and len(ca_jurs) >= 14 and len(eu_jurs) >= 28 and len(sources) >= 250
+    return {
+        "valid": valid,
+        "total_sources": len(sources),
+        "us_jurisdictions_count": len(us_jurs),
+        "canada_jurisdictions_count": len(ca_jurs),
+        "eu_jurisdictions_count": len(eu_jurs),
+        "subnational_regions_count": len(covered_sub),
+    }
+

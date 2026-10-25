@@ -915,3 +915,95 @@ class JudicialAndEnforcementAnnotator:
             )
 
         return annotations
+
+
+def build_canonical_document_from_fixture(fixture: Dict[str, Any]) -> CanonicalLegalDocument:
+    """
+    Construct a deterministic `CanonicalLegalDocument` from any curated judicial,
+    tribunal, or regulatory enforcement decision fixture dictionary.
+    """
+    norm_text = str(
+        fixture.get("normalized_text")
+        or fixture.get("verbatim_excerpt")
+        or fixture.get("exact_text_en")
+        or fixture.get("full_provision_text_original")
+        or ""
+    )
+    raw_sha = str(
+        fixture.get("raw_document_sha256")
+        or fixture.get("content_sha256")
+        or hashlib.sha256(norm_text.encode("utf-8")).hexdigest()
+    )
+    norm_sha = str(
+        fixture.get("normalized_text_sha256")
+        or hashlib.sha256(norm_text.encode("utf-8")).hexdigest()
+    )
+    raw_doc_type = fixture.get("document_type") or DocumentClassType.COURT_JUDGMENT
+    if isinstance(raw_doc_type, DocumentClassType):
+        doc_type = raw_doc_type
+    else:
+        try:
+            doc_type = DocumentClassType(str(raw_doc_type))
+        except ValueError:
+            doc_type = DocumentClassType.REGULATORY_ENFORCEMENT_DECISION
+
+    pub_date = fixture.get("publication_date") or fixture.get("decision_date")
+    if isinstance(pub_date, str):
+        try:
+            pub_date = date.fromisoformat(pub_date[:10])
+        except ValueError:
+            pub_date = None
+
+    eff_date = fixture.get("effective_date") or pub_date
+    if isinstance(eff_date, str):
+        try:
+            eff_date = date.fromisoformat(eff_date[:10])
+        except ValueError:
+            eff_date = None
+
+    return CanonicalLegalDocument(
+        document_id=str(fixture.get("document_id") or fixture.get("id") or "DOC-FIXTURE"),
+        source_id=str(fixture.get("source_id") or "SRC-FIXTURE"),
+        document_type=doc_type,
+        canonical_title=str(
+            fixture.get("canonical_title")
+            or fixture.get("title")
+            or fixture.get("case_name")
+            or "Official Regulatory or Judicial Decision"
+        ),
+        official_citation=str(
+            fixture.get("official_citation")
+            or fixture.get("neutral_citation_or_id")
+            or "Official Citation"
+        ),
+        eli_or_celex_identifier=fixture.get("eli_or_celex_identifier"),
+        jurisdiction_id=str(fixture.get("jurisdiction_id") or fixture.get("jurisdiction") or "US-FED"),
+        subnational_region=fixture.get("subnational_region"),
+        issuing_authority=str(
+            fixture.get("issuing_authority")
+            or fixture.get("court_tribunal_or_regulator")
+            or fixture.get("commissioner")
+            or "Official Authority"
+        ),
+        issuing_authority_type=str(fixture.get("issuing_authority_type") or "court_or_regulator"),
+        official_source_url=str(
+            fixture.get("official_source_url")
+            or fixture.get("source_url")
+            or "https://www.supremecourt.gov/"
+        ),
+        language=str(fixture.get("language") or "en"),
+        translation_status=str(fixture.get("translation_status") or "original_authoritative"),
+        publication_date=pub_date,
+        effective_date=eff_date,
+        document_version=str(fixture.get("document_version") or "2026.10.2"),
+        raw_document_sha256=raw_sha,
+        normalized_text_sha256=norm_sha,
+        normalized_text=norm_text,
+        binding_status=str(
+            fixture.get("binding_status")
+            or fixture.get("binding_vs_persuasive_status")
+            or "binding_precedent"
+        ),
+        appeal_status=str(fixture.get("appeal_status") or "final"),
+    )
+

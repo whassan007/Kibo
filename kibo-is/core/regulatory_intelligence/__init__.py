@@ -133,7 +133,7 @@ class CanonicalLegalDocument(BaseModel):
     binding_status: str = Field(default="binding_statute", description="binding_statute, binding_regulation, binding_precedent, administrative_order, persuasive_guidance")
     review_status: LegalPromotionState = LegalPromotionState.VERIFIED_SOURCE
     license: str = "Public / Official Government Publication"
-    source_snapshot_reference: str
+    source_snapshot_reference: str = "kibo-snapshot://sha256/default"
     normalized_text: str = ""
     original_language_passages: Dict[str, str] = Field(default_factory=dict)
     translated_passages: Dict[str, str] = Field(default_factory=dict)
@@ -250,6 +250,7 @@ class ProvisionDiffRecord(BaseModel):
     current_effective_date: Optional[date] = None
     previous_text: str
     current_text: str
+    previous_sha256: str = ""
     Previous_sha256: str = ""
     current_sha256: str = ""
     change_type: str = Field(
@@ -259,6 +260,12 @@ class ProvisionDiffRecord(BaseModel):
     is_substantive: bool = True
     changed_elements_summary: List[str] = Field(default_factory=list)
     detected_at: datetime = Field(default_factory=datetime.utcnow)
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.Previous_sha256 and not self.previous_sha256:
+            self.previous_sha256 = self.Previous_sha256
+        elif self.previous_sha256 and not self.Previous_sha256:
+            self.Previous_sha256 = self.previous_sha256
 
 
 def compute_sha256_hex(content: str | bytes) -> str:

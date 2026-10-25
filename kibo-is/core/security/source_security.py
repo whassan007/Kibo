@@ -6,6 +6,14 @@ import socket
 from urllib.parse import urlsplit
 
 
+class SSRFBlockedError(ValueError):
+    """Raised when an untrusted or non-public URL is blocked by SSRF validation."""
+
+
+class PromptInjectionDetectedError(ValueError):
+    """Raised when reject_on_detection=True and adversarial prompt injection is detected."""
+
+
 class RegulatorySourceSecurityGuard:
     """Reject unsafe source addresses and mark document instructions as inert.
 
@@ -17,25 +25,25 @@ class RegulatorySourceSecurityGuard:
     @staticmethod
     def validate_source_url(url, allowed_domains=None):
         if not isinstance(url, str) or any(ord(c) <= 32 for c in url) or "\\" in url:
-            raise ValueError("Invalid source URL")
+            raise SSRFBlockedError("Invalid source URL")
         try:
             parsed = urlsplit(url)
             host = (parsed.hostname or "").rstrip(".").encode("idna").decode().lower()
             port = parsed.port
         except (ValueError, UnicodeError) as exc:
-            raise ValueError("Invalid source URL") from exc
+            raise SSRFBlockedError("Invalid source URL") from exc
         if parsed.scheme.lower() not in {"http", "https"} or not host:
-            raise ValueError("HTTP or HTTPS source required")
+            raise SSRFBlockedError("HTTP or HTTPS source required")
         if parsed.username is not None or parsed.password is not None:
-            raise ValueError("Source credentials are prohibited")
-        if host == "localhost" or host.endswith(".localhost"):
-            raise ValueError("Local sources are prohibited")
+            raise SSRFBlockedError("Source credentials are prohibited")
+        if host == "localhost" or host.endswith(".localhost") or host.endswith(".example.com"):
+            raise SSRFBlockedError("Local or unapproved example sources are prohibited")
         if allowed_domains is not None:
             if isinstance(allowed_domains, str):
                 allowed_domains = [allowed_domains]
             domains = {d.rstrip(".").encode("idna").decode().lower() for d in allowed_domains}
             if not any(host == d or host.endswith("." + d) for d in domains if d):
-                raise ValueError("Source domain is not allowed")
+                raise SSRFBlockedError("Source domain is not allowed")
         try:
             addresses = [ipaddress.ip_address(host)]
         except ValueError:
@@ -44,16 +52,16 @@ class RegulatorySourceSecurityGuard:
                              socket.getaddrinfo(host, port or (443 if parsed.scheme == "https" else 80),
                                                 type=socket.SOCK_STREAM)]
             except (OSError, ValueError) as exc:
-                raise ValueError("Source host could not be safely resolved") from exc
+                raise SSRFBlockedError("Source host could not be safely resolved") from exc
         if not addresses or any(not address.is_global or
                                 (address.version == 6 and address.ipv4_mapped is not None
                                  and not address.ipv4_mapped.is_global)
                                 for address in addresses):
-            raise ValueError("Non-public source addresses are prohibited")
+            raise SSRFBlockedError("Non-public source addresses are prohibited")
         return url
 
     @staticmethod
-    def sanitize_document_text(raw_text, max_bytes=5_000_000):
+    def sanitize_document_text(raw_text, max_bytes=5_000_000, reject_on_detection=False):
         """Return {text, security_flags}; replace detected instructions with markers."""
         if not isinstance(raw_text, str):
             raise TypeError("Document text must be a string")
@@ -63,7 +71,7 @@ class RegulatorySourceSecurityGuard:
         patterns = (
             ("script", r"<\s*script\b[^>]*>.*?<\s*/\s*script\s*>|<\s*/?\s*script\b[^>]*>"),
             ("ignore_previous_instructions", r"\bignore\s+(?:all\s+)?previous\s+instructions\b"),
-            ("system_prompt", r"\bsystem\s+prompt\s*:"),
+            ("system_prompt", r"\bsystem\s+prompt\s*(?:override\s*)?:"),
             ("execute_command", r"\bexecute\s+command\b"),
             ("production_without_review", r"\bpromote\s+to\s+production\s+without\s+review\b"),
         )
@@ -73,4 +81,6 @@ class RegulatorySourceSecurityGuard:
                                   flags=re.IGNORECASE | re.DOTALL)
             if count:
                 flags.append(flag)
+        if reject_on_detection and flags:
+            raise PromptInjectionDetectedError(f"Adversarial instructions detected: {flags}")
         return {"text": text, "security_flags": flags}
