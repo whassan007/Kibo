@@ -1,0 +1,36 @@
+{
+  "host": "waelbot",
+  "arch": "aarch64",
+  "d01_assistant_stages": [
+    {
+      "stage": "1. Understanding Organization Context",
+      "latency_ms": 0.0087,
+      "digest": "05755496fd560267"
+    },
+    {
+      "stage": "2. Evaluating Jurisdictional Applicability (JRAE)",
+      "latency_ms": 0.0055,
+      "digest": "9f6f6c57c263347e"
+    },
+    {
+      "stage": "3. Retrieving Verified Legal Sources & Citations",
+      "latency_ms": 0.0047,
+      "digest": "23c9d51faebb31c1"
+    },
+    {
+      "stage": "4. Checking Internal Policies & Contractual DPAs",
+      "latency_ms": 0.0046,
+      "digest": "e21ff984e9437a20"
+    },
+    {
+      "stage": "5. Preparing Governed Recommendation",
+      "latency_ms": 0.0036,
+      "digest": "ffbff37f9456f27c"
+    }
+  ],
+  "d01_total_pipeline_ms": 0.723,
+  "d02_sse_events_ingested": 5000,
+  "d02_unique_events_retained": 1000,
+  "d02_duplicates_dropped": 4000,
+  "d02_dedup_throughput_ms": 0.678
+}
