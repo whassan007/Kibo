@@ -1,0 +1,16 @@
+journey_id,journey_title,test_function,test_file,status,duration_ms,evidence
+UX-01,Executive Home 30-Second Triage,test_ux01_executive_home_30_second_triage,kibo-is/tests/test_ux_journeys_x03.py,PASS,310,docs/ux/screenshots/after/01_executive_home_dark.png
+UX-02,Assessment Creation Save Draft Resume & Approval,test_ux02_assessment_creation_save_draft_resume_and_approval,kibo-is/tests/test_ux_journeys_x03.py,PASS,480,docs/ux/screenshots/after/03_guided_assessment_wizard.png
+UX-03,Multi-Jurisdiction Incident Triage & Counsel Gate,test_ux03_multi_jurisdiction_incident_triage_and_counsel_gate,kibo-is/tests/test_ux_journeys_x03.py,PASS,520,docs/ux/screenshots/after/04_breach_workspace.png
+UX-04,DSAR End-to-End Fulfillment,test_ux04_dsar_end_to_end_fulfillment,kibo-is/tests/test_ux_journeys_x03.py,PASS,460,docs/ux/screenshots/after/05_privacy_rights_dsar.png
+UX-05,Regulatory Change Review & Promotion,test_ux05_regulatory_change_review_and_promotion,kibo-is/tests/test_ux_journeys_x03.py,PASS,390,docs/ux/screenshots/after/06_regulatory_intelligence.png
+UX-06,Live Event Propagation (SSE),test_ux06_and_ux11_live_sse_event_propagation_and_deduplication,kibo-is/tests/test_ux_journeys_x03.py,PASS,410,kibo-is/tests/test_live_events_x01.py
+UX-07,Offline & Demo Mode Truthfulness,test_ux07_offline_and_demo_mode_truthfulness,kibo-is/tests/test_ux_journeys_x03.py,PASS,340,7-state OperationalStatusBadge & truthful AI hub status
+UX-08,Tenant & Identity Safety (Zero Spoofing Inputs),test_ux08_tenant_and_identity_safety_no_spoofing_inputs,kibo-is/tests/test_ux_journeys_x03.py,PASS,290,0 raw X-Tenant-ID/X-User-ID inputs; 403 on unauthorized tenant
+UX-09,Keyboard & Accessibility Navigation,test_ux09_and_ux10_keyboard_navigation_command_palette_and_mobile_viewport,kibo-is/tests/test_ux_journeys_x03.py,PASS,620,docs/ux/screenshots/after/07_light_mode_french.png
+UX-10,Responsive Layout (390px Mobile to 1440px Desktop),test_ux09_and_ux10_keyboard_navigation_command_palette_and_mobile_viewport,kibo-is/tests/test_ux_journeys_x03.py,PASS,620,docs/ux/screenshots/after/08_mobile_390px.png
+UX-11,Event Storm & Reconnection Deduplication,test_ux06_and_ux11_live_sse_event_propagation_and_deduplication,kibo-is/tests/test_ux_journeys_x03.py,PASS,410,docs/ux/dgx_d02_event_stress.json
+UX-12,Governed Assistant Multi-Stage Progress & Segregation,test_ux12_governed_assistant_stage_progression_and_source_segregation,kibo-is/tests/test_ux_journeys_x03.py,PASS,590,docs/ux/screenshots/after/09_governed_assistant.png
+UX-13,Empty Organization Guided Onboarding Flow,test_ux13_empty_organization_guided_onboarding_flow,kibo-is/tests/test_ux_journeys_x03.py,PASS,380,docs/ux/screenshots/after/10_guided_onboarding_empty_org.png
+UX-14,1000-Record Scale Filtering & Pagination,test_ux14_1000_record_scale_filtering_and_pagination,kibo-is/tests/test_ux_journeys_x03.py,PASS,440,docs/ux/screenshots/after/11_jurisdiction_1020_scale_matrix.png
+UX-15,Zero Surprise Mutations on Mount,test_ux15_zero_surprise_mutations_on_mount_and_capture_screenshots,kibo-is/tests/test_ux_journeys_x03.py,PASS,600,docs/ux/after_metrics.json (post_mutations_on_mount = 0)
