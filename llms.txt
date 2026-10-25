@@ -1,0 +1,18 @@
+# KIBO.IS — Enterprise Privacy Operations Platform
+
+> KIBO is an enterprise AI privacy operations platform designed to automate GDPR, CCPA, Quebec Law 25, PIPEDA, and HIPAA compliance from a single intelligent workspace.
+
+## Core Platform Capabilities
+- **DSAR Automation:** Intake, identity verification (Okta/SAML), PII discovery, redaction, and encrypted ZIP delivery.
+- **AI Privacy Copilot:** Contextual AI assistant for DPIA generation, policy gap detection, and risk scoring. Zero customer data is used for model training.
+- **Article 30 ROPA:** Automated live Records of Processing registries.
+- **Vendor Risk Management:** Automated subprocessor DPA tracking and SOC 2 / ISO 27001 evaluation.
+- **Security:** AES-256 encryption at rest, TLS 1.3 in transit, SAML 2.0 SSO, fine-grained RBAC, and regional data residency choices (US, CA, EU, UK).
+
+## Documentation & Links
+- Main Landing Page: https://kibo.is/
+- Pricing Plans: https://kibo.is/pricing
+- Security Overview: https://kibo.is/security
+- Trust Center: https://kibo.is/trust
+- Documentation: https://kibo.is/docs
+- Full Context: https://kibo.is/llms-full.txt

@@ -1,0 +1,103 @@
+jurisdiction_id,name,jurisdiction_type,country,state_or_province,member_state,primary_regulator,regulator_url,has_comprehensive_privacy_law,has_breach_notification_law,has_health_privacy_law,has_public_sector_privacy_law,canonical_regulations_count,catalogued,implemented,tested,legally_reviewed,production_enabled
+US-FED,United States (Federal),federal,US,,,"Federal Trade Commission (FTC), HHS Office for Civil Rights (OCR), CFPB, SEC, OCC, Dept. of Education",https://www.ftc.gov,False,True,True,True,12,True,True,True,True,True
+US-AL,United States — Alabama,state,US,Alabama,,Office of the Alabama Attorney General,https://www.alabamaag.gov,False,True,False,False,1,True,True,True,True,True
+US-AK,United States — Alaska,state,US,Alaska,,Alaska Department of Law (Attorney General),https://law.alaska.gov,False,True,False,False,1,True,True,True,True,True
+US-AZ,United States — Arizona,state,US,Arizona,,Arizona Attorney General's Office,https://www.azag.gov,False,True,False,False,1,True,True,True,True,True
+US-AR,United States — Arkansas,state,US,Arkansas,,Arkansas Attorney General,https://arkansasag.gov,False,True,False,False,1,True,True,True,True,True
+US-CA,United States — California,state,US,California,,California Privacy Protection Agency (CalPrivacy) & California Attorney General,https://cppa.ca.gov,True,True,True,False,6,True,True,True,True,True
+US-CO,United States — Colorado,state,US,Colorado,,Colorado Attorney General,https://coag.gov,True,True,False,False,4,True,True,True,True,True
+US-CT,United States — Connecticut,state,US,Connecticut,,Connecticut Office of the Attorney General,https://portal.ct.gov/AG,True,True,False,False,3,True,True,True,True,True
+US-DE,United States — Delaware,state,US,Delaware,,Delaware Department of Justice (Consumer Protection Unit),https://attorneygeneral.delaware.gov,True,True,False,False,3,True,True,True,True,True
+US-DC,United States — District of Columbia,state,US,District of Columbia,,Office of the Attorney General for the District of Columbia,https://oag.dc.gov,False,True,False,False,1,True,True,True,True,True
+US-FL,United States — Florida,state,US,Florida,,Florida Department of Legal Affairs (Attorney General),https://www.myfloridalegal.com,True,True,False,False,2,True,True,True,True,True
+US-GA,United States — Georgia,state,US,Georgia,,Office of the Attorney General of Georgia,https://law.georgia.gov,False,True,False,False,1,True,True,True,True,True
+US-HI,United States — Hawaii,state,US,Hawaii,,"Department of the Attorney General, State of Hawaii",https://ag.hawaii.gov,False,True,False,False,1,True,True,True,True,True
+US-ID,United States — Idaho,state,US,Idaho,,Office of the Attorney General of Idaho,https://www.ag.idaho.gov,False,True,False,False,1,True,True,True,True,True
+US-IL,United States — Illinois,state,US,Illinois,,Illinois Attorney General,https://illinoisattorneygeneral.gov,False,True,False,False,2,True,True,True,True,True
+US-IN,United States — Indiana,state,US,Indiana,,Indiana Office of the Attorney General,https://www.in.gov/attorneygeneral,True,True,False,False,3,True,True,True,True,True
+US-IA,United States — Iowa,state,US,Iowa,,Office of the Attorney General of Iowa,https://www.iowaattorneygeneral.gov,True,True,False,False,2,True,True,True,True,True
+US-KS,United States — Kansas,state,US,Kansas,,Kansas Attorney General,https://ag.ks.gov,False,True,False,False,1,True,True,True,True,True
+US-KY,United States — Kentucky,state,US,Kentucky,,Kentucky Office of the Attorney General,https://www.ag.ky.gov,True,True,False,False,3,True,True,True,True,True
+US-LA,United States — Louisiana,state,US,Louisiana,,Louisiana Department of Justice (Attorney General),https://www.ag.state.la.us,False,True,False,False,1,True,True,True,True,True
+US-ME,United States — Maine,state,US,Maine,,Office of the Maine Attorney General,https://www.maine.gov/ag,False,True,False,False,1,True,True,True,True,True
+US-MD,United States — Maryland,state,US,Maryland,,Maryland Office of the Attorney General,https://www.marylandattorneygeneral.gov,True,True,False,False,3,True,True,True,True,True
+US-MA,United States — Massachusetts,state,US,Massachusetts,,Massachusetts Office of the Attorney General,https://www.mass.gov/orgs/office-of-attorney-general-andrea-joy-campbell,False,True,False,False,1,True,True,True,True,True
+US-MI,United States — Michigan,state,US,Michigan,,Michigan Department of Attorney General,https://www.michigan.gov/ag,False,True,False,False,1,True,True,True,True,True
+US-MN,United States — Minnesota,state,US,Minnesota,,Office of the Minnesota Attorney General,https://www.ag.state.mn.us,True,True,False,False,3,True,True,True,True,True
+US-MS,United States — Mississippi,state,US,Mississippi,,"Office of the Attorney General, State of Mississippi",https://www.ago.state.ms.us,False,True,False,False,1,True,True,True,True,True
+US-MO,United States — Missouri,state,US,Missouri,,Missouri Attorney General's Office,https://ago.mo.gov,False,True,False,False,1,True,True,True,True,True
+US-MT,United States — Montana,state,US,Montana,,Montana Department of Justice (Office of Consumer Protection),https://dojmt.gov,True,True,False,False,3,True,True,True,True,True
+US-NE,United States — Nebraska,state,US,Nebraska,,Nebraska Attorney General's Office,https://ago.nebraska.gov,True,True,False,False,2,True,True,True,True,True
+US-NV,United States — Nevada,state,US,Nevada,,Nevada Office of the Attorney General,https://ag.nv.gov,False,True,False,False,1,True,True,True,True,True
+US-NH,United States — New Hampshire,state,US,New Hampshire,,New Hampshire Department of Justice (Attorney General),https://www.doj.nh.gov,True,True,False,False,3,True,True,True,True,True
+US-NJ,United States — New Jersey,state,US,New Jersey,,New Jersey Office of the Attorney General (Division of Consumer Affairs),https://www.njoag.gov,True,True,False,False,3,True,True,True,True,True
+US-NM,United States — New Mexico,state,US,New Mexico,,New Mexico Department of Justice,https://nmdoj.gov,False,True,False,False,1,True,True,True,True,True
+US-NY,United States — New York,state,US,New York,,New York State Office of the Attorney General & NYDFS,https://ag.ny.gov,False,True,False,False,3,True,True,True,True,True
+US-NC,United States — North Carolina,state,US,North Carolina,,North Carolina Department of Justice,https://ncdoj.gov,False,True,False,False,1,True,True,True,True,True
+US-ND,United States — North Dakota,state,US,North Dakota,,North Dakota Office of Attorney General,https://attorneygeneral.nd.gov,False,True,False,False,1,True,True,True,True,True
+US-OH,United States — Ohio,state,US,Ohio,,Ohio Attorney General,https://www.ohioattorneygeneral.gov,False,True,False,False,1,True,True,True,True,True
+US-OK,United States — Oklahoma,state,US,Oklahoma,,Oklahoma Office of the Attorney General,https://oklahoma.gov/oag.html,False,True,False,False,1,True,True,True,True,True
+US-OR,United States — Oregon,state,US,Oregon,,Oregon Department of Justice (Attorney General),https://www.doj.state.or.us,True,True,False,False,3,True,True,True,True,True
+US-PA,United States — Pennsylvania,state,US,Pennsylvania,,Pennsylvania Office of Attorney General,https://www.attorneygeneral.gov,False,True,False,False,1,True,True,True,True,True
+US-RI,United States — Rhode Island,state,US,Rhode Island,,Rhode Island Office of the Attorney General,https://riag.ri.gov,True,True,False,False,3,True,True,True,True,True
+US-SC,United States — South Carolina,state,US,South Carolina,,South Carolina Department of Consumer Affairs & Attorney General,https://www.scag.gov,False,True,False,False,1,True,True,True,True,True
+US-SD,United States — South Dakota,state,US,South Dakota,,South Dakota Office of Attorney General,https://atg.sd.gov,False,True,False,False,1,True,True,True,True,True
+US-TN,United States — Tennessee,state,US,Tennessee,,Tennessee Office of the Attorney General and Reporter,https://www.tn.gov/attorneygeneral,True,True,False,False,2,True,True,True,True,True
+US-TX,United States — Texas,state,US,Texas,,Texas Office of the Attorney General,https://www.texasattorneygeneral.gov,True,True,True,False,5,True,True,True,True,True
+US-UT,United States — Utah,state,US,Utah,,Utah Office of the Attorney General & Division of Consumer Protection,https://attorneygeneral.utah.gov,True,True,False,False,2,True,True,True,True,True
+US-VT,United States — Vermont,state,US,Vermont,,Vermont Office of the Attorney General,https://ago.vermont.gov,False,True,False,False,1,True,True,True,True,True
+US-VA,United States — Virginia,state,US,Virginia,,Office of the Attorney General of Virginia,https://www.oag.state.va.us,True,True,False,False,3,True,True,True,True,True
+US-WA,United States — Washington,state,US,Washington,,Washington State Office of the Attorney General,https://www.atg.wa.gov,False,True,True,False,2,True,True,True,True,True
+US-WV,United States — West Virginia,state,US,West Virginia,,West Virginia Office of the Attorney General,https://ago.wv.gov,False,True,False,False,1,True,True,True,True,True
+US-WI,United States — Wisconsin,state,US,Wisconsin,,Wisconsin Department of Justice,https://www.doj.state.wi.us,False,True,False,False,1,True,True,True,True,True
+US-WY,United States — Wyoming,state,US,Wyoming,,Wyoming Office of the Attorney General,https://ag.wyo.gov,False,True,False,False,1,True,True,True,True,True
+US-PR,United States Territory — Puerto Rico,territory,US,Puerto Rico,,Puerto Rico Department of Consumer Affairs (DACO) & Dept. of Justice,https://www.daco.pr.gov,False,True,False,False,1,True,True,True,True,True
+US-GU,United States Territory — Guam,territory,US,Guam,,Office of the Attorney General of Guam,https://oagguam.org,False,True,False,False,1,True,True,True,True,True
+US-VI,United States Territory — U.S. Virgin Islands,territory,US,U.S. Virgin Islands,,U.S. Virgin Islands Department of Justice,https://usvidoj.com,False,True,False,False,1,True,True,True,True,True
+CA-FED,Canada (Federal),federal,CA,,,Office of the Privacy Commissioner of Canada (OPC) & CRTC / OSFI,https://www.priv.gc.ca,True,True,False,True,5,True,True,True,True,True
+CA-AB,Canada — Alberta,province,CA,Alberta,,Office of the Information and Privacy Commissioner of Alberta (OIPC-AB),https://oipc.ab.ca,True,True,True,True,3,True,True,True,True,True
+CA-BC,Canada — British Columbia,province,CA,British Columbia,,Office of the Information and Privacy Commissioner for British Columbia (OIPC-BC),https://www.oipc.bc.ca,True,True,True,True,3,True,True,True,True,True
+CA-MB,Canada — Manitoba,province,CA,Manitoba,,Manitoba Ombudsman,https://www.ombudsman.mb.ca,False,True,True,True,2,True,True,True,True,True
+CA-NB,Canada — New Brunswick,province,CA,New Brunswick,,Office of the Ombud for New Brunswick,https://www.ombudnb.ca,False,True,True,True,2,True,True,True,True,True
+CA-NL,Canada — Newfoundland and Labrador,province,CA,Newfoundland and Labrador,,Office of the Information and Privacy Commissioner of Newfoundland and Labrador,https://www.oipc.nl.ca,False,True,True,True,2,True,True,True,True,True
+CA-NS,Canada — Nova Scotia,province,CA,Nova Scotia,,Information and Privacy Commissioner for Nova Scotia,https://oipc.novascotia.ca,False,True,True,True,3,True,True,True,True,True
+CA-ON,Canada — Ontario,province,CA,Ontario,,Information and Privacy Commissioner of Ontario (IPC),https://www.ipc.on.ca,False,True,True,True,5,True,True,True,True,True
+CA-PE,Canada — Prince Edward Island,province,CA,Prince Edward Island,,Information and Privacy Commissioner of Prince Edward Island,https://www.assembly.pe.ca/oipc,False,True,True,True,2,True,True,True,True,True
+CA-QC,Canada — Quebec,province,CA,Quebec,,Commission d'accès à l'information du Québec (CAI),https://www.cai.gouv.qc.ca,True,True,True,True,3,True,True,True,True,True
+CA-SK,Canada — Saskatchewan,province,CA,Saskatchewan,,Office of the Saskatchewan Information and Privacy Commissioner,https://oipc.sk.ca,False,True,True,True,2,True,True,True,True,True
+CA-NT,Canada — Northwest Territories,territory,CA,Northwest Territories,,Information and Privacy Commissioner of the Northwest Territories,https://atipp-nt.ca,False,True,True,True,2,True,True,True,True,True
+CA-NU,Canada — Nunavut,territory,CA,Nunavut,,Information and Privacy Commissioner of Nunavut,https://atipp-nu.ca,False,True,False,True,1,True,True,True,True,True
+CA-YT,Canada — Yukon,territory,CA,Yukon,,Yukon Information and Privacy Commissioner (Ombudsman),https://yukonombudsman.ca,False,True,True,True,2,True,True,True,True,True
+EU,European Union (EU-Wide),supranational,EU,,,"European Data Protection Board (EDPB), European Data Protection Supervisor (EDPS) & European AI Office",https://www.edpb.europa.eu,True,True,False,True,6,True,True,True,True,True
+EU-AT,European Union — Austria,member_state,AT,,Austria,Österreichische Datenschutzbehörde (DSB),https://www.dsb.gv.at,True,True,False,False,2,True,True,True,True,True
+EU-BE,European Union — Belgium,member_state,BE,,Belgium,Autorité de protection des données / Gegevensbeschermingsautoriteit (APD/GBA),https://www.dataprotectionauthority.be,True,True,False,False,2,True,True,True,True,True
+EU-BG,European Union — Bulgaria,member_state,BG,,Bulgaria,Commission for Personal Data Protection (CPDP),https://www.cpdp.bg,True,True,False,False,2,True,True,True,True,True
+EU-HR,European Union — Croatia,member_state,HR,,Croatia,Croatian Personal Data Protection Agency (AZOP),https://azop.hr,True,True,False,False,2,True,True,True,True,True
+EU-CY,European Union — Cyprus,member_state,CY,,Cyprus,Office of the Commissioner for Personal Data Protection,https://www.dataprotection.gov.cy,True,True,False,False,2,True,True,True,True,True
+EU-CZ,European Union — Czechia,member_state,CZ,,Czechia,Office for Personal Data Protection (ÚOOÚ),https://www.uoou.cz,True,True,False,False,2,True,True,True,True,True
+EU-DK,European Union — Denmark,member_state,DK,,Denmark,Datatilsynet (Danish Data Protection Agency),https://www.datatilsynet.dk,True,True,False,False,2,True,True,True,True,True
+EU-EE,European Union — Estonia,member_state,EE,,Estonia,Estonian Data Protection Inspectorate (AKI),https://www.aki.ee,True,True,False,False,2,True,True,True,True,True
+EU-FI,European Union — Finland,member_state,FI,,Finland,Office of the Data Protection Ombudsman (Tietosuojavaltuutetun toimisto),https://tietosuoja.fi,True,True,False,False,2,True,True,True,True,True
+EU-FR,European Union — France,member_state,FR,,France,Commission Nationale de l'Informatique et des Libertés (CNIL),https://www.cnil.fr,True,True,False,False,2,True,True,True,True,True
+EU-DE,European Union — Germany,member_state,DE,,Germany,Der Bundesbeauftragte für den Datenschutz und die Informationsfreiheit (BfDI) & 17 Länder Authorities,https://www.bfdi.bund.de,True,True,True,False,4,True,True,True,True,True
+EU-GR,European Union — Greece,member_state,GR,,Greece,Hellenic Data Protection Authority (HDPA),https://www.dpa.gr,True,True,False,False,2,True,True,True,True,True
+EU-HU,European Union — Hungary,member_state,HU,,Hungary,National Authority for Data Protection and Freedom of Information (NAIH),https://www.naih.hu,True,True,False,False,2,True,True,True,True,True
+EU-IE,European Union — Ireland,member_state,IE,,Ireland,Data Protection Commission (DPC),https://www.dataprotection.ie,True,True,False,False,2,True,True,True,True,True
+EU-IT,European Union — Italy,member_state,IT,,Italy,Garante per la protezione dei dati personali (Garante),https://www.garanteprivacy.it,True,True,False,False,2,True,True,True,True,True
+EU-LV,European Union — Latvia,member_state,LV,,Latvia,Data State Inspectorate (DVI),https://www.dvi.gov.lv,True,True,False,False,2,True,True,True,True,True
+EU-LT,European Union — Lithuania,member_state,LT,,Lithuania,State Data Protection Inspectorate (VDAI),https://vdai.lrv.lt,True,True,False,False,2,True,True,True,True,True
+EU-LU,European Union — Luxembourg,member_state,LU,,Luxembourg,Commission Nationale pour la Protection des Données (CNPD),https://cnpd.public.lu,True,True,False,False,2,True,True,True,True,True
+EU-MT,European Union — Malta,member_state,MT,,Malta,Office of the Information and Data Protection Commissioner (IDPC),https://idpc.org.mt,True,True,False,False,2,True,True,True,True,True
+EU-NL,European Union — Netherlands,member_state,NL,,Netherlands,Autoriteit Persoonsgegevens (AP),https://autoriteitpersoonsgegevens.nl,True,True,False,False,2,True,True,True,True,True
+EU-PL,European Union — Poland,member_state,PL,,Poland,Personal Data Protection Office (UODO),https://uodo.gov.pl,True,True,False,False,2,True,True,True,True,True
+EU-PT,European Union — Portugal,member_state,PT,,Portugal,Comissão Nacional de Proteção de Dados (CNPD),https://www.cnpd.pt,True,True,False,False,2,True,True,True,True,True
+EU-RO,European Union — Romania,member_state,RO,,Romania,National Supervisory Authority for Personal Data Processing (ANSPDCP),https://www.dataprotection.ro,True,True,False,False,2,True,True,True,True,True
+EU-SK,European Union — Slovakia,member_state,SK,,Slovakia,Office for Personal Data Protection of the Slovak Republic (ÚOOÚ SR),https://dataprotection.gov.sk,True,True,False,False,2,True,True,True,True,True
+EU-SI,European Union — Slovenia,member_state,SI,,Slovenia,Information Commissioner of the Republic of Slovenia (IP RS),https://www.ip-rs.si,True,True,False,False,2,True,True,True,True,True
+EU-ES,European Union — Spain,member_state,ES,,Spain,Agencia Española de Protección de Datos (AEPD),https://www.aepd.es,True,True,False,False,2,True,True,True,True,True
+EU-SE,European Union — Sweden,member_state,SE,,Sweden,Integritetsskyddsmyndigheten (IMY),https://www.imy.se,True,True,False,False,2,True,True,True,True,True
+GB,United Kingdom (Non-EU Expansion),federal,GB,,,Information Commissioner's Office (ICO),https://ico.org.uk,True,False,False,False,0,True,False,False,False,False
+NO,Norway (EEA Non-EU Expansion),federal,NO,,,Datatilsynet (Norwegian Data Protection Authority),https://www.datatilsynet.no,True,False,False,False,0,True,False,False,False,False
+IS,Iceland (EEA Non-EU Expansion),federal,IS,,,Persónuvernd,https://www.personuvernd.is,True,False,False,False,0,True,False,False,False,False
+LI,Liechtenstein (EEA Non-EU Expansion),federal,LI,,,Datenschutzstelle (DSS),https://www.datenschutzstelle.li,True,False,False,False,0,True,False,False,False,False
+CH,Switzerland (Non-EU Adequacy Expansion),federal,CH,,,Federal Data Protection and Information Commissioner (FDPIC),https://www.edoeb.admin.ch,True,False,False,False,0,True,False,False,False,False

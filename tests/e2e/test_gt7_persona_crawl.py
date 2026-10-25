@@ -12,7 +12,7 @@ def test_offline_graceful_degradation(page: Page):
     offline_banner = page.locator("text=System Offline")
     expect(offline_banner).to_be_visible(timeout=5000)
     
-    submit_btn = page.locator("button[type="submit"]")
+    submit_btn = page.locator('button[type="submit"]')
     expect(submit_btn).to_be_disabled()
 
 @pytest.mark.xfail(strict=True, reason="Defect UI-002: Contrast ratios fail WCAG")
@@ -22,4 +22,4 @@ def test_contrast_ratios(page: Page):
     """
     page.goto("http://localhost:5173/expert")
     # In a full run, we would inject axe-core and run assertions here.
-    assert False\n
+    assert False

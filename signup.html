@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Start Free Trial — KIBO Enterprise Privacy Operations</title>
+  <meta name="description" content="Start your 14-day free trial of KIBO Enterprise Privacy Operations Platform.">
+  <link rel="canonical" href="https://kibo.is/signup">
+  <link rel="stylesheet" href="css/kibo.css">
+  <style>
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(2, 6, 23, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-card {
+      background: var(--bg-slate-900);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: var(--shadow-lg);
+    }
+    .strength-meter {
+      height: 4px;
+      width: 100%;
+      background: var(--bg-slate-800);
+      border-radius: 2px;
+      margin-top: 0.4rem;
+      overflow: hidden;
+    }
+    .strength-bar {
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease, background 0.3s ease;
+    }
+    .sso-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+  </style>
+</head>
+<body style="background:var(--bg-slate-950); justify-content:center; align-items:center; min-height:100vh; padding:2rem 1rem;">
+
+  <div class="form-box" style="max-width:560px; margin:auto;">
+    <div style="text-align:center; margin-bottom:2rem">
+      <a href="/" class="logo" style="justify-content:center; margin-bottom:1rem">
+        <span class="logo-mark">K</span>
+        <span>KIBO<span style="color:var(--accent-cyan)">.IS</span></span>
+      </a>
+      <div style="display:flex; justify-content:center; margin-bottom:1rem">
+        <button class="theme-toggle-btn" aria-label="Toggle Theme" title="Toggle Theme">☀️</button>
+      </div>
+      <h2>Start 14-Day Free Trial</h2>
+      <p class="text-muted" style="font-size:0.9rem; margin-top:0.25rem">Full access to Privacy Operations & AI Copilot. No credit card required.</p>
+    </div>
+
+    <!-- Enterprise SSO Signup Options Grid -->
+    <div class="sso-grid">
+      <button type="button" id="btn-entra-id" class="btn btn-secondary" style="background:#0f172a; border-color:#2563eb; color:#fff; font-size:0.85rem">
+        <span style="display:flex; align-items:center; justify-content:center; gap:0.4rem">
+          <svg width="16" height="16" viewBox="0 0 23 23" fill="none"><path d="M0 0h11v11H0z" fill="#f25022"/><path d="M12 0h11v11H12z" fill="#7fba00"/><path d="M0 12h11v11H0z" fill="#00a4ef"/><path d="M12 12h11v11H12z" fill="#ffb900"/></svg>
+          Microsoft Entra
+        </span>
+      </button>
+
+      <button type="button" id="btn-okta-sso" class="btn btn-secondary" style="font-size:0.85rem">
+        <span>🔑 Okta SSO</span>
+      </button>
+
+      <button type="button" id="btn-google-sso" class="btn btn-secondary" style="font-size:0.85rem">
+        <span>🔴 Google Workspace</span>
+      </button>
+
+      <button type="button" id="btn-passkey-sso" class="btn btn-secondary" style="font-size:0.85rem">
+        <span>🔐 FIDO2 Passkey</span>
+      </button>
+    </div>
+
+    <div class="divider">OR REGISTER WITH BUSINESS EMAIL</div>
+
+    <form action="app.html" method="GET" id="signup-form">
+      <div class="form-group">
+        <label for="name" class="form-label">Full Name *</label>
+        <input type="text" id="name" name="name" class="form-input" placeholder="Sarah Jenkins" required>
+      </div>
+
+      <div class="form-group">
+        <label for="org" class="form-label">Organization Name *</label>
+        <input type="text" id="org" name="org" class="form-input" placeholder="Acme Health Inc." required>
+      </div>
+
+      <div class="form-group">
+        <label for="email" class="form-label">Work Email *</label>
+        <input type="email" id="email" name="email" class="form-input" placeholder="sarah@acmehealth.com" required>
+      </div>
+
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <label for="password" class="form-label" style="margin:0">Password *</label>
+          <span id="strength-text" style="font-size:0.75rem; color:var(--text-muted)">Strength: Required</span>
+        </div>
+        <input type="password" id="password" name="password" class="form-input" placeholder="Minimum 12 characters" minlength="12" required>
+        <div class="strength-meter"><div id="strength-bar" class="strength-bar"></div></div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirm_password" class="form-label">Confirm Password *</label>
+        <input type="password" id="confirm_password" name="confirm_password" class="form-input" placeholder="Re-enter password" minlength="12" required>
+      </div>
+
+      <div class="form-group">
+        <label style="font-size:0.85rem; color:var(--text-muted); cursor:pointer">
+          <input type="checkbox" id="terms" name="terms" required> I agree to the <a href="terms.html" target="_blank" style="color:var(--accent-cyan)">Terms of Service</a> and <a href="privacy.html" target="_blank" style="color:var(--accent-cyan)">Privacy Policy</a>.
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:1rem">Create Enterprise Account</button>
+    </form>
+
+    <div style="text-align:center; margin-top:1.5rem; font-size:0.875rem; color:var(--text-muted)">
+      Already have an account? <a href="login.html" style="color:var(--accent-cyan); font-weight:600">Sign In</a>
+    </div>
+  </div>
+
+  <!-- Microsoft Entra ID Authentication Modal -->
+  <div id="entra-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1.25rem">
+        <svg width="24" height="24" viewBox="0 0 23 23" fill="none"><path d="M0 0h11v11H0z" fill="#f25022"/><path d="M12 0h11v11H12z" fill="#7fba00"/><path d="M0 12h11v11H0z" fill="#00a4ef"/><path d="M12 12h11v11H12z" fill="#ffb900"/></svg>
+        <h3 style="margin:0; font-size:1.2rem; color:var(--text-main)">Microsoft Entra ID Single Sign-On</h3>
+      </div>
+      <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:1.5rem">
+        Sign up using your Microsoft 365, Azure Active Directory, or Entra ID tenant account.
+      </p>
+
+      <form action="app.html" method="GET" id="entra-form">
+        <input type="hidden" name="signup_sso" value="microsoft">
+        <input type="hidden" name="sso_provider" value="Microsoft Entra ID">
+
+        <div class="form-group">
+          <label for="entra_email" class="form-label">Microsoft Work Email</label>
+          <input type="email" id="entra_email" name="email" class="form-input" value="sarah@acmehealth.com" placeholder="user@domain.onmicrosoft.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="entra_tenant" class="form-label">Entra ID Tenant Domain</label>
+          <input type="text" id="entra_tenant" name="tenant" class="form-input" value="acmehealth.onmicrosoft.com" placeholder="acme.onmicrosoft.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="entra_user" class="form-label">Display Name</label>
+          <input type="text" id="entra_user" name="name" class="form-input" value="Sarah Jenkins" required>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem">
+          <button type="submit" class="btn btn-primary btn-full" style="background:#2563eb; border:none">
+            Authenticate with Entra ID
+          </button>
+          <button type="button" id="btn-entra-close" class="btn btn-secondary">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Google Workspace Authentication Modal -->
+  <div id="google-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1.25rem">
+        <span style="font-size:1.5rem">🔴</span>
+        <h3 style="margin:0; font-size:1.2rem; color:var(--text-main)">Google Workspace SSO</h3>
+      </div>
+      <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:1.5rem">
+        Sign up using your Google Workspace / Cloud IAM enterprise identity.
+      </p>
+
+      <form action="app.html" method="GET">
+        <input type="hidden" name="signup_sso" value="google">
+        <input type="hidden" name="sso_provider" value="Google Workspace">
+
+        <div class="form-group">
+          <label for="google_email" class="form-label">Google Business Email</label>
+          <input type="email" id="google_email" name="email" class="form-input" value="sarah@acmehealth.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="google_name" class="form-label">Full Name</label>
+          <input type="text" id="google_name" name="name" class="form-input" value="Sarah Jenkins" required>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem">
+          <button type="submit" class="btn btn-primary btn-full" style="background:#ea4335; border:none">
+            Authorize with Google
+          </button>
+          <button type="button" id="btn-google-close" class="btn btn-secondary">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Passkey / FIDO2 Authentication Modal -->
+  <div id="passkey-modal" class="modal-overlay">
+    <div class="modal-card" style="text-align:center">
+      <span style="font-size:3rem">🔐</span>
+      <h3 style="margin-top:0.75rem; font-size:1.3rem; color:var(--text-main)">FIDO2 Hardware Passkey</h3>
+      <p style="font-size:0.875rem; color:var(--text-muted); margin:0.75rem 0 1.5rem">
+        Touch your YubiKey or use Touch ID / Face ID biometric sensor to register your biometric passkey.
+      </p>
+
+      <a href="app.html?signup_sso=passkey&sso_provider=FIDO2+Passkey&name=Sarah+Jenkins&email=sarah%40acmehealth.com&tenant=Hardware+Security+Key" class="btn btn-primary btn-full btn-lg">
+        Touch Passkey Sensor
+      </a>
+
+      <button type="button" id="btn-passkey-close" class="btn btn-secondary btn-full" style="margin-top:0.75rem">
+        Cancel
+      </button>
+    </div>
+  </div>
+
+  <!-- Okta Enterprise SSO Modal -->
+  <div id="okta-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1.25rem">
+        <span style="font-size:1.5rem">🔑</span>
+        <h3 style="margin:0; font-size:1.2rem; color:var(--text-main)">Okta Enterprise Single Sign-On</h3>
+      </div>
+      <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:1.5rem">
+        Enter your Okta Organization Domain to initiate SAML 2.0 / OIDC authentication.
+      </p>
+      <form id="okta-auth-form" action="app.html" method="GET">
+        <input type="hidden" name="signup_sso" value="okta">
+        <input type="hidden" name="sso_provider" value="Okta SSO">
+        <div class="form-group">
+          <label for="okta_domain" class="form-label">Okta Organization Domain</label>
+          <input type="text" id="okta_domain" name="tenant" class="form-input" placeholder="acme.okta.com" required value="dev-kibo.okta.com">
+        </div>
+        <div class="form-group">
+          <label for="okta_email" class="form-label">Work Email Address</label>
+          <input type="email" id="okta_email" name="email" class="form-input" placeholder="alex@acmehealth.com" required value="sarah@acmehealth.com">
+        </div>
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem">
+          <button type="submit" class="btn btn-primary btn-full" style="background:#007dc1; border:none">Authenticate with Okta</button>
+          <button type="button" id="btn-okta-close" class="btn btn-secondary">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/kibo.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('signup-form');
+      const pass = document.getElementById('password');
+      const confirmPass = document.getElementById('confirm_password');
+      const strengthBar = document.getElementById('strength-bar');
+      const strengthText = document.getElementById('strength-text');
+      
+      const btnEntra = document.getElementById('btn-entra-id');
+      const modalEntra = document.getElementById('entra-modal');
+      const btnEntraClose = document.getElementById('btn-entra-close');
+
+      const btnGoogle = document.getElementById('btn-google-sso');
+      const modalGoogle = document.getElementById('google-modal');
+      const btnGoogleClose = document.getElementById('btn-google-close');
+
+      const btnPasskey = document.getElementById('btn-passkey-sso');
+      const modalPasskey = document.getElementById('passkey-modal');
+      const btnPasskeyClose = document.getElementById('btn-passkey-close');
+
+      const btnOkta = document.getElementById('btn-okta-sso');
+      const modalOkta = document.getElementById('okta-modal');
+      const btnOktaClose = document.getElementById('btn-okta-close');
+
+      // Live Password Strength Meter
+      if (pass && strengthBar && strengthText) {
+        pass.addEventListener('input', () => {
+          const val = pass.value;
+          let score = 0;
+          if (val.length >= 8) score += 25;
+          if (val.length >= 12) score += 25;
+          if (/[A-Z]/.test(val) && /[0-9]/.test(val)) score += 25;
+          if (/[^A-Za-z0-9]/.test(val)) score += 25;
+
+          strengthBar.style.width = score + '%';
+          if (score < 50) {
+            strengthBar.style.background = '#ef4444';
+            strengthText.textContent = 'Strength: Weak (Needs 12+ chars)';
+            strengthText.style.color = '#ef4444';
+          } else if (score < 100) {
+            strengthBar.style.background = '#f59e0b';
+            strengthText.textContent = 'Strength: Medium (Add numbers & symbols)';
+            strengthText.style.color = '#f59e0b';
+          } else {
+            strengthBar.style.background = '#10b981';
+            strengthText.textContent = 'Strength: Strong (Enterprise Grade)';
+            strengthText.style.color = '#10b981';
+          }
+        });
+      }
+
+      // Password matching validation
+      if (form && pass && confirmPass) {
+        form.addEventListener('submit', (e) => {
+          if (pass.value !== confirmPass.value) {
+            e.preventDefault();
+            confirmPass.setCustomValidity('Passwords do not match');
+            confirmPass.reportValidity();
+          } else {
+            confirmPass.setCustomValidity('');
+          }
+        });
+
+        confirmPass.addEventListener('input', () => {
+          if (pass.value === confirmPass.value) {
+            confirmPass.setCustomValidity('');
+          }
+        });
+      }
+
+      // Modals controller helper
+      const toggleModal = (btn, modal, closeBtn) => {
+        if (btn && modal) btn.addEventListener('click', () => modal.classList.add('active'));
+        if (closeBtn && modal) closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+      };
+
+      toggleModal(btnEntra, modalEntra, btnEntraClose);
+      toggleModal(btnGoogle, modalGoogle, btnGoogleClose);
+      toggleModal(btnPasskey, modalPasskey, btnPasskeyClose);
+      toggleModal(btnOkta, modalOkta, btnOktaClose);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KIBO Workspace — Enterprise Privacy Operations Platform</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/kibo.css">
+  <style>
+    body { background: var(--bg-slate-950); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+    .app-header { height: 60px; background: var(--bg-slate-900); border-bottom: 1px solid var(--border-slate); display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; }
+    .app-layout { display: grid; grid-template-columns: 260px 1fr; flex-grow: 1; overflow: hidden; }
+    .app-sidebar { background: var(--bg-slate-900); border-right: 1px solid var(--border-slate); padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 0.25rem; }
+    .app-sidebar .sidebar-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-md); color: var(--text-muted); font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: var(--transition); }
+    .app-sidebar .sidebar-item:hover, .app-sidebar .sidebar-item.active { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; }
+    .app-main { padding: 2rem; overflow-y: auto; background: var(--bg-slate-950); }
+    .table-box { background: var(--bg-slate-900); border: 1px solid var(--border-slate); border-radius: var(--radius-md); overflow: hidden; margin-top: 1.5rem; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
+    th { background: var(--bg-slate-850); padding: 0.85rem 1rem; color: var(--text-muted); font-weight: 600; border-bottom: 1px solid var(--border-slate); }
+    td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border-slate); color: var(--text-main); }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+    .chat-box { background: var(--bg-slate-900); border: 1px solid var(--border-slate); border-radius: var(--radius-md); height: 420px; display: flex; flex-direction: column; }
+    .chat-messages { flex-grow: 1; padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+    .chat-msg { display: flex; gap: 0.75rem; max-width: 80%; }
+    .chat-msg.user-msg { margin-left: auto; flex-direction: row-reverse; }
+    .msg-bubble { padding: 0.85rem 1.1rem; border-radius: var(--radius-md); font-size: 0.9rem; line-height: 1.5; }
+    .user-msg .msg-bubble { background: var(--accent-indigo); color: #fff; }
+    .ai-msg .msg-bubble { background: var(--bg-slate-850); border: 1px solid var(--border-slate); color: var(--text-main); }
+  </style>
+</head>
+<body>
+
+  <!-- Top App Navigation -->
+  <header class="app-header">
+    <div style="display:flex; align-items:center; gap:1rem">
+      <a href="/" class="logo">
+        <span class="logo-mark">K</span>
+        <span>KIBO<span style="color:var(--accent-cyan)">.IS</span></span>
+      </a>
+      <span style="padding:0.25rem 0.65rem; background:rgba(99,102,241,0.2); border:1px solid rgba(99,102,241,0.4); border-radius:4px; font-size:0.75rem; color:#a5b4fc; font-weight:600">Enterprise Workspace</span>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:1.25rem">
+      <div style="position:relative">
+        <input type="text" placeholder="Search privacy records, PII, tickets..." class="form-input" style="padding:0.4rem 0.85rem; font-size:0.85rem; width:260px;">
+      </div>
+      <button class="theme-toggle-btn" aria-label="Toggle Theme" title="Toggle Theme">☀️</button>
+      <span style="cursor:pointer; font-size:1.2rem">🔔</span>
+      <div style="display:flex; align-items:center; gap:0.6rem">
+        <div id="app-user-avatar" style="width:32px; height:32px; border-radius:50%; background:var(--gradient-brand); display:grid; place-items:center; font-weight:700; color:#fff; font-size:0.85rem">SJ</div>
+        <span id="app-user-name" style="font-size:0.85rem; font-weight:600">Sarah Jenkins (Enterprise)</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Workspace Layout -->
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="app-sidebar">
+      <div class="sidebar-item active" data-view="dashboard" data-permission="reports.view">📊 Executive Dashboard</div>
+      <div class="sidebar-item" data-view="dsar" data-permission="dsar.manage">📬 Privacy Inbox (DSAR)</div>
+      <div class="sidebar-item" data-view="copilot" data-permission="cases.read">🤖 AI Privacy Copilot</div>
+      <div class="sidebar-item" data-view="compliance" data-permission="audit.view">🛡️ Compliance Matrix</div>
+      <div class="sidebar-item" data-view="vendor" data-permission="audit.view">🏢 Vendor Risk (DPAs)</div>
+      <div class="sidebar-item" data-view="ropa" data-permission="audit.view">📋 Records of Processing</div>
+      <div class="sidebar-item" data-view="workflows" data-permission="cases.write">⚙️ Workflow Builder</div>
+      <div class="sidebar-item" data-view="evidence" data-permission="audit.view">🔒 Audit Evidence Logs</div>
+      
+      <!-- Team & Org Settings (Only Super Admins) -->
+      <div class="sidebar-item" data-view="organization" data-permission="organization.manage">🏢 Org Settings</div>
+      <div class="sidebar-item" data-view="users" data-permission="users.invite">👥 Team Management</div>
+
+      <div style="margin-top:auto; padding-top:1rem; border-top:1px solid var(--border-slate)">
+        <a href="/" class="sidebar-item" style="color:var(--text-subtle)">← Back to Public Website</a>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Content -->
+    <main class="app-main">
+
+      <!-- SSO Enterprise Onboarding Banner -->
+      <div id="app-sso-banner" style="display:none"></div>
+
+      <!-- PANEL 1: DASHBOARD -->
+      <div id="view-dashboard" class="app-view">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem">
+          <div>
+            <h2>Executive Privacy Operations Dashboard</h2>
+            <p class="text-muted" style="font-size:0.9rem">Real-time posture across GDPR, Quebec Law 25, CCPA, and HIPAA</p>
+          </div>
+          <a href="downloads/KIBO-Board-Compliance-Audit-Report.pdf" download class="btn btn-primary btn-sm">📄 Export Audit Report (PDF)</a>
+        </div>
+
+        <div class="dash-stats-row">
+          <div class="stat-card">
+            <div class="stat-val" style="color:#10b981">96.8%</div>
+            <div class="stat-lbl">Global Compliance Rate</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">142</div>
+            <div class="stat-lbl">Active DSAR Requests</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" style="color:#6366f1">128</div>
+            <div class="stat-lbl">Connected Integrations</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" style="color:#38bdf8">0</div>
+            <div class="stat-lbl">Active Data Breaches</div>
+          </div>
+        </div>
+
+        <div class="table-box">
+          <table>
+            <thead>
+              <tr>
+                <th>Regulatory Framework</th>
+                <th>Jurisdiction</th>
+                <th>Compliance Posture</th>
+                <th>Open Action Items</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>GDPR</strong></td>
+                <td>European Union</td>
+                <td>100% Verified</td>
+                <td>0 pending</td>
+                <td><span style="color:#10b981; font-weight:700">● Compliant</span></td>
+              </tr>
+              <tr>
+                <td><strong>Quebec Law 25</strong></td>
+                <td>Canada (Quebec)</td>
+                <td>98% Verified</td>
+                <td>1 DPA refresh required</td>
+                <td><span style="color:#10b981; font-weight:700">● Compliant</span></td>
+              </tr>
+              <tr>
+                <td><strong>HIPAA</strong></td>
+                <td>United States (Healthcare)</td>
+                <td>100% Verified</td>
+                <td>0 pending</td>
+                <td><span style="color:#10b981; font-weight:700">● Compliant</span></td>
+              </tr>
+              <tr>
+                <td><strong>EU AI Act</strong></td>
+                <td>European Union</td>
+                <td>92% In Progress</td>
+                <td>2 Model Assessments</td>
+                <td><span style="color:#f59e0b; font-weight:700">● In Progress</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PANEL 2: DSAR QUEUE -->
+      <div id="view-dsar" class="app-view" style="display:none">
+        <h2>Privacy Inbox & DSAR Fulfillment Queue</h2>
+        <p class="text-muted" style="font-size:0.9rem">Automated intake, identity verification, and statutory countdown tracking</p>
+
+        <div class="table-box">
+          <table>
+            <thead>
+              <tr>
+                <th>Request ID</th>
+                <th>Data Subject</th>
+                <th>Type</th>
+                <th>Jurisdiction</th>
+                <th>Deadline</th>
+                <th>Verification</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>DSAR-2026-889</code></td>
+                <td>Michael Vance</td>
+                <td>Right to Erasure (Art 17)</td>
+                <td>GDPR (EU)</td>
+                <td><span style="color:#10b981">24 days remaining</span></td>
+                <td><span style="color:#10b981">Verified (Okta)</span></td>
+                <td><button class="btn btn-primary btn-sm" onclick="alert('Executing automated deletion across AWS, Salesforce & Snowflake...')">Auto-Delete</button></td>
+              </tr>
+              <tr>
+                <td><code>DSAR-2026-890</code></td>
+                <td>Claire Dupont</td>
+                <td>Right to Access (Law 25)</td>
+                <td>Law 25 (Quebec)</td>
+                <td><span style="color:#10b981">18 days remaining</span></td>
+                <td><span style="color:#10b981">Verified (Passkey)</span></td>
+                <td><button class="btn btn-secondary btn-sm" onclick="alert('Generating PII export package (ZIP)...')">Export Package</button></td>
+              </tr>
+              <tr>
+                <td><code>DSAR-2026-891</code></td>
+                <td>Robert Smith</td>
+                <td>Opt-Out / Do Not Sell</td>
+                <td>CCPA / CPRA (CA)</td>
+                <td><span style="color:#10b981">Instant</span></td>
+                <td><span style="color:#10b981">Auto-Synced</span></td>
+                <td><button class="btn btn-secondary btn-sm" disabled>Completed</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PANEL 3: AI COPILOT -->
+      <div id="view-copilot" class="app-view" style="display:none">
+        <h2>AI Privacy Copilot</h2>
+        <p class="text-muted" style="font-size:0.9rem; margin-bottom:1rem">Ask questions, audit policy documents, or generate compliance evidence</p>
+
+        <div class="chat-box">
+          <div id="copilot-messages" class="chat-messages">
+            <div class="chat-msg ai-msg">
+              <div class="msg-avatar">🤖</div>
+              <div class="msg-bubble">
+                Hello Alex! I am your <strong>KIBO AI Privacy Copilot</strong>. I am continuously monitoring your 128 integrations, 142 DSARs, and connected cloud systems. How can I assist you with privacy operations today?
+              </div>
+            </div>
+          </div>
+
+          <form id="copilot-form" style="padding:1rem; border-top:1px solid var(--border-slate); display:flex; gap:0.75rem">
+            <input type="text" id="copilot-input" class="form-input" placeholder="Ask about DSARs, Law 25, HIPAA, or vendor risk..." required>
+            <button type="submit" class="btn btn-primary btn-sm">Send to Copilot</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- OTHER PANELS FOR SUMMARY -->
+      <div id="view-compliance" class="app-view" style="display:none">
+        <h2>Regulatory Compliance Gap Matrix</h2>
+        <p class="text-muted">Automated evidence scanning across 10 global privacy frameworks.</p>
+      </div>
+
+      <div id="view-vendor" class="app-view" style="display:none">
+        <h2>Vendor Risk & Subprocessor Registry</h2>
+        <p class="text-muted">Tracking DPAs, SOC 2 certificates, and security posture for 42 third-party vendors.</p>
+      </div>
+
+      <div id="view-ropa" class="app-view" style="display:none">
+        <h2>Records of Processing Activities (Article 30 ROPA)</h2>
+        <p class="text-muted">Live, auto-updating data inventory ready for supervisory authority audit.</p>
+      </div>
+
+      <div id="view-workflows" class="app-view" style="display:none">
+        <h2>No-Code Workflow Builder</h2>
+        <p class="text-muted">Automating privacy alerts, breach escalation, and deletion pipelines.</p>
+      </div>
+
+      <div id="view-evidence" class="app-view" style="display:none">
+        <h2>Cryptographic Audit Evidence Logs</h2>
+        <p class="text-muted">Immutable, timestamped verification logs for external auditors.</p>
+      </div>
+
+      <div id="view-organization" class="app-view" style="display:none">
+        <h2>Organization Settings (Multi-Tenant Hub)</h2>
+        <p class="text-muted">Manage your sovereign tenant: <strong id="tenant-name-display"></strong></p>
+        <div class="table-box" style="padding:1rem">
+          <p>Tenant ID: <code id="tenant-id-display"></code></p>
+          <p>Data Isolation: <span style="color:#10b981">Strict Boundary Enforced</span></p>
+        </div>
+      </div>
+
+      <div id="view-users" class="app-view" style="display:none">
+        <h2>Team Management (RBAC)</h2>
+        <p class="text-muted">Manage users securely isolated within your tenant.</p>
+        <div class="table-box">
+          <table>
+            <thead>
+              <tr>
+                <th>User ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body">
+              <!-- Dynamically populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="js/kibo.js" defer></script>
+  <script src="js/rbac.js" defer></script>
+  <script src="js/app.js" defer></script>
+</body>
+</html>

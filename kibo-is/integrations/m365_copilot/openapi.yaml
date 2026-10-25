@@ -1,0 +1,629 @@
+openapi: 3.1.0
+info:
+  title: KIBO Privacy OS — Corporate Hub & Copilot API
+  version: 2.4.0
+  description: >-
+    Governed Enterprise Privacy Office API for Microsoft 365 Copilot, Microsoft Teams,
+    Claude Enterprise MCP, and Google Gemini Enterprise. Enforces Microsoft Entra ID / OIDC
+    Bearer authentication, mandatory X-Tenant-ID isolation, RBAC/ABAC policy gates,
+    and human approval workflows for consequential actions.
+  contact:
+    name: KIBO Privacy Office Engineering
+    email: privacy-ops@kibo.is
+    url: https://kibo.is
+servers:
+  - url: https://api.kibo.is/api/v1/integrations
+    description: KIBO Privacy OS Enterprise Production Hub
+  - url: http://localhost:8000/api/v1/integrations
+    description: Local Development & Verification Server
+security:
+  - BearerAuth: []
+  - EntraOAuth2:
+      - api://api.kibo.is/b4a9120e-3c14-4d88-a712-9012f384e771/PrivacyOffice.Read
+paths:
+  /copilot/query:
+    post:
+      operationId: get_privacy_guidance
+      summary: Governed Privacy Office Assistant — Organization, Legal & Policy Guidance
+      description: >-
+        Identifies the employee's organization, applicable US/Canada/EU legal obligations,
+        internal company privacy policies, vendor governance status, required PIA/DPIA/TRA/TIA/AIIA
+        assessments, and mandatory human approval gates before responding.
+      parameters:
+        - $ref: "#/components/parameters/XTenantIdHeader"
+        - $ref: "#/components/parameters/XUserIdHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PrivacyGuidanceRequest"
+      responses:
+        "200":
+          description: Governed privacy guidance with statutory citations, internal policies, and approval gates.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrivacyGuidanceResponse"
+        "403":
+          description: Cross-tenant access blocked or insufficient role permissions.
+
+  /tools/report_privacy_incident:
+    post:
+      operationId: report_privacy_incident
+      summary: Intake a suspected privacy or security incident (Draft / Pending Triage)
+      description: >-
+        Creates a draft privacy incident intake record and assigns an immediate triage task
+        to the DPO and Legal team. Never automatically sends external regulatory notifications.
+      parameters:
+        - $ref: "#/components/parameters/XTenantIdHeader"
+        - $ref: "#/components/parameters/XUserIdHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportIncidentRequest"
+      responses:
+        "200":
+          description: Draft incident record created and routed for human legal/DPO triage.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportIncidentResponse"
+        "403":
+          description: Cross-tenant access blocked or write scope not granted.
+
+  /tools/initiate_privacy_assessment:
+    post:
+      operationId: initiate_privacy_assessment
+      summary: Initiate a PIA, DPIA, TRA, TIA, LIA, or AIIA
+      description: >-
+        Creates a draft Privacy Impact Assessment (PIA), GDPR Data Protection Impact Assessment (DPIA),
+        Quebec Law 25 Transfer Risk Assessment (TRA), EU Transfer Impact Assessment (TIA),
+        Legitimate Interests Assessment (LIA), or AI Impact Assessment (AIIA).
+      parameters:
+        - $ref: "#/components/parameters/XTenantIdHeader"
+        - $ref: "#/components/parameters/XUserIdHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InitiateAssessmentRequest"
+      responses:
+        "200":
+          description: Draft assessment created with required jurisdiction-specific questionnaires and approval gates.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InitiateAssessmentResponse"
+        "403":
+          description: Cross-tenant access blocked or write scope not granted.
+
+  /tools/lookup_privacy_tasks:
+    post:
+      operationId: lookup_privacy_tasks
+      summary: Look up tenant-scoped privacy tasks, DSAR deadlines, and assessment reviews
+      parameters:
+        - $ref: "#/components/parameters/XTenantIdHeader"
+        - $ref: "#/components/parameters/XUserIdHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LookupTasksRequest"
+      responses:
+        "200":
+          description: Tenant-scoped privacy tasks and statutory deadlines.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LookupTasksResponse"
+        "403":
+          description: Cross-tenant access blocked.
+
+  /tools/lookup_vendor_status:
+    post:
+      operationId: lookup_vendor_status
+      summary: Look up vendor DPA, BAA, EU SCC, Quebec TRA, and AI subprocessor approval status
+      parameters:
+        - $ref: "#/components/parameters/XTenantIdHeader"
+        - $ref: "#/components/parameters/XUserIdHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LookupVendorRequest"
+      responses:
+        "200":
+          description: Vendor governance record, contractual safeguards, and required conditions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LookupVendorResponse"
+        "403":
+          description: Cross-tenant access blocked.
+
+  /tools/search_privacy_policies:
+    post:
+      operationId: search_privacy_policies
+      summary: Search tenant-scoped company privacy policies and data handling standards
+      parameters:
+        - $ref: "#/components/parameters/XTenantIdHeader"
+        - $ref: "#/components/parameters/XUserIdHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchPoliciesRequest"
+      responses:
+        "200":
+          description: Matching tenant-scoped privacy policies and standard operating procedures.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchPoliciesResponse"
+        "403":
+          description: Cross-tenant access blocked.
+
+  /tools/evaluate_regulatory_applicability:
+    post:
+      operationId: evaluate_regulatory_applicability
+      summary: Run JRAE multi-jurisdictional applicability analysis (US, Canada, EU)
+      parameters:
+        - $ref: "#/components/parameters/XTenantIdHeader"
+        - $ref: "#/components/parameters/XUserIdHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvaluateApplicabilityRequest"
+      responses:
+        "200":
+          description: Deterministic JRAE applicability evaluation with citations, clocks, and authorities.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvaluateApplicabilityResponse"
+        "403":
+          description: Cross-tenant access blocked.
+
+  /tools/route_approval_decision:
+    post:
+      operationId: route_approval_decision
+      summary: Route a privacy workflow item for human DPO / CPO / Legal approval
+      parameters:
+        - $ref: "#/components/parameters/XTenantIdHeader"
+        - $ref: "#/components/parameters/XUserIdHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RouteApprovalRequest"
+      responses:
+        "200":
+          description: Approval routing record created and logged to the immutable audit trail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteApprovalResponse"
+        "403":
+          description: Cross-tenant access blocked or insufficient permissions.
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Signed Microsoft Entra ID / OIDC / KIBO Enterprise JWT containing `sub`, `tid`, `roles`, and `scp`.
+    EntraOAuth2:
+      type: oauth2
+      description: Microsoft Entra ID OAuth 2.0 Single Sign-On with On-Behalf-Of (OBO) token exchange.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://login.microsoftonline.com/common/oauth2/v2.0/authorize
+          tokenUrl: https://login.microsoftonline.com/common/oauth2/v2.0/token
+          scopes:
+            api://api.kibo.is/b4a9120e-3c14-4d88-a712-9012f384e771/PrivacyOffice.Read: Read tenant-scoped privacy guidance, policies, tasks, and vendor status.
+            api://api.kibo.is/b4a9120e-3c14-4d88-a712-9012f384e771/PrivacyOffice.Write: Initiate draft assessments, report incidents, and route approval requests.
+
+  parameters:
+    XTenantIdHeader:
+      name: X-Tenant-ID
+      in: header
+      required: true
+      description: Verified enterprise tenant identifier (must match JWT `tid` claim).
+      schema:
+        type: string
+    XUserIdHeader:
+      name: X-User-ID
+      in: header
+      required: false
+      description: Verified enterprise user principal identifier (must match JWT `sub` claim).
+      schema:
+        type: string
+
+  schemas:
+    PrivacyGuidanceRequest:
+      type: object
+      required:
+        - tenant_id
+        - user_id
+        - question
+      properties:
+        tenant_id:
+          type: string
+        user_id:
+          type: string
+        role:
+          type: string
+          default: EMPLOYEE
+        question:
+          type: string
+        jurisdictions:
+          type: array
+          items:
+            type: string
+        vendor_name:
+          type: string
+        data_categories:
+          type: array
+          items:
+            type: string
+        involves_ai:
+          type: boolean
+          default: false
+        involves_cross_border_transfer:
+          type: boolean
+          default: false
+
+    PrivacyGuidanceResponse:
+      type: object
+      properties:
+        tenant_id:
+          type: string
+        organization_context:
+          type: object
+        applicable_laws:
+          type: array
+          items:
+            type: object
+        company_policies:
+          type: array
+          items:
+            type: object
+        vendor_governance_check:
+          type: object
+        required_assessments:
+          type: array
+          items:
+            type: string
+        mandatory_controls:
+          type: array
+          items:
+            type: string
+        approval_gates:
+          type: array
+          items:
+            type: string
+        guidance_summary:
+          type: string
+        citations:
+          type: array
+          items:
+            type: object
+
+    ReportIncidentRequest:
+      type: object
+      required:
+        - tenant_id
+        - user_id
+        - title
+        - description
+      properties:
+        tenant_id:
+          type: string
+        user_id:
+          type: string
+        role:
+          type: string
+          default: EMPLOYEE
+        title:
+          type: string
+        description:
+          type: string
+        affected_jurisdictions:
+          type: array
+          items:
+            type: string
+        estimated_affected_count:
+          type: integer
+          default: 0
+        involves_phi:
+          type: boolean
+          default: false
+        involves_financial_data:
+          type: boolean
+          default: false
+        write_grant:
+          type: boolean
+          default: true
+
+    ReportIncidentResponse:
+      type: object
+      properties:
+        incident_id:
+          type: string
+        tenant_id:
+          type: string
+        status:
+          type: string
+        auto_dispatched_external_notice:
+          type: boolean
+        statutory_deadline_plan:
+          type: object
+        requires_human_legal_approval:
+          type: boolean
+
+    InitiateAssessmentRequest:
+      type: object
+      required:
+        - tenant_id
+        - user_id
+        - assessment_type
+        - project_name
+      properties:
+        tenant_id:
+          type: string
+        user_id:
+          type: string
+        role:
+          type: string
+          default: ANALYST
+        assessment_type:
+          type: string
+          enum: [PIA, DPIA, TRA, TIA, LIA, AIIA]
+        project_name:
+          type: string
+        jurisdictions:
+          type: array
+          items:
+            type: string
+        data_categories:
+          type: array
+          items:
+            type: string
+        transfer_destination:
+          type: string
+        write_grant:
+          type: boolean
+          default: true
+
+    InitiateAssessmentResponse:
+      type: object
+      properties:
+        assessment_id:
+          type: string
+        tenant_id:
+          type: string
+        assessment_type:
+          type: string
+        status:
+          type: string
+        required_sections:
+          type: array
+          items:
+            type: string
+        required_approvers:
+          type: array
+          items:
+            type: string
+
+    LookupTasksRequest:
+      type: object
+      required:
+        - tenant_id
+        - user_id
+      properties:
+        tenant_id:
+          type: string
+        user_id:
+          type: string
+        role:
+          type: string
+          default: ANALYST
+        status_filter:
+          type: string
+          default: open
+
+    LookupTasksResponse:
+      type: object
+      properties:
+        tenant_id:
+          type: string
+        tasks:
+          type: array
+          items:
+            type: object
+
+    LookupVendorRequest:
+      type: object
+      required:
+        - tenant_id
+        - user_id
+        - vendor_name
+      properties:
+        tenant_id:
+          type: string
+        user_id:
+          type: string
+        role:
+          type: string
+          default: EMPLOYEE
+        vendor_name:
+          type: string
+        intended_use:
+          type: string
+        source_jurisdictions:
+          type: array
+          items:
+            type: string
+        destination_jurisdiction:
+          type: string
+
+    LookupVendorResponse:
+      type: object
+      properties:
+        tenant_id:
+          type: string
+        vendor_name:
+          type: string
+        approval_status:
+          type: string
+        dpa_executed:
+          type: boolean
+        baa_executed:
+          type: boolean
+        eu_sccs_executed:
+          type: boolean
+        quebec_law25_tra_completed:
+          type: boolean
+        ai_training_prohibited_clause:
+          type: boolean
+        required_conditions:
+          type: array
+          items:
+            type: string
+
+    SearchPoliciesRequest:
+      type: object
+      required:
+        - tenant_id
+        - user_id
+        - query
+      properties:
+        tenant_id:
+          type: string
+        user_id:
+          type: string
+        role:
+          type: string
+          default: EMPLOYEE
+        query:
+          type: string
+
+    SearchPoliciesResponse:
+      type: object
+      properties:
+        tenant_id:
+          type: string
+        results:
+          type: array
+          items:
+            type: object
+
+    EvaluateApplicabilityRequest:
+      type: object
+      required:
+        - tenant_id
+        - user_id
+        - jurisdictions
+        - purpose
+      properties:
+        tenant_id:
+          type: string
+        user_id:
+          type: string
+        role:
+          type: string
+          default: ANALYST
+        jurisdictions:
+          type: array
+          items:
+            type: string
+        purpose:
+          type: string
+        data_categories:
+          type: array
+          items:
+            type: string
+        transfer_destinations:
+          type: array
+          items:
+            type: string
+        involves_ai:
+          type: boolean
+          default: false
+
+    EvaluateApplicabilityResponse:
+      type: object
+      properties:
+        tenant_id:
+          type: string
+        applicable_instruments:
+          type: array
+          items:
+            type: object
+        required_assessments:
+          type: array
+          items:
+            type: string
+        mandatory_controls:
+          type: array
+          items:
+            type: string
+        competent_authorities:
+          type: array
+          items:
+            type: object
+
+    RouteApprovalRequest:
+      type: object
+      required:
+        - tenant_id
+        - user_id
+        - resource_type
+        - resource_id
+        - requested_action
+      properties:
+        tenant_id:
+          type: string
+        user_id:
+          type: string
+        role:
+          type: string
+          default: ANALYST
+        resource_type:
+          type: string
+        resource_id:
+          type: string
+        requested_action:
+          type: string
+        justification:
+          type: string
+        write_grant:
+          type: boolean
+          default: true
+
+    RouteApprovalResponse:
+      type: object
+      properties:
+        approval_request_id:
+          type: string
+        tenant_id:
+          type: string
+        status:
+          type: string
+        required_approver_roles:
+          type: array
+          items:
+            type: string
+        audit_log_id:
+          type: string

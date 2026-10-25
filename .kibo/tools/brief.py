@@ -6,7 +6,7 @@ from datetime import datetime
 
 def generate_brief():
     dry_run = "--dry-run" in sys.argv
-    workspace_dir = "/Users/iceman/Documents/Code/Kibo"
+    workspace_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     state_dir = os.path.join(workspace_dir, ".kibo/state")
     logs_dir = os.path.join(workspace_dir, ".kibo/logs")
     

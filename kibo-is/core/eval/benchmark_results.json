@@ -1,0 +1,106 @@
+{
+  "agent": "A6",
+  "host": "waelbot",
+  "evaluated_at": "2026-10-25T18:00:57.666110Z",
+  "model": "gemma4:26b",
+  "total_cases": 5,
+  "passed_cases": 5,
+  "total_duration_sec": 27.28,
+  "cases": [
+    {
+      "case_id": "DGX-SYN-01",
+      "title": "California Hospital External AI Diagnostic Assistant",
+      "jurisdictions": [
+        "US-FED",
+        "US-CA"
+      ],
+      "model": "gemma4:26b",
+      "status": "PASS",
+      "latency_sec": 6.19,
+      "tokens_generated": 409,
+      "expected_laws": [
+        "HIPAA Privacy/Security/Breach",
+        "California CMIA",
+        "CalPrivacy ADMT / AI Transparency",
+        "BAA Requirement"
+      ],
+      "sample_output": "As a multi-jurisdictional privacy compliance evaluator, here is the assessment for the described scenario:\n\n*   **Applicable Statutes:** The primary regulatory framework is the federal **Health Insurance Portability and Accountability Act (HIPAA)** and its implementing regulations (Privacy, Security, and Breach Notification Rules). At the state level, the **California Confidentiality of Medical Information Act (CMIA)** applies to protect medical information, as the CCPA/CPRA provides a specific "
+    },
+    {
+      "case_id": "DGX-SYN-02",
+      "title": "Ontario Hospital Cloud Processor Transfer",
+      "jurisdictions": [
+        "CA-ON",
+        "CA-FED"
+      ],
+      "model": "gemma4:26b",
+      "status": "PASS",
+      "latency_sec": 5.16,
+      "tokens_generated": 396,
+      "expected_laws": [
+        "Ontario PHIPA",
+        "PHIPA Threat Risk Assessment (TRA)",
+        "O. Reg. 329/04 s. 6 Electronic Service Provider Agreement",
+        "IPC Ontario Breach Notification"
+      ],
+      "sample_output": "As a multi-jurisdictional privacy compliance evaluator, here is the assessment for the described scenario:\n\n*   **Applicable Statutes:** The primary governing statute is Ontario\u2019s **Personal Health Information Protection Act (PHIPA)**, which regulates Health Information Custodians (HICs). **PIPEDA** (the federal commercial privacy law) generally does **not** apply to the hospital\u2019s handling of patient health information, as PHIPA is deemed \"substantially similar\" and takes precedence for health "
+    },
+    {
+      "case_id": "DGX-SYN-03",
+      "title": "Quebec Enterprise International Data Transfer",
+      "jurisdictions": [
+        "CA-QC",
+        "CA-FED"
+      ],
+      "model": "gemma4:26b",
+      "status": "PASS",
+      "latency_sec": 5.69,
+      "tokens_generated": 367,
+      "expected_laws": [
+        "Quebec Law 25 (CQLR c. P-39.1)",
+        "Section 17 Transfer Impact Assessment (TIA)",
+        "Written contract with adequate protection",
+        "French privacy notice"
+      ],
+      "sample_output": "As a multi-jurisdictional privacy compliance evaluator, here is the assessment for the described scenario:\n\n*   **Applicable Statutes:** The primary governing law is Quebec\u2019s **Act respecting the protection of personal information in the private sector** (as amended by **Law 25**). Because the data is transferred to the US, the **U.S. federal and state laws** (e.g., CCPA/CPRA if applicable to the processor) apply to the recipient, though Quebec law dictates the compliance obligations of the Mont"
+    },
+    {
+      "case_id": "DGX-SYN-04",
+      "title": "German Hospital AI-Assisted Scheduling",
+      "jurisdictions": [
+        "EU",
+        "EU-DE"
+      ],
+      "model": "gemma4:26b",
+      "status": "PASS",
+      "latency_sec": 5.81,
+      "tokens_generated": 426,
+      "expected_laws": [
+        "GDPR Art. 9(2)(h) & Art. 35 DPIA",
+        "German BDSG \u00a7 22 & \u00a7 38 DPO",
+        "Bavarian Hospital / Patient Data Protection laws",
+        "EU AI Act High-Risk AI System",
+        "BayLDA / Bavarian Supervisory Authority"
+      ],
+      "sample_output": "As a multi-jurisdictional privacy compliance evaluator, here is the assessment for the Bavarian hospital scenario:\n\n*   **Applicable Statutes:** The primary framework is the **EU GDPR** (General Data Protection Regulation). At the national level, the **BDSG** (Federal Data Protection Act) applies, supplemented by the **BayDSG** (Bavarian Data Protection Act) regarding public bodies. Crucially, the **SGB V** (Social Code Book V) and the **Patient Data Protection Act (PDSG)** govern the processing"
+    },
+    {
+      "case_id": "DGX-SYN-05",
+      "title": "German Resident Deletion Request to US/Canadian Company Without EU Nexus",
+      "jurisdictions": [
+        "US-FED",
+        "CA-FED",
+        "EU-DE"
+      ],
+      "model": "gemma4:26b",
+      "status": "PASS",
+      "latency_sec": 4.43,
+      "tokens_generated": 331,
+      "expected_laws": [
+        "GDPR Art. 3(1) and Art. 3(2) Territorial Scope Negative Determination",
+        "US/Canadian applicable rules only"
+      ],
+      "sample_output": "As a multi-jurisdictional privacy compliance evaluator, here is the assessment based on the provided facts:\n\n*   **Applicable Statutes:** The **GDPR does not apply** via Article 3(2) because the firm lacks the necessary nexus (no targeting of EU data subjects, no monitoring of behavior, and no EU establishment). Consequently, the request is governed by **U.S. state laws** (e.g., CCPA/CPRA if the firm meets thresholds) and **PIPEDA** (Canada), provided the data processing occurs within Canadian o"
+    }
+  ]
+}

@@ -17,15 +17,16 @@ class AnomalyDetector:
         """
         Flags if today's risk score is an anomaly (> 2 std dev from 30-day mean).
         """
+        cutoff_date = date.today() - timedelta(days=30)
         query = text("""
             SELECT risk_avg 
             FROM analytics_daily_metrics
             WHERE org_id = :org_id 
-              AND date >= current_date - interval '30 days'
+              AND date >= :cutoff_date
             ORDER BY date DESC
         """)
         
-        results = self.db.execute(query, {"org_id": org_id}).fetchall()
+        results = self.db.execute(query, {"org_id": org_id, "cutoff_date": cutoff_date}).fetchall()
         
         if len(results) < 14:
             # Not enough data for statistical significance

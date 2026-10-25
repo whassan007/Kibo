@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — KIBO Enterprise Privacy Operations</title>
+  <meta name="description" content="Sign in to your KIBO Enterprise Privacy Operations Platform workspace.">
+  <link rel="canonical" href="https://kibo.is/login">
+  <link rel="stylesheet" href="css/kibo.css">
+  <style>
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(2, 6, 23, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-card {
+      background: var(--bg-slate-900);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: var(--shadow-lg);
+    }
+    .sso-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+  </style>
+</head>
+<body style="background:var(--bg-slate-950); justify-content:center; align-items:center; min-height:100vh; padding:2rem 1rem;">
+
+  <div class="form-box" style="max-width:560px; margin:auto;">
+    <div style="text-align:center; margin-bottom:2rem">
+      <a href="/" class="logo" style="justify-content:center; margin-bottom:1rem">
+        <span class="logo-mark">K</span>
+        <span>KIBO<span style="color:var(--accent-cyan)">.IS</span></span>
+      </a>
+      <div style="display:flex; justify-content:center; margin-bottom:1rem">
+        <button class="theme-toggle-btn" aria-label="Toggle Theme" title="Toggle Theme">☀️</button>
+      </div>
+      <h2>Welcome Back</h2>
+      <p class="text-muted" style="font-size:0.9rem; margin-top:0.25rem">Sign in to access your privacy operations workspace</p>
+    </div>
+
+    <!-- SSO Grid -->
+    <div class="sso-grid">
+      <button type="button" id="btn-entra-login" class="btn btn-secondary" style="background:#0f172a; border-color:#2563eb; color:#fff; font-size:0.85rem">
+        <span style="display:flex; align-items:center; justify-content:center; gap:0.4rem">
+          <svg width="16" height="16" viewBox="0 0 23 23" fill="none"><path d="M0 0h11v11H0z" fill="#f25022"/><path d="M12 0h11v11H12z" fill="#7fba00"/><path d="M0 12h11v11H0z" fill="#00a4ef"/><path d="M12 12h11v11H12z" fill="#ffb900"/></svg>
+          Microsoft Entra
+        </span>
+      </button>
+
+      <button type="button" id="btn-okta-login" class="btn btn-secondary" style="font-size:0.85rem">
+        <span>🔑 Okta SSO</span>
+      </button>
+
+      <button type="button" id="btn-google-login" class="btn btn-secondary" style="font-size:0.85rem">
+        <span>🔴 Google Workspace</span>
+      </button>
+
+      <button type="button" id="btn-passkey-login" class="btn btn-secondary" style="font-size:0.85rem">
+        <span>🔐 FIDO2 Passkey</span>
+      </button>
+    </div>
+
+    <div class="divider">OR SIGN IN WITH EMAIL</div>
+
+    <form action="app.html" method="GET" id="login-form">
+      <div class="form-group">
+        <label for="email" class="form-label">Business Email *</label>
+        <input type="email" id="email" name="email" class="form-input" placeholder="name@company.com" required>
+      </div>
+
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem">
+          <label for="password" class="form-label" style="margin:0">Password *</label>
+          <button type="button" id="btn-forgot-pass" style="background:none; border:none; padding:0; font-size:0.8rem; color:var(--accent-cyan); cursor:pointer">Forgot password?</button>
+        </div>
+        <input type="password" id="password" name="password" class="form-input" placeholder="••••••••••••" required>
+      </div>
+
+      <div class="form-group" style="display:flex; justify-content:space-between; align-items:center;">
+        <label style="font-size:0.85rem; color:var(--text-muted); cursor:pointer">
+          <input type="checkbox" id="remember" name="remember" style="margin-right:0.4rem"> Remember me
+        </label>
+        <button type="button" id="btn-magic-link" style="background:none; border:none; padding:0; font-size:0.8rem; color:var(--accent-indigo); cursor:pointer">Send Magic Link</button>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:1rem">Sign In to Platform</button>
+    </form>
+
+    <div style="text-align:center; margin-top:1.5rem; font-size:0.875rem; color:var(--text-muted)">
+      Don't have an enterprise account? <a href="signup.html" style="color:var(--accent-cyan); font-weight:600">Start Free Trial</a>
+    </div>
+  </div>
+
+  <!-- Microsoft Entra ID Authentication Modal -->
+  <div id="entra-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1.25rem">
+        <svg width="24" height="24" viewBox="0 0 23 23" fill="none"><path d="M0 0h11v11H0z" fill="#f25022"/><path d="M12 0h11v11H12z" fill="#7fba00"/><path d="M0 12h11v11H0z" fill="#00a4ef"/><path d="M12 12h11v11H12z" fill="#ffb900"/></svg>
+        <h3 style="margin:0; font-size:1.2rem; color:var(--text-main)">Microsoft Entra ID Single Sign-On</h3>
+      </div>
+      <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:1.5rem">
+        Sign in using your Microsoft 365 or Azure Active Directory organization account.
+      </p>
+
+      <form action="app.html" method="GET">
+        <input type="hidden" name="sso" value="microsoft">
+        <input type="hidden" name="sso_provider" value="Microsoft Entra ID">
+
+        <div class="form-group">
+          <label for="entra_login_email" class="form-label">Microsoft Work Email</label>
+          <input type="email" id="entra_login_email" name="email" class="form-input" value="sarah@acmehealth.com" placeholder="user@domain.onmicrosoft.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="entra_login_tenant" class="form-label">Entra ID Tenant Domain</label>
+          <input type="text" id="entra_login_tenant" name="tenant" class="form-input" value="acmehealth.onmicrosoft.com" placeholder="acme.onmicrosoft.com" required>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem">
+          <button type="submit" class="btn btn-primary btn-full" style="background:#2563eb; border:none">
+            Sign In with Entra ID
+          </button>
+          <button type="button" id="btn-entra-close" class="btn btn-secondary">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Okta Modal -->
+  <div id="okta-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1.25rem">
+        <span style="font-size:1.5rem">🔑</span>
+        <h3 style="margin:0; font-size:1.2rem; color:var(--text-main)">Okta Enterprise SSO</h3>
+      </div>
+      <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:1.5rem">
+        Enter your Okta domain to authenticate via SAML 2.0 / OIDC.
+      </p>
+
+      <form action="app.html" method="GET">
+        <input type="hidden" name="sso" value="okta">
+        <input type="hidden" name="sso_provider" value="Okta SSO">
+
+        <div class="form-group">
+          <label for="okta_login_domain" class="form-label">Okta Tenant Domain</label>
+          <input type="text" id="okta_login_domain" name="tenant" class="form-input" value="dev-kibo.okta.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="okta_login_email" class="form-label">Work Email</label>
+          <input type="email" id="okta_login_email" name="email" class="form-input" value="sarah@acmehealth.com" required>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem">
+          <button type="submit" class="btn btn-primary btn-full" style="background:#007dc1; border:none">
+            Sign In with Okta
+          </button>
+          <button type="button" id="btn-okta-close" class="btn btn-secondary">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Google Workspace Modal -->
+  <div id="google-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1.25rem">
+        <span style="font-size:1.5rem">🔴</span>
+        <h3 style="margin:0; font-size:1.2rem; color:var(--text-main)">Google Workspace SSO</h3>
+      </div>
+      <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:1.5rem">
+        Sign in using your Google Workspace enterprise account.
+      </p>
+
+      <form action="app.html" method="GET">
+        <input type="hidden" name="sso" value="google">
+        <input type="hidden" name="sso_provider" value="Google Workspace">
+
+        <div class="form-group">
+          <label for="google_login_email" class="form-label">Google Work Email</label>
+          <input type="email" id="google_login_email" name="email" class="form-input" value="sarah@acmehealth.com" required>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem">
+          <button type="submit" class="btn btn-primary btn-full" style="background:#ea4335; border:none">
+            Sign In with Google
+          </button>
+          <button type="button" id="btn-google-close" class="btn btn-secondary">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Passkey Modal -->
+  <div id="passkey-modal" class="modal-overlay">
+    <div class="modal-card" style="text-align:center">
+      <span style="font-size:3rem">🔐</span>
+      <h3 style="margin-top:0.75rem; font-size:1.3rem; color:var(--text-main)">FIDO2 Hardware Passkey</h3>
+      <p style="font-size:0.875rem; color:var(--text-muted); margin:0.75rem 0 1.5rem">
+        Verify identity with Touch ID, Face ID, or YubiKey hardware security token.
+      </p>
+
+      <a href="app.html?sso=passkey&sso_provider=FIDO2+Passkey&email=sarah%40acmehealth.com&tenant=Hardware+Security+Key" class="btn btn-primary btn-full btn-lg">
+        Unlock with Biometric Passkey
+      </a>
+
+      <button type="button" id="btn-passkey-close" class="btn btn-secondary btn-full" style="margin-top:0.75rem">
+        Cancel
+      </button>
+    </div>
+  </div>
+
+  <!-- Magic Link Modal -->
+  <div id="magic-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1.25rem">
+        <span style="font-size:1.5rem">⚡</span>
+        <h3 style="margin:0; font-size:1.2rem; color:var(--text-main)">Passwordless Magic Link</h3>
+      </div>
+      <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:1.5rem">
+        We'll send a 6-digit secure authentication link directly to your inbox.
+      </p>
+
+      <form action="app.html" method="GET">
+        <input type="hidden" name="sso" value="magic_link">
+        <input type="hidden" name="sso_provider" value="Passwordless Magic Link">
+
+        <div class="form-group">
+          <label for="magic_email" class="form-label">Business Email</label>
+          <input type="email" id="magic_email" name="email" class="form-input" value="sarah@acmehealth.com" required>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem">
+          <button type="submit" class="btn btn-primary btn-full">
+            Send One-Click Link
+          </button>
+          <button type="button" id="btn-magic-close" class="btn btn-secondary">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Forgot Password Modal -->
+  <div id="forgot-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1.25rem">
+        <span style="font-size:1.5rem">🛠️</span>
+        <h3 style="margin:0; font-size:1.2rem; color:var(--text-main)">Account Recovery</h3>
+      </div>
+      <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:1.5rem">
+        Enter your registered business email to receive an instant password reset link.
+      </p>
+
+      <div id="forgot-success" style="display:none; padding:1rem; background:rgba(16,185,129,0.1); border:1px solid #10b981; color:#10b981; border-radius:var(--radius-md); text-align:center; font-size:0.85rem; margin-bottom:1rem">
+        ✓ Reset link sent! Check your inbox.
+      </div>
+
+      <form id="forgot-form" onsubmit="event.preventDefault(); document.getElementById('forgot-success').style.display='block';">
+        <div class="form-group">
+          <label for="reset_email" class="form-label">Registered Work Email</label>
+          <input type="email" id="reset_email" class="form-input" placeholder="sarah@acmehealth.com" required>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem">
+          <button type="submit" class="btn btn-primary btn-full">
+            Send Reset Instructions
+          </button>
+          <button type="button" id="btn-forgot-close" class="btn btn-secondary">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/kibo.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleModal = (btnId, modalId, closeId) => {
+        const btn = document.getElementById(btnId);
+        const modal = document.getElementById(modalId);
+        const closeBtn = document.getElementById(closeId);
+
+        if (btn && modal) btn.addEventListener('click', () => modal.classList.add('active'));
+        if (closeBtn && modal) closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+      };
+
+      toggleModal('btn-entra-login', 'entra-modal', 'btn-entra-close');
+      toggleModal('btn-okta-login', 'okta-modal', 'btn-okta-close');
+      toggleModal('btn-google-login', 'google-modal', 'btn-google-close');
+      toggleModal('btn-passkey-login', 'passkey-modal', 'btn-passkey-close');
+      toggleModal('btn-magic-link', 'magic-modal', 'btn-magic-close');
+      toggleModal('btn-forgot-pass', 'forgot-modal', 'btn-forgot-close');
+    });
+  </script>
+</body>
+</html>

@@ -3,7 +3,7 @@ import sys
 import yaml
 
 def check_uri_mappings():
-    workspace_dir = '/Users/iceman/Documents/Code/Kibo'
+    workspace_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     config_path = os.path.join(workspace_dir, '.kibo/config/mcp-surface.yaml')
     required_uris = [
         "kibo://company/profile",

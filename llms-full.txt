@@ -1,0 +1,25 @@
+# KIBO.IS — Enterprise Privacy Operations Platform (Full Specification)
+
+KIBO (https://kibo.is) provides an end-to-end privacy operations workspace consolidating DSAR automation, vendor risk, AI governance, ROPA registries, and regulatory intelligence.
+
+## 1. Supported Regulations & Frameworks
+- **GDPR (European Union):** Full Article 15 (Access), Article 17 (Erasure), Article 30 (ROPA), Article 33/34 (72-hour Breach Notification), and DPIA assessments.
+- **Quebec Law 25 (Canada):** Officer in Charge controls, mandatory confidentiality incident logging, and cross-border transfer assessments.
+- **CCPA / CPRA (California):** Opt-out / Do Not Sell, Right to Correct, Right to Limit Sensitive PII, and annual security audit evidence.
+- **PIPEDA & PHIPA (Canada / Ontario):** Commercial and healthcare privacy rule automation.
+- **HIPAA (US Healthcare):** Business Associate Agreement (BAA) workflow, PHI access controls, and breach notification logs.
+- **EU AI Act:** AI model registry, algorithmic impact assessments (AIA), and training dataset lineage auditing.
+
+## 2. AI Architecture & Privacy Guarantees
+KIBO integrates a domain-trained AI Privacy Copilot that automates workflow classification and risk scoring while preserving strict human-in-the-loop legal sign-offs.
+- Zero customer data is ever used to train public or foundational LLMs.
+- All customer queries and documents are processed in isolated, ephemeral memory environments.
+
+## 3. Integrations
+Native pre-built connectors for Microsoft 365, Google Workspace, Slack, Okta, Azure, AWS, Salesforce, Jira, ServiceNow, Zendesk, GitHub, Box, Dropbox, and SharePoint.
+
+## 4. Enterprise Security Controls
+- **Encryption:** FIPS 140-2 validated AES-256 for data at rest; TLS 1.3 for data in transit.
+- **Authentication:** SAML 2.0, OAuth 2.0, SCIM provisioning, and mandatory MFA.
+- **Certifications:** Certified SOC 2 Type II and ISO 27001:2022.
+- **Data Residency:** Isolated regional datacenters in US, Canada, Europe (Germany/Ireland), and UK.

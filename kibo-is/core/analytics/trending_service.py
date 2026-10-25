@@ -44,21 +44,23 @@ class TrendingService:
             }
             
         # Calculate velocity (change over the last 30 days compared to previous 30 days)
+        d30 = today - timedelta(days=30)
+        d60 = today - timedelta(days=60)
         velocity_query = text("""
             WITH current_period AS (
                 SELECT AVG(risk_avg) as val FROM analytics_daily_metrics
-                WHERE org_id = :org_id AND date >= current_date - interval '30 days'
+                WHERE org_id = :org_id AND date >= :d30
             ),
             previous_period AS (
                 SELECT AVG(risk_avg) as val FROM analytics_daily_metrics
-                WHERE org_id = :org_id AND date >= current_date - interval '60 days' 
-                  AND date < current_date - interval '30 days'
+                WHERE org_id = :org_id AND date >= :d60 
+                  AND date < :d30
             )
             SELECT current_period.val - previous_period.val as risk_velocity
             FROM current_period, previous_period
         """)
         
-        velocity_result = self.db.execute(velocity_query, {"org_id": org_id}).fetchone()
+        velocity_result = self.db.execute(velocity_query, {"org_id": org_id, "d30": d30, "d60": d60}).fetchone()
         
         trends["risk_velocity"] = float(velocity_result.risk_velocity) if velocity_result and velocity_result.risk_velocity else 0.0
         

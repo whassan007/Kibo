@@ -9,7 +9,7 @@ def test_widget_consent_flow(page: Page):
     page.goto("http://localhost:5173/widget")
     
     # Check for Zod validation errors on empty submit
-    submit_btn = page.locator("button[type="submit"]")
+    submit_btn = page.locator('button[type="submit"]')
     submit_btn.click()
     
-    expect(page.locator("text=Consent is required")).to_be_visible()\n
+    expect(page.locator("text=Consent is required")).to_be_visible()

@@ -11,7 +11,7 @@ from kibo_surface import KiboSurface
 mcp = FastMCP("KIBO-OS")
 
 # Workspace root
-WORKSPACE_DIR = "/Users/iceman/Documents/Code/Kibo"
+WORKSPACE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
 def get_surface():
     return KiboSurface(WORKSPACE_DIR)

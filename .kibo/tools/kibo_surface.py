@@ -2,9 +2,11 @@ import os
 import yaml
 import json
 
+DEFAULT_WORKSPACE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+
 class KiboSurface:
-    def __init__(self, workspace_dir='/Users/iceman/Documents/Code/Kibo'):
-        self.workspace_dir = workspace_dir
+    def __init__(self, workspace_dir=None):
+        self.workspace_dir = workspace_dir or DEFAULT_WORKSPACE_DIR
         self.config = {}
         self.load_config()
 

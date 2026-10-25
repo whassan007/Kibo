@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Status — KIBO Enterprise Privacy Operations</title>
+  <meta name="description" content="Real-time operational status of KIBO global infrastructure, APIs, and AI engines.">
+  <link rel="canonical" href="https://kibo.is/status">
+  <link rel="stylesheet" href="css/kibo.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container nav-container">
+      <a href="/" class="logo">
+        <span class="logo-mark">K</span>
+        <span>KIBO<span style="color:var(--accent-cyan)">.IS</span></span>
+      </a>
+      <div class="nav-actions">
+        <button class="theme-toggle-btn" aria-label="Toggle Theme" title="Toggle Theme">☀️</button>
+        <a href="/" class="btn btn-secondary btn-sm">← Home</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding:4rem 1.5rem; max-width:900px">
+    <div style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:var(--radius-lg); padding:2rem; text-align:center; margin-bottom:3rem">
+      <div style="display:flex; align-items:center; justify-content:center; gap:0.6rem; font-size:1.5rem; font-weight:800; color:#10b981">
+        <span class="badge-dot" style="width:12px; height:12px"></span>
+        All KIBO Systems Operational
+      </div>
+      <p style="color:var(--text-muted); margin-top:0.5rem">99.99% Uptime over the past 90 days across all global regions.</p>
+    </div>
+
+    <h3 style="margin-bottom:1.5rem">Regional System Status</h3>
+
+    <div class="table-box">
+      <table>
+        <thead>
+          <tr>
+            <th>Service Component</th>
+            <th>Region</th>
+            <th>Uptime (90 Days)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Core Web Platform & App</strong></td>
+            <td>Global CDN</td>
+            <td>100.00%</td>
+            <td><span style="color:#10b981; font-weight:700">● Operational</span></td>
+          </tr>
+          <tr>
+            <td><strong>AI Privacy Copilot Engine</strong></td>
+            <td>US-East / EU-Central</td>
+            <td>99.98%</td>
+            <td><span style="color:#10b981; font-weight:700">● Operational</span></td>
+          </tr>
+          <tr>
+            <td><strong>DSAR Fulfillment APIs</strong></td>
+            <td>US / CA / EU / UK</td>
+            <td>99.99%</td>
+            <td><span style="color:#10b981; font-weight:700">● Operational</span></td>
+          </tr>
+          <tr>
+            <td><strong>SAML SSO & Identity Bridge</strong></td>
+            <td>Global Auth Cluster</td>
+            <td>100.00%</td>
+            <td><span style="color:#10b981; font-weight:700">● Operational</span></td>
+          </tr>
+          <tr>
+            <td><strong>Audit Evidence Log Vault</strong></td>
+            <td>Immutable Cloud Storage</td>
+            <td>100.00%</td>
+            <td><span style="color:#10b981; font-weight:700">● Operational</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container" style="text-align:center; color:var(--text-subtle)">
+      © 2026 KIBO.IS. All rights reserved.
+    </div>
+  </footer>
+  <script src="js/kibo.js" defer></script>
+</body>
+</html>

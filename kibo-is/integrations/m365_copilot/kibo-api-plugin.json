@@ -1,0 +1,113 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.1/schema.json",
+  "schema_version": "v2.1",
+  "name_for_human": "KIBO Privacy OS API Plugin",
+  "description_for_human": "Governed Privacy Office tools for guidance, incident intake, PIA/DPIA/TRA/TIA/AIIA initiation, vendor status, policy search, JRAE applicability, and approval routing.",
+  "description_for_model": "Use this plugin whenever an employee, privacy analyst, DPO, or legal counsel requests privacy guidance, checks vendor DPA/BAA/SCC approval status, reports a suspected privacy incident, initiates a privacy assessment (PIA, DPIA, TRA, TIA, LIA, AIIA), searches tenant privacy policies, evaluates multi-jurisdictional regulatory applicability (US, Canada, EU), or routes an approval decision. All calls require verified tenant_id and Entra ID Bearer token propagation.",
+  "contact_email": "privacy-ops@kibo.is",
+  "legal_info_url": "https://kibo.is/legal",
+  "privacy_policy_url": "https://kibo.is/privacy",
+  "namespace": "kibo_privacy_office",
+  "functions": [
+    {
+      "name": "get_privacy_guidance",
+      "description": "Governed Privacy Office Assistant: identifies the employee's organization, applicable US/Canada/EU legal obligations, internal company policies, vendor approval status, required assessments, and approval gates before responding.",
+      "capabilities": {
+        "confirmation": {
+          "type": "None"
+        }
+      }
+    },
+    {
+      "name": "report_privacy_incident",
+      "description": "Intake a suspected privacy or security incident. Creates a draft incident record and triage task for DPO/Legal review; never auto-dispatches external regulator notices.",
+      "capabilities": {
+        "confirmation": {
+          "type": "AdaptiveCard",
+          "title": "Confirm Privacy Incident Intake",
+          "body": "Submit this suspected privacy incident to the KIBO Privacy Office triage queue for DPO and Legal review?"
+        }
+      }
+    },
+    {
+      "name": "initiate_privacy_assessment",
+      "description": "Initiate a governed Privacy Impact Assessment (PIA), DPIA, Quebec/Canadian Transfer Risk Assessment (TRA), EU Transfer Impact Assessment (TIA), Legitimate Interests Assessment (LIA), or AI Impact Assessment (AIIA).",
+      "capabilities": {
+        "confirmation": {
+          "type": "AdaptiveCard",
+          "title": "Confirm Privacy Assessment Initiation",
+          "body": "Create a new draft privacy assessment in KIBO Privacy OS and assign the required reviewers?"
+        }
+      }
+    },
+    {
+      "name": "lookup_privacy_tasks",
+      "description": "Look up open privacy tasks, DSAR deadlines, breach readiness tasks, and assessment reviews scoped strictly to the authenticated tenant.",
+      "capabilities": {
+        "confirmation": {
+          "type": "None"
+        }
+      }
+    },
+    {
+      "name": "lookup_vendor_status",
+      "description": "Look up a third-party vendor or AI subprocessor's privacy governance status, including executed DPA, HIPAA BAA, EU SCCs, Quebec Law 25 TRA, subprocessor list, and risk tier.",
+      "capabilities": {
+        "confirmation": {
+          "type": "None"
+        }
+      }
+    },
+    {
+      "name": "search_privacy_policies",
+      "description": "Search tenant-scoped internal privacy policies, data handling standards, AI usage policies, and retention schedules.",
+      "capabilities": {
+        "confirmation": {
+          "type": "None"
+        }
+      }
+    },
+    {
+      "name": "evaluate_regulatory_applicability",
+      "description": "Run the Jurisdictional Regulatory Applicability Engine (JRAE) across US Federal & 50 States, Canada Federal & 13 Provinces/Territories, and EU 27 Member States.",
+      "capabilities": {
+        "confirmation": {
+          "type": "None"
+        }
+      }
+    },
+    {
+      "name": "route_approval_decision",
+      "description": "Route a consequential privacy workflow item (PIA/DPIA sign-off, vendor onboarding, cross-border transfer, or incident notification draft) to DPO/CPO/Legal for human approval.",
+      "capabilities": {
+        "confirmation": {
+          "type": "AdaptiveCard",
+          "title": "Confirm Approval Routing",
+          "body": "Route this item to the designated DPO / Legal Counsel approval queue with an immutable audit log entry?"
+        }
+      }
+    }
+  ],
+  "runtimes": [
+    {
+      "type": "OpenApi",
+      "auth": {
+        "type": "OAuthPluginVault",
+        "reference_id": "kibo_entra_id_oauth2_vault"
+      },
+      "spec": {
+        "url": "openapi.yaml"
+      },
+      "run_for_functions": [
+        "get_privacy_guidance",
+        "report_privacy_incident",
+        "initiate_privacy_assessment",
+        "lookup_privacy_tasks",
+        "lookup_vendor_status",
+        "search_privacy_policies",
+        "evaluate_regulatory_applicability",
+        "route_approval_decision"
+      ]
+    }
+  ]
+}

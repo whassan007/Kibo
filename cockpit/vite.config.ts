@@ -19,8 +19,9 @@ const kiboDevApi = () => ({
         }
         
         // Ensure path stays inside Kibo workspace
-        const resolvedPath = path.resolve('/Users/iceman/Documents/Code/Kibo', filepath)
-        if (!resolvedPath.startsWith('/Users/iceman/Documents/Code/Kibo')) {
+        const repoRoot = path.resolve(__dirname, '..')
+        const resolvedPath = path.resolve(repoRoot, filepath)
+        if (!resolvedPath.startsWith(repoRoot)) {
           res.statusCode = 403
           return res.end('Access Denied')
         }

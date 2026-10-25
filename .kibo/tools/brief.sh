@@ -2,7 +2,8 @@
 # brief.sh - Weekly brief aggregator for KIBO OS
 set -euo pipefail
 
-WORKSPACE_DIR="/Users/iceman/Documents/Code/Kibo"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 # Execute the python brief generator
-uv run --with pyyaml python3 "${WORKSPACE_DIR}/.kibo/tools/brief.py" "$@"
+python3 "${WORKSPACE_DIR}/.kibo/tools/brief.py" "$@"

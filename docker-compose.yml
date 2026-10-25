@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: kibo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kibo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kibo_enterprise_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-kibo_privacy_os}
+    ports:
+      - "5432:5432"
+    volumes:
+      - kibo_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kibo} -d ${POSTGRES_DB:-kibo_privacy_os}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: kibo-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  kibo-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kibo-privacy-os-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-kibo}:${POSTGRES_PASSWORD:-kibo_enterprise_secret}@postgres:5432/${POSTGRES_DB:-kibo_privacy_os}
+      REDIS_URL: redis://redis:6379/0
+      KIBO_ENV: production
+      KIBO_RESIDENCY_REGION: ${KIBO_RESIDENCY_REGION:-US-CA-EU-MULTI}
+      OLLAMA_LOCAL_URL: ${OLLAMA_LOCAL_URL:-http://host.docker.internal:11434}
+      OLLAMA_DGX_URL: ${OLLAMA_DGX_URL:-http://100.113.62.112:11434}
+    ports:
+      - "8000:8000"
+
+volumes:
+  kibo_pg_data:

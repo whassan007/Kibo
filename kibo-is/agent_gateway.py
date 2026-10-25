@@ -185,17 +185,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# SQLite file locations
+# SQLite / PostgreSQL setup
 DB_FILE = os.path.join(os.path.dirname(__file__), "kibo_state.db")
+DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{DB_FILE}")
 
-# SQLAlchemy setup for Audit Logging
+# SQLAlchemy setup for Audit Logging & Enterprise Domain Model
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from core.models.base import Base
 import core.models
 from core.middleware.audit_middleware import AuditMiddleware
 
-sqlalchemy_engine = create_engine(f"sqlite:///{DB_FILE}", connect_args={"check_same_thread": False})
+if DATABASE_URL.startswith("sqlite"):
+    sqlalchemy_engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+else:
+    sqlalchemy_engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sqlalchemy_engine)
 
 # Create tables
@@ -421,16 +425,21 @@ def route_to_statutory_artifacts(state: AgentState):
     return [Send(r, {"id": state["id"], "intake": enriched_intake, "artifacts": []}) for r in sorted(routes)]
 
 # Ollama routing — local gemma4 when prompt fits in 4096 ctx, waelbot reasoning-core otherwise
-_OLLAMA_LOCAL  = "http://127.0.0.1:11434"
-_OLLAMA_REMOTE = "http://100.113.62.112:11434"   # waelbot DGX via Tailscale
-_MODEL_LOCAL   = "gemma4:latest"
-_MODEL_REMOTE  = "reasoning-core:latest"
+_OLLAMA_LOCAL  = os.environ.get("OLLAMA_LOCAL_URL", "http://127.0.0.1:11434")
+_OLLAMA_REMOTE = os.environ.get("OLLAMA_DGX_URL", "http://100.113.62.112:11434")   # waelbot DGX via Tailscale
+_MODEL_LOCAL   = os.environ.get("OLLAMA_LOCAL_MODEL", "gemma4:latest")
+_MODEL_REMOTE  = os.environ.get("OLLAMA_DGX_MODEL", "reasoning-core:latest")
 _LOCAL_TOKEN_LIMIT = 3000  # gemma4 has 4096 total; reserve ~1000 for the response
 
 def _estimate_tokens(text: str) -> int:
     return len(text) // 4
 
 def run_agent_node(prompt: str, context: str, mock_data: dict) -> dict:
+    if os.environ.get("KIBO_DISABLE_LLMS", "").lower() in ("1", "true", "yes"):
+        fallback = dict(mock_data)
+        fallback["execution_mode"] = "deterministic_symbolic_fallback"
+        fallback["llm_disabled"] = True
+        return fallback
     import urllib.request
     full_prompt = f"{prompt}\n\nCONTEXT:\n{context}\n\nReturn JSON only."
     token_estimate = _estimate_tokens(full_prompt)
@@ -453,11 +462,11 @@ def run_agent_node(prompt: str, context: str, mock_data: dict) -> dict:
             data=json.dumps(req_data).encode("utf-8"),
             headers={"Content-Type": "application/json"}
         )
-        with urllib.request.urlopen(req, timeout=60) as res:
+        with urllib.request.urlopen(req, timeout=5) as res:
             res_json = json.loads(res.read().decode("utf-8"))
             return json.loads(res_json.get("response", ""))
     except Exception as e:
-        print(f"[Ollama Router] Failed ({e}), using mock data")
+        print(f"[Ollama Router] Failed ({e}), using deterministic fallback data")
         return mock_data
 
 # Parallel Assessment Nodes
@@ -6891,4 +6900,32 @@ def classify_inbox_item(text: str):
         "confidence": 0.0,
         "why": "model offline"
     }
+
+# ---------------------------------------------------------------------------
+# KIBO PRIVACY OS — ENTERPRISE ROUTER MOUNTS (JRAE, Office Modules A-J, Corporate AI Hubs)
+# ---------------------------------------------------------------------------
+try:
+    from core.jrae.router import router as jrae_router
+    app.include_router(jrae_router)
+except Exception as _e:
+    print(f"[Router Mount Warning] jrae_router: {_e}")
+
+try:
+    from core.office.assessments_rights import router as assessments_rights_router
+    app.include_router(assessments_rights_router)
+except Exception as _e:
+    print(f"[Router Mount Warning] assessments_rights_router: {_e}")
+
+try:
+    from core.office.breach_governance import router as breach_governance_router
+    app.include_router(breach_governance_router)
+except Exception as _e:
+    print(f"[Router Mount Warning] breach_governance_router: {_e}")
+
+try:
+    from core.office.hub_router import router as hub_router
+    app.include_router(hub_router)
+except Exception as _e:
+    print(f"[Router Mount Warning] hub_router: {_e}")
+
 

@@ -444,7 +444,7 @@ def run_state_contract_tests(workspace_dir):
     return success, "\n".join(msgs)
 
 def main():
-    workspace_dir = '/Users/iceman/Documents/Code/Kibo'
+    workspace_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     
     print("=" * 60)
     print("KIBO OS Scaffold Verification Suite - End-to-End")

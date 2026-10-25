@@ -1,0 +1,50 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "2.4.0",
+  "id": "e8d4932b-7f2c-41a9-9b41-8c652f0190a4",
+  "developer": {
+    "name": "KIBO Privacy OS Enterprise",
+    "websiteUrl": "https://kibo.is",
+    "privacyUrl": "https://kibo.is/privacy",
+    "termsOfUseUrl": "https://kibo.is/terms",
+    "mpnId": "KIBO-ENT-PRIVACY-001"
+  },
+  "name": {
+    "short": "KIBO Privacy Office",
+    "full": "KIBO Privacy OS — Autonomous Multi-Jurisdictional Privacy Office for Microsoft 365 Copilot & Teams"
+  },
+  "description": {
+    "short": "Governed Privacy Office assistant for US, Canada, and EU compliance.",
+    "full": "Enterprise-governed Privacy Office integration for Microsoft 365 Copilot and Microsoft Teams. Provides organization-aware privacy guidance, incident reporting, PIA/DPIA/TRA/TIA/LIA/AIIA initiation, vendor DPA/BAA/SCC verification, policy search, JRAE regulatory applicability analysis, and human approval routing with strict Microsoft Entra ID SSO and tenant isolation."
+  },
+  "icons": {
+    "outline": "outline.png",
+    "color": "color.png"
+  },
+  "accentColor": "#0F172A",
+  "copilotAgents": {
+    "declarativeAgents": [
+      {
+        "id": "kiboPrivacyOfficeAgent",
+        "file": "declarativeAgent.json"
+      }
+    ]
+  },
+  "composeExtensions": [],
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "validDomains": [
+    "api.kibo.is",
+    "kibo.is",
+    "login.microsoftonline.com"
+  ],
+  "webApplicationInfo": {
+    "id": "b4a9120e-3c14-4d88-a712-9012f384e771",
+    "resource": "api://api.kibo.is/b4a9120e-3c14-4d88-a712-9012f384e771"
+  },
+  "defaultBlockUntilAdminAction": true,
+  "publisherDocsUrl": "https://docs.kibo.is/integrations/m365-copilot"
+}

@@ -1,0 +1,88 @@
+{
+  "$schema": "https://cloud.google.com/vertex-ai/schemas/extensions/v1/extension_manifest.schema.json",
+  "name": "kibo_privacy_os_enterprise",
+  "displayName": "KIBO Privacy OS — Governed Privacy Office Extension for Gemini Enterprise",
+  "description": "Autonomous Multi-Jurisdictional Privacy Office integration for Google Workspace and Vertex AI Gemini Enterprise. Provides organization-aware privacy guidance, incident intake, PIA/DPIA/TRA/TIA/LIA/AIIA initiation, vendor DPA/BAA/SCC verification, policy search, JRAE regulatory applicability analysis, and human approval routing.",
+  "version": "2.4.0",
+  "provider": {
+    "organization": "KIBO Privacy OS Enterprise",
+    "contactEmail": "privacy-ops@kibo.is",
+    "documentationUri": "https://docs.kibo.is/integrations/gemini-enterprise"
+  },
+  "manifest": {
+    "name": "kibo_privacy_office_tools",
+    "description": "Use this extension for all employee, privacy analyst, DPO, and legal counsel queries involving US, Canadian, or EU privacy obligations, vendor AI/data processing approvals, privacy assessments, DSAR/breach deadlines, and policy lookups.",
+    "apiSpec": {
+      "openApiYamlUri": "../m365_copilot/openapi.yaml",
+      "openApiVersion": "3.1.0"
+    },
+    "authConfig": {
+      "authType": "OIDC_WORKFORCE_IDENTITY_FEDERATION",
+      "oidcConfig": {
+        "audience": "https://api.kibo.is/api/v1/integrations",
+        "serviceAccountEmail": "kibo-gemini-extension@kibo-privacy-os.iam.gserviceaccount.com",
+        "workforcePoolProvider": "locations/global/workforcePools/kibo-enterprise-pool/providers/entra-okta-oidc",
+        "propagateCallerIdentity": true,
+        "requiredHeaders": [
+          "Authorization",
+          "X-Tenant-ID",
+          "X-User-ID"
+        ]
+      }
+    }
+  },
+  "toolConfigs": [
+    {
+      "operationId": "get_privacy_guidance",
+      "readOnly": true,
+      "requiresConfirmation": false,
+      "groundingRequirement": "MANDATORY_CITATION_AND_TENANT_POLICY_CHECK"
+    },
+    {
+      "operationId": "report_privacy_incident",
+      "readOnly": false,
+      "requiresConfirmation": true,
+      "consequentialAction": "DRAFT_ONLY_NO_EXTERNAL_DISPATCH"
+    },
+    {
+      "operationId": "initiate_privacy_assessment",
+      "readOnly": false,
+      "requiresConfirmation": true,
+      "consequentialAction": "DRAFT_ASSESSMENT_CREATION"
+    },
+    {
+      "operationId": "lookup_privacy_tasks",
+      "readOnly": true,
+      "requiresConfirmation": false
+    },
+    {
+      "operationId": "lookup_vendor_status",
+      "readOnly": true,
+      "requiresConfirmation": false
+    },
+    {
+      "operationId": "search_privacy_policies",
+      "readOnly": true,
+      "requiresConfirmation": false
+    },
+    {
+      "operationId": "evaluate_regulatory_applicability",
+      "readOnly": true,
+      "requiresConfirmation": false
+    },
+    {
+      "operationId": "route_approval_decision",
+      "readOnly": false,
+      "requiresConfirmation": true,
+      "consequentialAction": "HUMAN_APPROVAL_ROUTING"
+    }
+  ],
+  "safetyAndGroundingSettings": {
+    "enforceStrictTenantIsolation": true,
+    "defaultReadOnlyMode": true,
+    "prohibitModelTrainingOnCustomerData": true,
+    "requireAuthoritativeCitations": true,
+    "blockCrossTenantRetrieval": true,
+    "auditLogAllToolInvocations": true
+  }
+}

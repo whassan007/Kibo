@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KIBO — Enterprise Privacy Operations Platform</title>
+  <meta name="description" content="Automate privacy operations across GDPR, CCPA, CPRA, PIPEDA, Law 25, HIPAA, and enterprise governance from a single intelligent workspace.">
+  <meta name="keywords" content="privacy operations, GDPR compliance, DSAR automation, AI privacy copilot, Law 25, HIPAA, PIPEDA, CCPA, consent management, ROPA, enterprise privacy software">
+  <meta name="author" content="KIBO">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+  <meta name="theme-color" content="#020617">
+
+  <link rel="canonical" href="https://kibo.is/">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%236366f1'/><text x='50' y='70' font-size='65' font-weight='900' text-anchor='middle' fill='white'>K</text></svg>">
+
+  <!-- Open Graph / Social -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="KIBO">
+  <meta property="og:url" content="https://kibo.is/">
+  <meta property="og:title" content="KIBO — Enterprise Privacy Operations Platform">
+  <meta property="og:description" content="Automate privacy operations across GDPR, CCPA, Law 25, HIPAA, and enterprise governance from a single intelligent workspace.">
+  <meta property="og:image" content="https://kibo.is/images/kibo-og-preview.png">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="KIBO — Enterprise Privacy Operations Platform">
+  <meta name="twitter:description" content="Automate GDPR, CCPA, Law 25, and HIPAA privacy workflows with AI-driven operations.">
+
+  <!-- Design System CSS -->
+  <link rel="stylesheet" href="css/kibo.css">
+
+  <!-- Matomo Web Tracker (Self-Hosted On-Premise) -->
+  <script>
+    var _paq = window._paq = window._paq || [];
+    _paq.push(['disableCookies']);
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+      var u="//wael.bot/matomo/";
+      _paq.push(['setTrackerUrl', u+'matomo.php']);
+      _paq.push(['setSiteId', '2']);
+      var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+      g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+    })();
+  </script>
+
+  <!-- Technical SEO & AI Search Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://kibo.is/#organization",
+        "name": "KIBO",
+        "url": "https://kibo.is/",
+        "logo": "https://kibo.is/images/logo.png",
+        "description": "KIBO is an enterprise privacy operations platform delivering automated compliance, DSAR fulfillment, vendor risk management, and AI privacy governance.",
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "Sales",
+          "email": "sales@kibo.is"
+        }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://kibo.is/#app",
+        "name": "KIBO Privacy Operations Platform",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "All Cloud Platforms, Web",
+        "description": "Automated enterprise privacy management platform for GDPR, CCPA, Law 25, PIPEDA, and HIPAA compliance.",
+        "offers": {
+          "@type": "AggregateOffer",
+          "priceCurrency": "USD",
+          "lowPrice": "499",
+          "highPrice": "custom",
+          "offerCount": "3"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://kibo.is/#website",
+        "url": "https://kibo.is/",
+        "name": "KIBO.IS",
+        "inLanguage": "en-US"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://kibo.is/" },
+          { "@type": "ListItem", "position": 2, "name": "Pricing", "item": "https://kibo.is/pricing" },
+          { "@type": "ListItem", "position": 3, "name": "Security", "item": "https://kibo.is/security" },
+          { "@type": "ListItem", "position": 4, "name": "Docs", "item": "https://kibo.is/docs" }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What privacy regulations does KIBO support?",
+            "acceptedAnswer": { "@type": "Answer", "text": "KIBO supports global privacy regulations out-of-the-box including GDPR, CCPA/CPRA, Quebec Law 25, PIPEDA, PHIPA, HIPAA, ISO 27001, SOC 2 Type II, NIST Privacy Framework, and the EU AI Act." }
+          },
+          {
+            "@type": "Question",
+            "name": "How does the AI Privacy Copilot work?",
+            "acceptedAnswer": { "@type": "Answer", "text": "KIBO's AI Privacy Copilot analyzes policy documents, classifies DSAR inquiries, assesses regulatory gap risks, and automates evidence gathering while maintaining strict human-in-the-loop approval controls." }
+          },
+          {
+            "@type": "Question",
+            "name": "Is customer data used for AI model training?",
+            "acceptedAnswer": { "@type": "Answer", "text": "No. Customer data processed through KIBO is strictly isolated and never used to train public or foundational LLM models. Zero data leakage is guaranteed." }
+          },
+          {
+            "@type": "Question",
+            "name": "Can KIBO be deployed on-premise or in dedicated cloud regions?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. KIBO supports multi-tenant SaaS, dedicated single-tenant VPCs, and self-hosted on-premise deployments in US, EU, Canada, and UK data centers." }
+          },
+          {
+            "@type": "Question",
+            "name": "Does KIBO support Single Sign-On (SSO)?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. Enterprise plans include native SAML 2.0, OAuth 2.0, and SCIM provisioning for Okta, Microsoft Entra ID, Google Workspace, and Ping Identity." }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <!-- Accessibility Skip Link -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Top Sticky Navigation Bar -->
+  <header class="header">
+    <div class="container nav-container">
+      <a href="/" class="logo" aria-label="KIBO Home">
+        <span class="logo-mark">K</span>
+        <span>KIBO<span style="color:var(--accent-cyan)">.IS</span></span>
+      </a>
+
+      <button class="mobile-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+        ☰
+      </button>
+
+      <ul class="nav-menu">
+        <li><a href="#platform" class="nav-link">Platform</a></li>
+        <li><a href="#solutions" class="nav-link">Solutions</a></li>
+        <li><a href="#features" class="nav-link">Features</a></li>
+        <li><a href="pricing.html" class="nav-link">Pricing</a></li>
+        <li><a href="docs.html" class="nav-link">Documentation</a></li>
+        <li><a href="security.html" class="nav-link">Security</a></li>
+        <li><a href="trust.html" class="nav-link">Trust Center</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button class="theme-toggle-btn" aria-label="Toggle Theme" title="Toggle Theme">☀️</button>
+        <a href="login.html" class="btn btn-secondary btn-sm">Sign In</a>
+        <a href="signup.html" class="btn btn-primary btn-sm">Start Free Trial</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main id="main-content">
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+      <div class="container">
+        <div class="hero-content">
+          <div class="badge-tag">
+            <span>✨ Enterprise Privacy Operations 2.0</span>
+          </div>
+
+          <h1>Enterprise Privacy Operations Platform</h1>
+
+          <p class="hero-subheadline">
+            Automate privacy operations across <strong>GDPR, CCPA, CPRA, PIPEDA, Law 25, HIPAA</strong>, and enterprise governance from a single intelligent workspace.
+          </p>
+
+          <div class="hero-ctas">
+            <a href="signup.html" class="btn btn-primary btn-lg">Start Free Trial</a>
+            <a href="contact.html" class="btn btn-secondary btn-lg">Book Demo</a>
+          </div>
+        </div>
+
+        <!-- REALISTIC PRODUCT SCREENSHOT FRAME (Interactive UI Mockup) -->
+        <div class="product-frame" aria-label="KIBO Platform Dashboard Preview">
+          <div class="frame-header">
+            <div class="dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+            <span class="frame-title">app.kibo.is/dashboard — Workspace: Global Operations</span>
+          </div>
+
+          <div class="frame-body">
+            <!-- Sidebar -->
+            <div class="frame-sidebar">
+              <div class="sidebar-item active">📊 Executive Dashboard</div>
+              <div class="sidebar-item">📬 Privacy Inbox (DSAR Queue)</div>
+              <div class="sidebar-item">🤖 AI Privacy Copilot</div>
+              <div class="sidebar-item">🛡️ Compliance Gap Matrix</div>
+              <div class="sidebar-item">🏢 Vendor Risk Management</div>
+              <div class="sidebar-item">📋 Records of Processing (ROPA)</div>
+              <div class="sidebar-item">⚙️ Automated Workflows</div>
+              <div class="sidebar-item">🔒 Audit Evidence Logs</div>
+            </div>
+
+            <!-- Main Workspace Window -->
+            <div class="frame-main">
+              <div class="dash-stats-row">
+                <div class="stat-card">
+                  <div class="stat-val" style="color:#10b981">96.8%</div>
+                  <div class="stat-lbl">Global Posture</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-val">142</div>
+                  <div class="stat-lbl">Active DSAR Requests</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-val" style="color:#6366f1">128</div>
+                  <div class="stat-lbl">Connected Integrations</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-val" style="color:#38bdf8">0</div>
+                  <div class="stat-lbl">Active Breaches</div>
+                </div>
+              </div>
+
+              <div class="dash-grid">
+                <div class="widget-box">
+                  <div class="widget-head">
+                    <span>⚡ AI Copilot Live Stream</span>
+                    <span class="badge-dot"></span>
+                  </div>
+                  <div style="font-size:0.85rem; color:var(--text-muted); background:var(--bg-slate-950); padding:0.85rem; border-radius:6px; border:1px solid var(--border-slate)">
+                    <strong style="color:var(--accent-cyan)">AI Agent #04:</strong> Classified 18 incoming erasure requests via GDPR Art. 17. Identity verified via Okta. Auto-routing execution to AWS S3 & Salesforce Sandbox.
+                  </div>
+                </div>
+
+                <div class="widget-box">
+                  <div class="widget-head">
+                    <span>Regulatory Frameworks</span>
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:0.4rem; font-size:0.8rem;">
+                    <div style="display:flex; justify-content:space-between;"><span>GDPR (EU)</span><span style="color:#10b981">100% Compliant</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Quebec Law 25</span><span style="color:#10b981">98% Compliant</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>HIPAA (US)</span><span style="color:#10b981">100% Compliant</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>EU AI Act</span><span style="color:#f59e0b">92% In Progress</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SUPPORTED COMPLIANCE REGULATIONS -->
+    <section class="section" style="background:var(--bg-slate-900)">
+      <div class="container">
+        <div class="section-header" style="margin-bottom:2rem">
+          <span class="text-subtle" style="text-transform:uppercase; letter-spacing:0.08em; font-size:0.85rem; font-weight:700">Supported Global Regulatory Frameworks</span>
+        </div>
+        <div class="badges-wrapper">
+          <div class="reg-badge"><span class="badge-dot"></span> GDPR (Europe)</div>
+          <div class="reg-badge"><span class="badge-dot"></span> CCPA / CPRA (California)</div>
+          <div class="reg-badge"><span class="badge-dot"></span> PIPEDA (Canada)</div>
+          <div class="reg-badge"><span class="badge-dot"></span> PHIPA (Ontario)</div>
+          <div class="reg-badge"><span class="badge-dot"></span> Quebec Law 25</div>
+          <div class="reg-badge"><span class="badge-dot"></span> HIPAA (Healthcare)</div>
+          <div class="reg-badge"><span class="badge-dot"></span> ISO 27001</div>
+          <div class="reg-badge"><span class="badge-dot"></span> SOC 2 Type II</div>
+          <div class="reg-badge"><span class="badge-dot"></span> NIST Privacy Framework</div>
+          <div class="reg-badge"><span class="badge-dot"></span> EU AI Act</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PLATFORM OVERVIEW SECTION -->
+    <section id="platform" class="section">
+      <div class="container">
+        <div class="section-header">
+          <div class="badge-tag">Unified Platform</div>
+          <h2>16 Enterprise Privacy Capabilities in One Workspace</h2>
+          <p>Eliminate fragmented spreadsheets and manual audit trails. KIBO unifies your end-to-end privacy stack.</p>
+        </div>
+
+        <div class="grid-4">
+          <div class="card">
+            <div class="card-icon">📬</div>
+            <h3>Privacy Requests</h3>
+            <p>Centralized intake for all consumer, employee, and customer privacy requests across web, app, and email.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">⚡</div>
+            <h3>DSAR Management</h3>
+            <p>Automate identity verification, data discovery, redacting, and data package delivery within statutory deadlines.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">🚨</div>
+            <h3>Privacy Incidents</h3>
+            <p>Real-time incident tracking, severity assessment, and automated 72-hour regulatory notification workflows.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">🛡️</div>
+            <h3>Breach Management</h3>
+            <p>Orchestrate legal risk evaluation, regulator reporting, and affected individual notifications seamlessly.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">🏢</div>
+            <h3>Vendor Risk</h3>
+            <p>Automate third-party DPA evaluations, vendor security posture tracking, and subprocessor monitoring.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">📋</div>
+            <h3>Privacy Assessments</h3>
+            <p>Pre-built templates for DPIA, PIA, LIA, and Transfer Impact Assessments (TIA) with automated risk scoring.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">🍪</div>
+            <h3>Consent Management</h3>
+            <p>Universal consent banner, preference center, and cookieless consent sync across web and mobile apps.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">🗺️</div>
+            <h3>Data Mapping</h3>
+            <p>Automate data asset discovery, PII classification, data flow diagrams, and lineage tracking across cloud DBs.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">⌛</div>
+            <h3>Retention Policies</h3>
+            <p>Enforce data retention schedules and automated deletion across databases, data lakes, and SaaS tools.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">📚</div>
+            <h3>Records of Processing (ROPA)</h3>
+            <p>Maintain live, auto-updating Article 30 ROPA registries ready for supervisory authority audits.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">🤖</div>
+            <h3>AI Governance</h3>
+            <p>Audit shadow AI usage, evaluate model training datasets, and maintain EU AI Act compliance logs.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">📜</div>
+            <h3>Policy Management</h3>
+            <p>Version control for terms, privacy notices, internal policies, and employee handbook sign-offs.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">🔄</div>
+            <h3>Workflow Automation</h3>
+            <p>No-code trigger-and-action builder to automate repetitive compliance tasks across IT and legal teams.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">🔒</div>
+            <h3>Evidence Collection</h3>
+            <p>Immutable, cryptographically signed audit evidence logs for SOC 2, ISO 27001, and regulator reviews.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">📈</div>
+            <h3>Compliance Dashboards</h3>
+            <p>Real-time executive reporting, risk heatmaps, SLA monitors, and cross-jurisdictional posture metrics.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">🌐</div>
+            <h3>Regulatory Intelligence</h3>
+            <p>Automated tracking of regulatory changes, legal precedents, and enforcement actions across 120+ countries.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI SECTION -->
+    <section id="ai-capabilities" class="section" style="background:var(--bg-slate-900)">
+      <div class="container">
+        <div class="section-header">
+          <div class="badge-tag">AI Intelligence</div>
+          <h2>AI-First Privacy Operations Engine</h2>
+          <p>Augment your privacy and legal teams with domain-trained AI agents while maintaining total human governance.</p>
+        </div>
+
+        <div class="grid-3">
+          <div class="card">
+            <h3>🤖 AI Privacy Copilot</h3>
+            <p>Contextual AI assistant answering complex regulatory questions, generating DPIA drafts, and suggesting remediation steps instantly.</p>
+          </div>
+          <div class="card">
+            <h3>🔍 Regulatory Gap Detection</h3>
+            <p>Continuous AI scanning of system configurations, vendor DPAs, and data flows to flag non-compliance before regulators do.</p>
+          </div>
+          <div class="card">
+            <h3>📊 Automated Risk Scoring</h3>
+            <p>Machine-learning risk evaluation that weights data sensitivity, jurisdiction, and exposure level to prioritize open tickets.</p>
+          </div>
+          <div class="card">
+            <h3>⚡ DSAR & Email Classification</h3>
+            <p>NLP model trained on legal intent to auto-classify incoming requests, extract PII identifiers, and route to proper data stewards.</p>
+          </div>
+          <div class="card">
+            <h3>🚨 Incident Prioritization</h3>
+            <p>Instant severity scoring during potential breaches, calculating notification deadlines under GDPR, Law 25, or HIPAA.</p>
+          </div>
+          <div class="card">
+            <h3>👥 Human-in-the-Loop Workflows</h3>
+            <p>AI executes routine data fetching and drafting while requiring explicit human legal approval before final external actions.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURE GRID -->
+    <section id="features" class="section">
+      <div class="container">
+        <div class="section-header">
+          <div class="badge-tag">Features</div>
+          <h2>Designed for High-Velocity Privacy Teams</h2>
+          <p>Every tool required to scale enterprise privacy programs smoothly.</p>
+        </div>
+
+        <div class="grid-3">
+          <div class="card">
+            <h3>Privacy Inbox</h3>
+            <p>Single operational inbox consolidating DSARs, vendor inquiries, employee requests, and regulatory communications.</p>
+          </div>
+          <div class="card">
+            <h3>Compliance Dashboard</h3>
+            <p>Executive and operational views tracking compliance progress across multiple brands, subsidiaries, and regions.</p>
+          </div>
+          <div class="card">
+            <h3>Risk Register</h3>
+            <p>Centralized ledger tracking identified privacy risks, mitigation ownership, residual exposure, and target resolution dates.</p>
+          </div>
+          <div class="card">
+            <h3>Integrations Ecosystem</h3>
+            <p>Pre-built native connectors for 100+ cloud systems, databases, identity providers, and ticketing platforms.</p>
+          </div>
+          <div class="card">
+            <h3>Employee Portal</h3>
+            <p>Self-service portal for internal employees to complete privacy training, file disclosures, and submit internal requests.</p>
+          </div>
+          <div class="card">
+            <h3>Executive Reporting</h3>
+            <p>One-click PDF/CSV board report generation demonstrating ROI, SLA compliance, and regulatory risk reduction.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INTEGRATIONS SECTION -->
+    <section id="integrations" class="section" style="background:var(--bg-slate-900)">
+      <div class="container">
+        <div class="section-header">
+          <div class="badge-tag">Ecosystem</div>
+          <h2>Seamless Integrations Across Your Stack</h2>
+          <p>Connect KIBO directly to your existing infrastructure in minutes with zero custom code.</p>
+        </div>
+
+        <div class="logo-grid">
+          <div class="logo-item">Microsoft</div>
+          <div class="logo-item">Google Workspace</div>
+          <div class="logo-item">Slack</div>
+          <div class="logo-item">Okta</div>
+          <div class="logo-item">Azure</div>
+          <div class="logo-item">AWS</div>
+          <div class="logo-item">Salesforce</div>
+          <div class="logo-item">Jira</div>
+          <div class="logo-item">ServiceNow</div>
+          <div class="logo-item">Zendesk</div>
+          <div class="logo-item">GitHub</div>
+          <div class="logo-item">Box</div>
+          <div class="logo-item">Dropbox</div>
+          <div class="logo-item">SharePoint</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WHY KIBO SECTION -->
+    <section id="solutions" class="section">
+      <div class="container">
+        <div class="section-header">
+          <div class="badge-tag">Why KIBO</div>
+          <h2>Built for the Modern Enterprise</h2>
+          <p>Why leading privacy and legal executives choose KIBO as their operational backbone.</p>
+        </div>
+
+        <div class="grid-3">
+          <div class="card">
+            <h3 style="color:var(--accent-cyan)">1. Single Source of Truth</h3>
+            <p>Eliminate fragmented data across spreadsheets, emails, and isolated SaaS tools. KIBO centralizes your entire privacy architecture.</p>
+          </div>
+          <div class="card">
+            <h3 style="color:var(--accent-indigo)">2. AI-First Architecture</h3>
+            <p>Built from the ground up with native AI capabilities, reducing manual operational workload by up to 80%.</p>
+          </div>
+          <div class="card">
+            <h3 style="color:var(--accent-purple)">3. Built for Privacy Teams</h3>
+            <p>Designed specifically for CISOs, DPOs, General Counsels, and Privacy Engineers who need speed without compromising accuracy.</p>
+          </div>
+          <div class="card">
+            <h3 style="color:var(--accent-emerald)">4. Enterprise Ready</h3>
+            <p>Includes SAML SSO, RBAC, regional data residency, SOC 2 certification, and 99.99% availability SLAs.</p>
+          </div>
+          <div class="card">
+            <h3 style="color:var(--accent-amber)">5. Audit Ready Always</h3>
+            <p>Every action, approval, and data deletion is logged in an immutable audit trail ready for regulator inspection.</p>
+          </div>
+          <div class="card">
+            <h3 style="color:var(--accent-rose)">6. Fast Deployment</h3>
+            <p>Go live in days—not months. Turnkey integrations and pre-configured workflow templates ensure instant time-to-value.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECURITY SECTION -->
+    <section id="security" class="section" style="background:var(--bg-slate-900)">
+      <div class="container">
+        <div class="section-header">
+          <div class="badge-tag">Security & Trust</div>
+          <h2>Bank-Grade Security Architecture</h2>
+          <p>Your privacy data is protected by industry-leading security controls and strict zero-trust isolation.</p>
+        </div>
+
+        <div class="grid-3">
+          <div class="card">
+            <h3>🔒 Encryption at Rest</h3>
+            <p>All stored data, database backups, and logs are encrypted using FIPS 140-2 validated AES-256 encryption keys.</p>
+          </div>
+          <div class="card">
+            <h3>🌐 Encryption in Transit</h3>
+            <p>Enforced TLS 1.3 encryption across all public and internal service communications with HSTS preloading.</p>
+          </div>
+          <div class="card">
+            <h3>🔑 SSO & SAML 2.0</h3>
+            <p>Seamless authentication integration with Okta, Microsoft Entra ID, Google Workspace, and SAML 2.0 providers.</p>
+          </div>
+          <div class="card">
+            <h3>🛡️ Fine-Grained RBAC</h3>
+            <p>Granular role-based access control ensuring employees only access data strictly required for their specific role.</p>
+          </div>
+          <div class="card">
+            <h3>🗺️ Regional Data Residency</h3>
+            <p>Choose exact storage locations across US, Canada, EU, and UK regions to maintain strict data sovereignty.</p>
+          </div>
+          <div class="card">
+            <h3>📋 Immutable Audit Logs</h3>
+            <p>Cryptographically verified activity logs recording every system change, query, export, and user interaction.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALS SECTION -->
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <div class="badge-tag">Customer Validation</div>
+          <h2>Trusted by Privacy Leaders Worldwide</h2>
+        </div>
+
+        <div class="grid-3">
+          <div class="card">
+            <p style="font-style:italic; margin-bottom:1.5rem">"KIBO reduced our DSAR fulfillment time from 14 days down to 2 hours. The AI copilot automated 90% of data discovery across our AWS environment."</p>
+            <div style="font-weight:700">VP of Privacy & Compliance</div>
+            <div style="font-size:0.85rem; color:var(--text-muted)">Global Healthcare Enterprise</div>
+          </div>
+          <div class="card">
+            <p style="font-style:italic; margin-bottom:1.5rem">"Quebec Law 25 and GDPR compliance used to require 4 full-time staff. With KIBO's unified ROPA and workflow engine, we manage it effortlessly."</p>
+            <div style="font-weight:700">Chief Information Security Officer</div>
+            <div style="font-size:0.85rem; color:var(--text-muted)">North American Financial Services</div>
+          </div>
+          <div class="card">
+            <p style="font-style:italic; margin-bottom:1.5rem">"KIBO provided the exact trust center and vendor risk visibility our enterprise buyers demanded during security audits. Game changer for sales."</p>
+            <div style="font-weight:700">Head of Information Governance</div>
+            <div style="font-size:0.85rem; color:var(--text-muted)">Enterprise SaaS Platform</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING PREVIEW SECTION -->
+    <section id="pricing" class="section" style="background:var(--bg-slate-900)">
+      <div class="container">
+        <div class="section-header">
+          <div class="badge-tag">Pricing Plans</div>
+          <h2>Transparent Enterprise Pricing</h2>
+          <p>Predictable plans tailored to your organization's scale and complexity.</p>
+        </div>
+
+        <div class="pricing-grid">
+          <div class="pricing-card">
+            <div class="plan-name">Starter</div>
+            <div class="plan-desc">For growing organizations establishing privacy fundamentals.</div>
+            <div class="plan-price">$499 <span>/ month</span></div>
+            <ul class="plan-features">
+              <li>Up to 50 DSAR requests / mo</li>
+              <li>GDPR & CCPA Frameworks</li>
+              <li>10 System Integrations</li>
+              <li>Standard Privacy Inbox</li>
+              <li>Email Support</li>
+            </ul>
+            <a href="signup.html?plan=starter" class="btn btn-secondary">Start 14-Day Trial</a>
+          </div>
+
+          <div class="pricing-card featured">
+            <div class="plan-name">Professional</div>
+            <div class="plan-desc">For mid-market enterprises scaling privacy automation.</div>
+            <div class="plan-price">$1,499 <span>/ month</span></div>
+            <ul class="plan-features">
+              <li>Unlimited DSAR requests</li>
+              <li>All Global Frameworks (Law 25, HIPAA, PIPEDA)</li>
+              <li>AI Privacy Copilot Included</li>
+              <li>50+ Integrations</li>
+              <li>Vendor Risk & ROPA Modules</li>
+              <li>SAML SSO & Priority Support</li>
+            </ul>
+            <a href="signup.html?plan=pro" class="btn btn-primary">Start 14-Day Trial</a>
+          </div>
+
+          <div class="pricing-card">
+            <div class="plan-name">Enterprise</div>
+            <div class="plan-desc">Custom governance, dedicated cloud, and custom SLA for global leaders.</div>
+            <div class="plan-price">Custom</div>
+            <ul class="plan-features">
+              <li>Everything in Professional</li>
+              <li>Dedicated Single-Tenant Cloud / On-Prem</li>
+              <li>Regional Data Residency Choices</li>
+              <li>Custom AI Model Governance</li>
+              <li>Dedicated Technical Account Manager</li>
+              <li>99.99% Uptime Guarantee SLA</li>
+            </ul>
+            <a href="contact.html" class="btn btn-secondary">Contact Sales</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ SECTION (15 QUESTIONS) -->
+    <section id="faq" class="section">
+      <div class="container">
+        <div class="section-header">
+          <div class="badge-tag">Got Questions?</div>
+          <h2>Frequently Asked Questions</h2>
+          <p>Everything you need to know about KIBO.IS platform capabilities and compliance.</p>
+        </div>
+
+        <div class="faq-list">
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>1. What privacy regulations are supported by KIBO out-of-the-box?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              KIBO natively supports GDPR, CCPA/CPRA, Quebec Law 25, PIPEDA, PHIPA, HIPAA, ISO 27001, SOC 2 Type II, NIST Privacy Framework, and the EU AI Act. New frameworks are added continuously via automated platform updates.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>2. How does the AI Privacy Copilot assist privacy operations?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              The AI Privacy Copilot analyzes intake requests, assists with DPIA drafting, classifies PII data across integrations, highlights regulatory gaps, and generates audit evidence while preserving strict human legal sign-off.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>3. Is customer data ever used to train AI models?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              No. Zero customer data is ever used to train public or foundational AI models. All data processed remains encrypted, isolated, and governed by strict zero-retention policies.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>4. Can KIBO be deployed on-premise or in dedicated cloud regions?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              Yes. In addition to our multi-tenant cloud SaaS, KIBO supports single-tenant VPC deployments on AWS, Azure, GCP, and fully air-gapped on-premise enterprise environments.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>5. Do you support Enterprise Single Sign-On (SSO)?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              Yes. Enterprise SSO supports SAML 2.0, OAuth 2.0, Okta, Microsoft Entra ID, Google Workspace, and SCIM automated user provisioning.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>6. How are Data Subject Access Requests (DSARs) automated?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              KIBO verifies user identity via MFA/SSO, queries connected databases/SaaS systems via secure APIs, redacts third-party PII, compiles an encrypted ZIP file, and delivers it securely within statutory deadlines.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>7. Can KIBO manage compliance across multiple global jurisdictions simultaneously?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              Yes. KIBO automatically applies jurisdiction-aware logic based on consumer residency, applying strict EU GDPR rules to European users, Quebec Law 25 rules to Quebec residents, and CCPA rules to California users.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>8. How does automated evidence collection work for audits?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              KIBO continuously records workflow completions, identity verifications, DPA sign-offs, and deletion proofs into cryptographically signed, immutable audit logs ready for external auditors.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>9. How long does implementation take?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              Most customers achieve production deployment within 3 to 5 business days using pre-built connectors and out-of-the-box workflow templates.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>10. What integrations are available out of the box?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              KIBO connects natively to Microsoft 365, Google Workspace, Slack, AWS, Azure, Salesforce, Jira, ServiceNow, Zendesk, Snowflake, PostgreSQL, and 100+ other enterprise tools.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>11. How does KIBO handle vendor risk and subprocessors?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              KIBO maintains automated DPA tracking, collects security certifications (SOC 2, ISO 27001), monitors subprocessor updates, and flags high-risk vendors automatically.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>12. Is KIBO compliant with WCAG accessibility standards?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              Yes. KIBO is fully compliant with WCAG 2.2 AA accessibility standards, featuring high contrast ratios, visible focus indicators, screen reader optimization, and full keyboard navigation.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>13. How does KIBO support AI Governance and the EU AI Act?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              KIBO provides automated model inventories, data lineage tracking, algorithmic impact assessments (AIA), and EU AI Act compliance mapping for internal AI projects.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>14. What security certifications does KIBO hold?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              KIBO maintains SOC 2 Type II certification, ISO 27001 certification, and complies with HIPAA Security and Privacy Rules.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>15. How can I start a free trial or request a custom demo?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              Click 'Start Free Trial' to launch a 14-day full feature trial, or click 'Book Demo' to schedule a custom walkthrough with one of our privacy architects.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINAL CTA SECTION -->
+    <section class="section" style="background:var(--gradient-brand); text-align:center; color:#fff">
+      <div class="container">
+        <h2 style="font-size:clamp(2rem, 4vw, 3rem); margin-bottom:1rem; color:#fff">Ready to Modernize Privacy Operations?</h2>
+        <p style="font-size:1.2rem; max-width:640px; margin:0 auto 2.5rem auto; opacity:0.95">
+          Join leading enterprises automating GDPR, CCPA, Law 25, and HIPAA compliance with KIBO.IS.
+        </p>
+        <div style="display:flex; justify-content:center; gap:1.25rem; flex-wrap:wrap">
+          <a href="signup.html" class="btn btn-secondary btn-lg" style="background:#fff; color:var(--bg-slate-950); border:none">Start Free Trial</a>
+          <a href="contact.html" class="btn btn-secondary btn-lg" style="border-color:#fff; color:#fff">Book a Demo</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="/" class="logo">
+            <span class="logo-mark">K</span>
+            <span>KIBO<span style="color:var(--accent-cyan)">.IS</span></span>
+          </a>
+          <p>Enterprise Privacy Operations Platform. Automating compliance, DSAR fulfillment, vendor risk, and AI governance.</p>
+        </div>
+
+        <div class="footer-col">
+          <h4>Platform</h4>
+          <ul>
+            <li><a href="#platform">Privacy Requests</a></li>
+            <li><a href="#platform">DSAR Automation</a></li>
+            <li><a href="#platform">AI Privacy Copilot</a></li>
+            <li><a href="#platform">Vendor Risk</a></li>
+            <li><a href="#platform">AI Governance</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Solutions</h4>
+          <ul>
+            <li><a href="#solutions">GDPR Compliance</a></li>
+            <li><a href="#solutions">Quebec Law 25</a></li>
+            <li><a href="#solutions">CCPA / CPRA</a></li>
+            <li><a href="#solutions">HIPAA Governance</a></li>
+            <li><a href="#solutions">SOC 2 Evidence</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="docs.html">Documentation</a></li>
+            <li><a href="pricing.html">Pricing Plans</a></li>
+            <li><a href="status.html">System Status</a></li>
+            <li><a href="trust.html">Trust Center</a></li>
+            <li><a href="security.html">Security Overview</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Compliance</h4>
+          <ul>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="terms.html">Terms of Service</a></li>
+            <li><a href="accessibility.html">Accessibility Statement</a></li>
+            <li><a href="responsible-ai.html">Responsible AI</a></li>
+            <li><a href="dpa.html">DPA & Subprocessors</a></li>
+            <li><a href="contact.html">Contact Sales</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 KIBO.IS. All rights reserved. Enterprise Privacy Operations.</div>
+        <div style="display:flex; gap:1.5rem">
+          <a href="privacy.html">Privacy</a>
+          <a href="terms.html">Terms</a>
+          <a href="security.html">Security</a>
+          <a href="status.html">Status</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- COOKIE CONSENT BANNER -->
+  <div id="cookie-banner" class="cookie-banner" role="dialog" aria-live="polite" aria-label="Cookie consent banner">
+    <h4 style="margin-bottom:0.5rem">🔒 Privacy & Consent Preferences</h4>
+    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem">
+      We use privacy-friendly, consent-aware analytics to improve your experience. We respect GDPR and applicable global privacy laws.
+    </p>
+    <div style="display:flex; gap:0.5rem">
+      <button id="cookie-accept" class="btn btn-primary btn-sm btn-full">Accept All</button>
+      <button id="cookie-reject" class="btn btn-secondary btn-sm btn-full">Necessary Only</button>
+    </div>
+  </div>
+
+  <!-- Core JavaScript Engine -->
+  <script src="js/kibo.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Sales & Book Demo — KIBO Enterprise Privacy Operations</title>
+  <meta name="description" content="Schedule a live demo or contact the KIBO enterprise sales team.">
+  <link rel="canonical" href="https://kibo.is/contact">
+  <link rel="stylesheet" href="css/kibo.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container nav-container">
+      <a href="/" class="logo">
+        <span class="logo-mark">K</span>
+        <span>KIBO<span style="color:var(--accent-cyan)">.IS</span></span>
+      </a>
+      <div class="nav-actions">
+        <button class="theme-toggle-btn" aria-label="Toggle Theme" title="Toggle Theme">☀️</button>
+        <a href="signup.html" class="btn btn-primary btn-sm">Start Free Trial</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding:4rem 1.5rem; max-width:1000px">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:3rem; align-items:start">
+      <div>
+        <div class="badge-tag">Get in Touch</div>
+        <h1 style="margin-bottom:1rem">Book a Live Custom Demo</h1>
+        <p class="text-muted" style="font-size:1.1rem; line-height:1.7; margin-bottom:2rem">
+          Speak directly with one of our lead privacy architects. Discover how KIBO automates DSARs, vendor risk, and compliance workflows for your organization.
+        </p>
+
+        <div style="display:flex; flex-direction:column; gap:1.5rem; color:var(--text-muted)">
+          <div style="display:flex; gap:1rem; align-items:center">
+            <div style="width:40px; height:40px; border-radius:50%; background:rgba(99,102,241,0.15); display:grid; place-items:center; color:var(--accent-primary)">✉️</div>
+            <div>
+              <div style="font-weight:700; color:var(--text-main)">Sales & Demo Inquiries</div>
+              <a href="mailto:sales@kibo.is" style="color:var(--accent-cyan)">sales@kibo.is</a>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:1rem; align-items:center">
+            <div style="width:40px; height:40px; border-radius:50%; background:rgba(99,102,241,0.15); display:grid; place-items:center; color:var(--accent-primary)">🛡️</div>
+            <div>
+              <div style="font-weight:700; color:var(--text-main)">Security & Trust Center</div>
+              <a href="mailto:security@kibo.is" style="color:var(--accent-cyan)">security@kibo.is</a>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:1rem; align-items:center">
+            <div style="width:40px; height:40px; border-radius:50%; background:rgba(99,102,241,0.15); display:grid; place-items:center; color:var(--accent-primary)">🏢</div>
+            <div>
+              <div style="font-weight:700; color:var(--text-main)">Global Headquarters</div>
+              <div>KIBO Technologies Inc., Enterprise Division</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Form Box -->
+      <div class="form-box" style="margin:0; max-width:100%">
+        <h3 style="margin-bottom:1.5rem">Schedule Your Demo</h3>
+
+        <div id="contact-success-msg" style="display:none; background:rgba(16,185,129,0.1); border:1px solid #10b981; border-radius:var(--radius-md); padding:1.5rem; text-align:center;">
+          <h4 style="color:#10b981; margin-bottom:0.5rem">✓ Demo Request Submitted!</h4>
+          <p class="text-muted" style="font-size:0.9rem">Thank you! A KIBO Privacy Architect will contact you within 2 business hours.</p>
+        </div>
+
+        <form action="#" method="POST" id="contact-form">
+          <!-- Honeypot anti-spam -->
+          <input type="text" name="b_honeypot" id="b_honeypot" style="display:none" tabindex="-1" aria-hidden="true">
+
+          <div class="form-group">
+            <label for="first_name" class="form-label">First Name *</label>
+            <input type="text" id="first_name" name="first_name" class="form-input" placeholder="Sarah" required>
+          </div>
+
+          <div class="form-group">
+            <label for="last_name" class="form-label">Last Name *</label>
+            <input type="text" id="last_name" name="last_name" class="form-input" placeholder="Jenkins" required>
+          </div>
+
+          <div class="form-group">
+            <label for="work_email" class="form-label">Work Email *</label>
+            <input type="email" id="work_email" name="work_email" class="form-input" placeholder="sarah@company.com" required>
+          </div>
+
+          <div class="form-group">
+            <label for="company_name" class="form-label">Company Name *</label>
+            <input type="text" id="company_name" name="company_name" class="form-input" placeholder="Acme Health" required>
+          </div>
+
+          <div class="form-group">
+            <label for="framework" class="form-label">Primary Regulatory Focus</label>
+            <select id="framework" name="framework" class="form-input">
+              <option value="gdpr">GDPR (EU)</option>
+              <option value="law25">Quebec Law 25 (Canada)</option>
+              <option value="ccpa">CCPA / CPRA (California)</option>
+              <option value="hipaa">HIPAA (Healthcare)</option>
+              <option value="all">Multiple Global Frameworks</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label style="font-size:0.85rem; color:var(--text-muted); cursor:pointer">
+              <input type="checkbox" id="casl_consent" name="casl_consent" required style="margin-right:0.4rem"> I grant express consent under CASL/CAN-SPAM to be contacted regarding this request.
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-lg">Request Custom Demo</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container" style="text-align:center; color:var(--text-subtle)">
+      © 2026 KIBO.IS. All rights reserved.
+    </div>
+  </footer>
+
+  <script src="js/kibo.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const contactForm = document.getElementById('contact-form');
+      const successMsg = document.getElementById('contact-success-msg');
+      const honeypot = document.getElementById('b_honeypot');
+
+      if (contactForm) {
+        contactForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          if (honeypot && honeypot.value) return; // Silent spam drop
+
+          contactForm.style.display = 'none';
+          if (successMsg) successMsg.style.display = 'block';
+
+          if (window.trackConversion) {
+            window.trackConversion('Contact_Demo_Form_Submit', { page: '/contact' });
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

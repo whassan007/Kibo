@@ -4,7 +4,8 @@
 
 set -euo pipefail
 
-WORKSPACE_DIR="/Users/iceman/Documents/Code/Kibo"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 # Run the python-based URI mappings checker
-uv run --with pyyaml python3 "${WORKSPACE_DIR}/.kibo/tools/test_uri.py"
+python3 "${WORKSPACE_DIR}/.kibo/tools/test_uri.py"

@@ -34,11 +34,18 @@ class System(Asset):
 class Vendor(Asset):
     __mapper_args__ = {'polymorphic_identity': 'vendor'}
     service_description = Column(String, nullable=True)
+    service = Column(String, nullable=True)
     country_of_origin = Column(String, nullable=True)
-    dpa_status = Column(String, nullable=True)  # none, draft, executed, expired
+    risk_rating = Column(String, nullable=True, default="medium")
+    dpa_status = Column(String, nullable=True, default="none")  # none, draft, executed, expired
     dpa_expiry_date = Column(String, nullable=True)
-    soc2_type = Column(String, nullable=True)  # none, type_i, type_ii
+    dpa_expiration_date = Column(String, nullable=True)
+    sccs_in_place = Column(Boolean, default=False)
+    baa_in_place = Column(Boolean, default=False)
+    soc2_type = Column(String, nullable=True, default="none")  # none, type_i, type_ii
     cross_border = Column(Boolean, default=False)
+    status = Column(String, nullable=True, default="active")
+    next_review_date = Column(String, nullable=True)
     
     # Relationships
     contracts = relationship('Contract', back_populates='vendor', cascade='all, delete-orphan')

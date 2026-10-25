@@ -1,0 +1,24 @@
+# KIBO.IS Robots.txt — Search Engines & AI Crawlers
+User-agent: *
+Allow: /
+Disallow: /app
+Disallow: /dashboard
+
+# Specific AI Search Agents Allowed
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: FirecrawlAgent
+Allow: /
+
+# Sitemaps & LLM docs
+Sitemap: https://kibo.is/sitemap.xml
