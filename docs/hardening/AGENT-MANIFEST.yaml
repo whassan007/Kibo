@@ -1,0 +1,396 @@
+orchestrator:
+  agent_id: A0
+  role: Antigravity Principal Architect & Distributed Orchestrator
+  baseline_tag: v2026.10.1
+  baseline_commit: e2147b3ec4cc5c6848d2698145f9830d1ae47c20
+  integration_branch: hardening/v2026.10.1/integration
+  worktree_root: /tmp/kibo-hardening-worktrees
+
+concurrency_policy:
+  gemini_max_active: 12
+  claude_max_active: 3
+  codex_max_active: 3
+  dgx_max_active: 2
+
+agents:
+  # --- CODEX WORKERS (X01-X05): Security, DB/Tenant Isolation, Pipeline Queues, MCP Security, CI/CD ---
+  - agent_id: X01
+    runtime: codex-cli
+    host: localhost
+    model: codex-default
+    branch: hardening/v2026.10.1/X01-auth-rbac-security
+    owned_paths:
+      - kibo-is/core/security/
+      - kibo-is/tests/test_security_x01.py
+    assignment: "Authentication, RBAC/ABAC and identity security"
+    dependencies: []
+
+  - agent_id: X02
+    runtime: codex-cli
+    host: localhost
+    model: codex-default
+    branch: hardening/v2026.10.1/X02-tenant-isolation-db
+    owned_paths:
+      - kibo-is/core/middleware/tenant_isolation.py
+      - kibo-is/tests/test_tenant_isolation_x02.py
+    assignment: "PostgreSQL, migrations, tenant isolation and data integrity"
+    dependencies: [X01]
+
+  - agent_id: X03
+    runtime: codex-cli
+    host: localhost
+    model: codex-default
+    branch: hardening/v2026.10.1/X03-discovery-pipeline-scheduler
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/discovery/
+      - kibo-is/tests/test_discovery_scheduler_x03.py
+    assignment: "Discovery pipeline reliability, queues and scheduling"
+    dependencies: []
+
+  - agent_id: X04
+    runtime: codex-cli
+    host: localhost
+    model: codex-default
+    branch: hardening/v2026.10.1/X04-mcp-hub-security
+    owned_paths:
+      - kibo-is/core/office/hub_router.py
+      - kibo-is/integrations/claude_mcp/kibo_privacy_mcp.py
+      - kibo-is/tests/test_mcp_hub_security_x04.py
+    assignment: "MCP and corporate AI integration security"
+    dependencies: [X01]
+
+  - agent_id: X05
+    runtime: codex-cli
+    host: localhost
+    model: codex-default
+    branch: hardening/v2026.10.1/X05-deployment-security-cicd
+    owned_paths:
+      - Dockerfile
+      - docker-compose.yml
+      - .kibo/tools/backup_restore.py
+      - kibo-is/tests/test_deployment_security_x05.py
+    assignment: "CI/CD, deployment security, audit and regression hardening"
+    dependencies: []
+
+  # --- GEMINI WORKERS (G01-G24): Regulatory Sources, Ingestion, Parsing, Annotations, Citations, KG, JRAE, UI, E2E ---
+  - agent_id: G01
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G01-us-federal-sources
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/source_registry/us_federal_sources.py
+    assignment: "US federal legislative source discovery"
+    dependencies: []
+
+  - agent_id: G02
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G02-us-states-a-m-sources
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/source_registry/us_states_a_m_sources.py
+    assignment: "US state legislation and administrative rules, states A-M"
+    dependencies: []
+
+  - agent_id: G03
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G03-us-states-n-w-dc-sources
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/source_registry/us_states_n_w_dc_sources.py
+    assignment: "US state legislation and administrative rules, states N-W, plus DC and territories"
+    dependencies: []
+
+  - agent_id: G04
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G04-us-regulator-enforcement-feeds
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/source_registry/us_enforcement_sources.py
+    assignment: "US privacy regulator and enforcement decision feeds"
+    dependencies: []
+
+  - agent_id: G05
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G05-us-judicial-opinions
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/source_registry/us_judicial_sources.py
+    assignment: "US federal/state judicial opinion ingestion"
+    dependencies: []
+
+  - agent_id: G06
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G06-canada-federal-sources
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/source_registry/canada_federal_sources.py
+    assignment: "Canadian federal laws and amendment discovery"
+    dependencies: []
+
+  - agent_id: G07
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G07-canada-provincial-territorial-sources
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/source_registry/canada_provincial_sources.py
+    assignment: "Canadian provincial and territorial laws"
+    dependencies: []
+
+  - agent_id: G08
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G08-canada-commissioner-decisions
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/source_registry/canada_commissioner_sources.py
+      - kibo-is/canadian_verdicts_agent.py
+    assignment: "Canadian privacy commissioner decisions and elimination of fabricated verdicts"
+    dependencies: []
+
+  - agent_id: G09
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G09-canada-court-tribunal-decisions
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/source_registry/canada_judicial_sources.py
+    assignment: "Canadian court and tribunal decisions"
+    dependencies: []
+
+  - agent_id: G10
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G10-eu-eurlex-cellar-sources
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/source_registry/eu_union_sources.py
+    assignment: "EU-wide EUR-Lex and Cellar ingestion"
+    dependencies: []
+
+  - agent_id: G11
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G11-eu-states-1-9-sources
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/source_registry/eu_member_states_1_9.py
+    assignment: "EU member-state legislation, first nine member states alphabetically (AT, BE, BG, HR, CY, CZ, DK, EE, FI)"
+    dependencies: []
+
+  - agent_id: G12
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G12-eu-states-10-18-sources
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/source_registry/eu_member_states_10_18.py
+    assignment: "EU member-state legislation, next nine member states (FR, DE + 17 Länder, GR, HU, IE, IT, LV, LT, LU)"
+    dependencies: []
+
+  - agent_id: G13
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G13-eu-states-19-27-sources
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/source_registry/eu_member_states_19_27.py
+    assignment: "EU member-state legislation, remaining nine member states (MT, NL, PL, PT, RO, SK, SI, ES, SE)"
+    dependencies: []
+
+  - agent_id: G14
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G14-edpb-edps-cjeu-decisions
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/source_registry/eu_edpb_edps_cjeu_sources.py
+    assignment: "EDPB, EDPS and CJEU decisions"
+    dependencies: []
+
+  - agent_id: G15
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G15-eu-national-dpa-decisions
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/source_registry/eu_national_dpa_sources.py
+    assignment: "National EU supervisory authority decisions"
+    dependencies: []
+
+  - agent_id: G16
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G16-multilingual-parsers
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/parsers/
+    assignment: "Multilingual document parsing and normalization (EN, FR, DE, EU)"
+    dependencies: []
+
+  - agent_id: G17
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G17-statutory-provision-annotation
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/annotations/statute_annotator.py
+    assignment: "Statutory provision annotation"
+    dependencies: [G16]
+
+  - agent_id: G18
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G18-judicial-decision-annotation
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/annotations/decision_annotator.py
+    assignment: "Judicial decision, holding and remedy annotation"
+    dependencies: [G16]
+
+  - agent_id: G19
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G19-citation-verification
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/citations/
+      - kibo-is/core/regulatory_intelligence/verification/
+    assignment: "Citation verification and source provenance"
+    dependencies: [G17, G18]
+
+  - agent_id: G20
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G20-amendment-version-detection
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/versioning/
+      - kibo-is/core/regulatory_intelligence/legal_relations/
+    assignment: "Legislative amendment, version detection and temporal knowledge graph"
+    dependencies: [G16]
+
+  - agent_id: G21
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G21-applicability-impact-mapping
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/applicability/
+      - kibo-is/core/regulatory_intelligence/impact_analysis/
+      - kibo-is/core/regulatory_intelligence/approval/
+    assignment: "Regulatory applicability, impact mapping and legal promotion state machine"
+    dependencies: [G19, G20]
+
+  - agent_id: G22
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G22-regintel-dashboard-search
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/monitoring/
+      - kibo-is/core/regulatory_intelligence/api/
+    assignment: "Regulatory intelligence dashboard, metrics and search API"
+    dependencies: [G21]
+
+  - agent_id: G23
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G23-office-workflows-integration
+    owned_paths:
+      - kibo-is/core/office/assessments_rights.py
+      - kibo-is/core/office/breach_governance.py
+      - kibo-is/src/views/PrivacyOSPortal.tsx
+    assignment: "Privacy-office workflows and legal intelligence UI/API integration"
+    dependencies: [G21, G22]
+
+  - agent_id: G24
+    runtime: gemini-subagent
+    host: localhost
+    model: inherit
+    branch: hardening/v2026.10.1/G24-rd01-rd18-acceptance-tests
+    owned_paths:
+      - kibo-is/tests/test_regulatory_discovery_rd01_18.py
+    assignment: "End-to-end scenario testing (RD-01 through RD-18) and accessibility"
+    dependencies: [G22, G23]
+
+  # --- CLAUDE WORKERS (C01-C05): Independent Legal & Adversarial Review ---
+  - agent_id: C01
+    runtime: claude-cli
+    host: localhost
+    model: claude-code
+    branch: hardening/v2026.10.1/C01-us-annotation-review
+    owned_paths:
+      - docs/hardening/reviews/C01-us-review.md
+    assignment: "US regulatory interpretation and annotation quality review"
+    dependencies: [G01, G02, G03, G04, G05, G17]
+
+  - agent_id: C02
+    runtime: claude-cli
+    host: localhost
+    model: claude-code
+    branch: hardening/v2026.10.1/C02-canada-bilingual-review
+    owned_paths:
+      - docs/hardening/reviews/C02-canada-review.md
+    assignment: "Canadian bilingual legal annotation and jurisdiction review"
+    dependencies: [G06, G07, G08, G09, G16]
+
+  - agent_id: C03
+    runtime: claude-cli
+    host: localhost
+    model: claude-code
+    branch: hardening/v2026.10.1/C03-eu-multilingual-review
+    owned_paths:
+      - docs/hardening/reviews/C03-eu-review.md
+    assignment: "EU GDPR, member-state and multilingual annotation review"
+    dependencies: [G10, G11, G12, G13, G14, G15, G16]
+
+  - agent_id: C04
+    runtime: claude-cli
+    host: localhost
+    model: claude-code
+    branch: hardening/v2026.10.1/C04-ontology-consistency-review
+    owned_paths:
+      - docs/hardening/reviews/C04-ontology-review.md
+    assignment: "Ontology architecture and cross-jurisdiction consistency"
+    dependencies: [G20, G21]
+
+  - agent_id: C05
+    runtime: claude-cli
+    host: localhost
+    model: claude-code
+    branch: hardening/v2026.10.1/C05-adversarial-citation-review
+    owned_paths:
+      - docs/hardening/reviews/C05-adversarial-review.md
+    assignment: "Adversarial review of legal reasoning and fabricated citations"
+    dependencies: [G18, G19]
+
+  # --- DGX SPARK WORKERS (D01-D02): Remote GPU Evaluation & Stress Testing ---
+  - agent_id: D01
+    runtime: dgx-ssh
+    host: dgx (waelbot)
+    model: gemma4:26b / qwen3.6:35b-a3b-q8_0
+    branch: hardening/v2026.10.1/D01-dgx-annotation-benchmarks
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/evaluation/dgx_annotation_benchmark.py
+      - kibo-is/core/regulatory_intelligence/evaluation/dgx_d01_results.json
+    assignment: "Local LLM legal annotation evaluation and embedding benchmarks"
+    dependencies: [G17, G18]
+
+  - agent_id: D02
+    runtime: dgx-ssh
+    host: dgx (waelbot)
+    model: gemma4:26b / qwen3.8:27b
+    branch: hardening/v2026.10.1/D02-dgx-citation-stress-test
+    owned_paths:
+      - kibo-is/core/regulatory_intelligence/evaluation/dgx_citation_stress.py
+      - kibo-is/core/regulatory_intelligence/evaluation/dgx_d02_results.json
+    assignment: "Independent citation, retrieval and jurisdiction stress testing"
+    dependencies: [G19, G21]
