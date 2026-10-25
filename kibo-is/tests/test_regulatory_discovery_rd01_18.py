@@ -218,7 +218,8 @@ def _create_isolated_kg() -> TemporalRegulatoryKnowledgeGraph:
     orig_create_engine = _legal_relations_mod.create_engine
 
     def _static_pool_create_engine(url: str, **kwargs: Any) -> Any:
-        return orig_create_engine(url, poolclass=StaticPool, **kwargs)
+        kwargs.setdefault("poolclass", StaticPool)
+        return orig_create_engine(url, **kwargs)
 
     _legal_relations_mod.create_engine = _static_pool_create_engine  # type: ignore[assignment]
     try:

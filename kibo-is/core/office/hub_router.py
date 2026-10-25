@@ -191,10 +191,12 @@ async def handle_copilot_query(payload: CopilotQueryPayload, request: Request) -
     """
     caller = _resolve_verified_caller(
         request,
-        fallback_tenant=payload.tenant_id,
+        fallback_tenant=payload.tenant_id or payload.target_tenant_id,
         fallback_user=payload.user_id,
         fallback_role=payload.role if "role" in payload.model_fields_set else None,
     )
+    if payload.target_tenant_id and payload.target_tenant_id != caller["tenant_id"]:
+        raise HTTPException(403, "CROSS_TENANT_ACCESS_DENIED: Tenant mismatch")
     requested_tenant = payload.tenant_id or caller["tenant_id"]
 
     try:
