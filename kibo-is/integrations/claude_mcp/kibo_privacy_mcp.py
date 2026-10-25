@@ -1303,9 +1303,11 @@ def invoke_mcp_tool(
         call_args["authenticated_tenant_id"] = authenticated_tenant_id
         call_args.setdefault("tenant_id", authenticated_tenant_id)
     if authenticated_user_id:
-        call_args.setdefault("user_id", authenticated_user_id)
+        call_args["user_id"] = authenticated_user_id
     if authenticated_role:
-        call_args.setdefault("role", authenticated_role)
+        if call_args.get("role") and call_args["role"].upper() != authenticated_role.upper():
+            raise PermissionError("ROLE_ESCALATION_DENIED: Role differs from verified caller")
+        call_args["role"] = authenticated_role
     if read_only_default and "read_only" not in call_args:
         call_args["read_only"] = True
 

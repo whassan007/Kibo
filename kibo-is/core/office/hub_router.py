@@ -17,7 +17,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from core.context.tenant_context import _tenant_context
-from core.security.auth import principal_from_request
+from core.security.auth import PrincipalContext, principal_from_request, strict_auth_enabled
 from integrations.claude_mcp.kibo_privacy_mcp import (
     APPROVED_MCP_TOOLS,
     MCP_SECURITY_AUDIT_LOG,
@@ -63,10 +63,9 @@ class MCPInvokePayload(BaseModel):
 
 def _resolve_verified_caller(request: Request, fallback_tenant: Optional[str] = None, fallback_user: Optional[str] = None, fallback_role: Optional[str] = None) -> Dict[str, str]:
     """
-    Resolves the authenticated caller's tenant_id, user_id, and role from:
-    1. Active TenantIsolationMiddleware context (`_tenant_context`), or
-    2. Request headers / Bearer JWT via `principal_from_request`, or
-    3. Explicit fallback parameters when invoked in unit tests without middleware.
+    Bind authenticated callers to the middleware PrincipalContext or verified JWT.
+    Context variables, headers and payload fallbacks are compatibility inputs only
+    for unauthenticated local mode; they never supersede authenticated claims.
     """
     ctx = _tenant_context.get()
     header_tenant = request.headers.get("X-Tenant-ID")
@@ -74,11 +73,29 @@ def _resolve_verified_caller(request: Request, fallback_tenant: Optional[str] = 
     header_role = request.headers.get("X-User-Role")
 
     principal = getattr(request.state, "principal", None)
-    if principal is None and (request.headers.get("Authorization") or header_tenant or header_user):
-        try:
-            principal = principal_from_request(request)
-        except HTTPException:
-            raise
+    if principal is None:
+        principal = principal_from_request(request)
+    if strict_auth_enabled() and not (
+        isinstance(principal, PrincipalContext) and principal.authenticated
+    ):
+        raise HTTPException(401, "Verified enterprise token required")
+    if isinstance(principal, PrincipalContext) and principal.authenticated:
+        if header_tenant and header_tenant != principal.tenant_id:
+            raise HTTPException(403, "CROSS_TENANT_ACCESS_DENIED: Tenant mismatch")
+        if fallback_tenant and fallback_tenant != principal.tenant_id:
+            raise HTTPException(403, "CROSS_TENANT_ACCESS_DENIED: Tenant mismatch")
+        roles = tuple(role.upper() for role in principal.roles)
+        if not roles:
+            raise HTTPException(403, "ROLE_ACCESS_DENIED: Principal has no granted roles")
+        if fallback_role and fallback_role.upper() not in roles:
+            raise HTTPException(403, "ROLE_ESCALATION_DENIED: Role is not granted to principal")
+        return {
+            "tenant_id": principal.tenant_id,
+            "user_id": principal.user_id,
+            "role": fallback_role.upper() if fallback_role else (roles[0] if roles else ""),
+        }
+    if header_tenant and fallback_tenant and header_tenant != fallback_tenant:
+        raise HTTPException(403, "CROSS_TENANT_ACCESS_DENIED: Tenant mismatch")
 
     if ctx and ctx.tenant_id and ctx.tenant_id != "default":
         verified_tenant = ctx.tenant_id
@@ -176,15 +193,15 @@ async def handle_copilot_query(payload: CopilotQueryPayload, request: Request) -
         request,
         fallback_tenant=payload.tenant_id,
         fallback_user=payload.user_id,
-        fallback_role=payload.role,
+        fallback_role=payload.role if "role" in payload.model_fields_set else None,
     )
     requested_tenant = payload.tenant_id or caller["tenant_id"]
 
     try:
         result = get_privacy_guidance(
             tenant_id=requested_tenant,
-            user_id=payload.user_id or caller["user_id"],
-            role=payload.role or caller["role"],
+            user_id=caller["user_id"],
+            role=caller["role"],
             question=payload.question,
             jurisdictions=payload.jurisdictions,
             vendor_name=payload.vendor_name,
@@ -218,6 +235,12 @@ async def handle_mcp_invoke(payload: MCPInvokePayload, request: Request) -> Dict
         fallback_role=arg_role,
     )
 
+    for tenant in (payload.tenant_id, payload.arguments.get("tenant_id"), payload.arguments.get("target_tenant_id")):
+        if tenant and tenant != caller["tenant_id"]:
+            raise HTTPException(403, "CROSS_TENANT_ACCESS_DENIED: Tenant mismatch")
+    if payload.role:
+        _resolve_verified_caller(request, fallback_role=payload.role)
+
     call_args = dict(payload.arguments)
     if payload.tenant_id and "tenant_id" not in call_args:
         call_args["tenant_id"] = payload.tenant_id
@@ -246,3 +269,18 @@ async def handle_mcp_invoke(payload: MCPInvokePayload, request: Request) -> Dict
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/enterprise/verify")
+async def verify_enterprise_hub(payload: CopilotQueryPayload, request: Request) -> Dict[str, Any]:
+    """RD-18: verify a Bearer JWT and execute a tenant-scoped hub tool."""
+    if payload.hub_provider not in {"m365_copilot", "claude_enterprise", "gemini_enterprise"}:
+        raise HTTPException(400, "Unsupported enterprise hub provider")
+    if not request.headers.get("Authorization", "").lower().startswith("bearer "):
+        raise HTTPException(401, "Verified enterprise Bearer token required")
+    principal = principal_from_request(request)
+    if not principal.authenticated:
+        raise HTTPException(401, "Verified enterprise Bearer token required")
+    result = await handle_copilot_query(payload, request)
+    return {"authenticated": True, "hub_provider": payload.hub_provider,
+            "tool_name": "get_privacy_guidance", "result": result}
