@@ -58,6 +58,49 @@ def filter_records_by_tenant(records: list, tenant_id: str) -> list:
                 else getattr(record, "tenant_id", None)) == tenant_id]
 
 
+def filter_annotations_by_tenant(annotations, requested_tenant_id):
+    """Customer annotations and legal evidence are never public statutory text."""
+    enforce_tenant_isolation(requested_tenant_id)
+    return filter_records_by_tenant(annotations, requested_tenant_id)
+
+
+def verify_tenant_export_access(resource_tenant_id, requested_tenant_id, *,
+                                include_public_statutory=False):
+    """Authorize a document export; public statutory exports require explicit opt-in.
+
+    Callers must pass the document's ownership, never the ownership of a linked
+    statute in place of a customer annotation or evidence record.
+    """
+    enforce_tenant_isolation(requested_tenant_id)
+    if resource_tenant_id == requested_tenant_id:
+        return True
+    if include_public_statutory and resource_tenant_id in (None, "PUBLIC_STATUTORY"):
+        return True
+    raise HTTPException(403, "Cross-tenant document export blocked")
+
+
+def filter_vector_search_results(results, requested_tenant_id, *,
+                                 include_public_statutory=False):
+    """Filter customer hits; public documents need an explicit statutory marker.
+
+    Public hits must have is_public_statutory=True as well as public ownership.
+    A missing tenant tag alone never makes customer evidence public.
+    """
+    enforce_tenant_isolation(requested_tenant_id)
+    visible = []
+    for result in results:
+        def field(name):
+            return result.get(name) if isinstance(result, dict) else getattr(result, name, None)
+
+        owner = field("tenant_id")
+        if owner == requested_tenant_id or (
+            include_public_statutory and owner in (None, "PUBLIC_STATUTORY")
+            and field("is_public_statutory") is True
+        ):
+            visible.append(result)
+    return visible
+
+
 class TenantIsolationMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, db_session_factory):
         super().__init__(app)
@@ -112,7 +155,7 @@ class TenantIsolationMiddleware(BaseHTTPMiddleware):
                     TenantMembership.user_id == user_id)).scalars().first()
                 if existing is None:
                     membership = TenantMembership(tenant_id=tenant_id, user_id=user_id,
-                        role="admin" if "admin" in user_id else "dpo" if "dpo" in user_id else "analyst",
+                        role="analyst",
                         is_active=True)
                     db.add(membership)
                     db.commit()
