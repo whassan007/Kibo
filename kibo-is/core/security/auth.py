@@ -34,7 +34,9 @@ class PrincipalContext:
 
 
 def strict_auth_enabled() -> bool:
-    return os.getenv("KIBO_STRICT_AUTH", "").lower() in {"1", "true", "yes"}
+    return (os.getenv("KIBO_STRICT_AUTH", "").strip().lower() in {"1", "true", "yes"}
+            or (os.getenv("KIBO_ENV", "").strip().lower() == "production"
+                and os.getenv("KIBO_ALLOW_LEGACY_DEV_AUTH") != "1"))
 
 
 def _strings(value):
@@ -133,4 +135,22 @@ def principal_from_request(request) -> PrincipalContext:
         raise HTTPException(401, "Verified enterprise token required")
     # Explicitly unverified compatibility identity; membership is still required.
     return PrincipalContext(user_id=user or token or "user_expert",
-                            tenant_id=tenant or "default", authenticated=False)
+                            tenant_id=tenant or "default", roles=("EMPLOYEE",),
+                            authenticated=False)
+
+
+def resolve_verified_role(request, fallback="EMPLOYEE") -> str:
+    """Resolve roles from verified credentials, never headers or payload defaults.
+
+    Authentication failures cannot acquire a role from the fallback argument.
+    Identity and tenant mismatches still propagate as access denials.
+    """
+    try:
+        principal = principal_from_request(request)
+    except HTTPException as exc:
+        if exc.status_code == 401:
+            return "EMPLOYEE"
+        raise
+    if principal.authenticated and principal.roles:
+        return principal.roles[0]
+    return "EMPLOYEE"
