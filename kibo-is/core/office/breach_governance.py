@@ -22,6 +22,12 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
 from core.context.tenant_context import get_current_tenant, get_tenant_id
+from core.security.auth import (
+    PrincipalContext,
+    principal_from_request,
+    resolve_verified_role,
+    strict_auth_enabled,
+)
 from core.jrae.deadlines import calculate_breach_deadlines
 from core.jrae.registry import (
     GERMAN_LANDER_AUTHORITIES,
@@ -78,11 +84,45 @@ def resolve_caller_role(
     payload_role: Optional[str] = None,
     x_user_role: Optional[str] = None,
 ) -> str:
-    """Resolve the caller's role from principal, header, payload, or tenant context."""
-    principal = getattr(request.state, "principal", None)
-    if principal and getattr(principal, "roles", None):
-        return str(principal.roles[0]).upper()
+    """
+    Resolve the caller's role using `resolve_verified_role` from `core.security.auth`.
+    In strict/production mode (`strict_auth_enabled()`), unauthenticated callers raise `401`
+    and `x_user_role`/payload role escalation is rejected (`403`) when it conflicts with
+    the verified JWT role, while preserving dev-mode test compatibility when
+    `strict_auth_enabled()` is False.
+    """
     header_role = x_user_role if isinstance(x_user_role, str) else request.headers.get("X-User-Role")
+    requested_role = (header_role or payload_role or "").strip().upper() or None
+
+    principal = getattr(request.state, "principal", None)
+    if principal is None:
+        principal = principal_from_request(request)
+
+    if strict_auth_enabled():
+        if not (isinstance(principal, PrincipalContext) and principal.authenticated):
+            raise HTTPException(
+                status_code=401,
+                detail="Verified enterprise token required",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+    if isinstance(principal, PrincipalContext) and principal.authenticated:
+        verified_role = str(resolve_verified_role(request, fallback="EMPLOYEE")).upper()
+        granted_roles = {str(r).upper() for r in principal.roles} or {verified_role}
+        if header_role and header_role.strip().upper() not in granted_roles:
+            raise HTTPException(
+                status_code=403,
+                detail=f"ROLE_ESCALATION_DENIED: Header role '{header_role.strip().upper()}' conflicts with verified JWT role '{verified_role}'",
+            )
+        if payload_role and payload_role.strip().upper() not in granted_roles:
+            raise HTTPException(
+                status_code=403,
+                detail=f"ROLE_ESCALATION_DENIED: Payload role '{payload_role.strip().upper()}' conflicts with verified JWT role '{verified_role}'",
+            )
+        return requested_role if (requested_role and requested_role in granted_roles) else verified_role
+
+    # Non-strict / local development compatibility mode (strict_auth_enabled() is False)
+    verified_fallback = str(resolve_verified_role(request, fallback="EMPLOYEE")).upper()
     if header_role:
         return header_role.strip().upper()
     if payload_role:
@@ -90,7 +130,7 @@ def resolve_caller_role(
     ctx = get_current_tenant()
     if ctx and getattr(ctx, "user_role", None):
         return str(ctx.user_role).upper()
-    return "EMPLOYEE"
+    return verified_fallback
 
 
 def _compute_sha256(payload_str: str) -> str:
@@ -740,6 +780,7 @@ class NotificationRecipientDraft(BaseModel):
     mandatory_content_elements: List[str]
     status: str = "pending_legal_approval"
     auto_send_blocked: bool = True
+    external_dispatch_authorized: bool = False
     requires_human_legal_approval: bool = True
     approved_by: Optional[str] = None
     approved_by_role: Optional[str] = None
@@ -782,6 +823,7 @@ class UnifiedIncidentRecord(BaseModel):
     description: str
     status: str = "pending_legal_approval"
     auto_send_blocked: bool = True
+    external_dispatch_authorized: bool = False
     requires_human_legal_approval: bool = True
     discovered_at: datetime
     occurred_at: datetime
@@ -1576,6 +1618,7 @@ class MultiJurisdictionalBreachService:
             description=req.description,
             status="pending_legal_approval",
             auto_send_blocked=True,
+            external_dispatch_authorized=False,
             requires_human_legal_approval=True,
             discovered_at=discovered_at,
             occurred_at=occurred_at,
@@ -1622,7 +1665,7 @@ class MultiJurisdictionalBreachService:
         caller_role: str,
     ) -> UnifiedIncidentRecord:
         inc = self.get_incident(tenant_id, incident_id)
-        effective_role = (payload.approver_role or caller_role).strip().upper()
+        effective_role = (caller_role or payload.approver_role).strip().upper()
         if effective_role not in {"LEGAL", "CPO", "DPO"}:
             raise HTTPException(
                 status_code=403,
@@ -1634,9 +1677,12 @@ class MultiJurisdictionalBreachService:
 
         now = datetime.utcnow()
         approved_count = 0
+        is_approved_decision = payload.decision.strip().lower() == "approved"
         for draft in inc.notification_drafts:
             if payload.draft_id is None or draft.draft_id == payload.draft_id:
-                draft.status = "approved_for_controlled_dispatch" if payload.decision == "approved" else payload.decision
+                draft.status = "approved_for_controlled_dispatch" if is_approved_decision else payload.decision
+                draft.external_dispatch_authorized = bool(is_approved_decision and effective_role in {"LEGAL", "CPO", "DPO"})
+                draft.auto_send_blocked = not draft.external_dispatch_authorized
                 draft.approved_by = payload.approver_name or payload.approver_id
                 draft.approved_by_role = effective_role
                 draft.approved_at = now
@@ -1663,7 +1709,9 @@ class MultiJurisdictionalBreachService:
             )
         )
 
-        all_approved = all(d.status == "approved_for_controlled_dispatch" for d in inc.notification_drafts)
+        all_approved = all(d.status == "approved_for_controlled_dispatch" and d.external_dispatch_authorized for d in inc.notification_drafts)
+        inc.external_dispatch_authorized = all_approved
+        inc.auto_send_blocked = not all_approved
         inc.status = "approved_by_legal" if all_approved else "partially_approved_by_legal"
         inc.updated_at = now
         return inc
@@ -2209,7 +2257,7 @@ class RiskAndControlManagementService:
         if rec.tenant_id != tenant_id:
             raise HTTPException(status_code=403, detail="CROSS_TENANT_ACCESS_DENIED")
 
-        role = (payload.approver_role or caller_role).strip().upper()
+        role = (caller_role or payload.approver_role).strip().upper()
         if role not in {"CPO", "DPO", "LEGAL"}:
             raise HTTPException(
                 status_code=403,
@@ -2347,7 +2395,7 @@ class RegulatoryIntelligenceService:
         now = datetime.utcnow()
         amendment_id = f"amd_{uuid.uuid4().hex[:12]}"
         norm_jur = normalize_jurisdiction_code(req.jurisdiction_id)
-        effective_role = (req.reviewer_role or caller_role).strip().upper()
+        effective_role = (caller_role or req.reviewer_role).strip().upper()
 
         # Rule: No LLM or unreviewed change can directly alter production obligations without human LEGAL / CPO approval
         is_llm_or_unreviewed = (

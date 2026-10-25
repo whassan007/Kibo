@@ -23,10 +23,48 @@ class UserRole(str, Enum):
     LEGAL = "LEGAL"
     AUDITOR = "AUDITOR"
 
-def get_current_active_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    if not credentials:
-        return UserRole.CPO # Default fallback for local testing without headers
-    token = credentials.credentials
+from core.security.auth import strict_auth_enabled, verify_enterprise_token
+
+def get_current_active_user(
+    request: Request = None,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    """
+    Resolve the authenticated caller's UserRole without default CPO privilege escalation.
+    - When `strict_auth_enabled()` is True, requires a verified enterprise JWT and raises 401 if missing/invalid.
+    - Uses the token's `role` or `roles` claim (defaulting to `UserRole.EMPLOYEE`), never username substring matching.
+    - When `strict_auth_enabled()` is False and no token is provided, returns `UserRole.EMPLOYEE` (never `UserRole.CPO`)
+      unless an explicit `X-User-Role` dev header is supplied in non-strict mode.
+    """
+    strict = strict_auth_enabled()
+    if not credentials or not credentials.credentials:
+        if strict:
+            raise HTTPException(
+                status_code=401,
+                detail="Verified enterprise token required",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        if request is not None:
+            dev_role = (request.headers.get("X-User-Role") or "").strip().upper()
+            if dev_role in UserRole.__members__:
+                return UserRole[dev_role]
+        return UserRole.EMPLOYEE
+
+    token = credentials.credentials.strip()
+    if "." in token or strict:
+        principal = verify_enterprise_token(token)
+        if request is not None:
+            request.state.principal = principal
+        role_claim = None
+        if principal.roles:
+            role_claim = str(principal.roles[0]).strip().upper()
+        elif isinstance(principal.claims, dict) and principal.claims.get("role"):
+            role_claim = str(principal.claims["role"]).strip().upper()
+        if role_claim and role_claim in UserRole.__members__:
+            return UserRole[role_claim]
+        return UserRole.EMPLOYEE
+
+    # Non-strict mode legacy role token compatibility
     try:
         return UserRole(token.upper())
     except ValueError:
@@ -4042,7 +4080,7 @@ def generate_vault_report(job_id: str, payload: dict):
         c.setFont("Courier", 12)
         c.drawString(100, 750, f"Framework Target: {payload.get('framework_target')}")
         c.drawString(100, 730, "Immutable Audit Artifact")
-        c.drawString(100, 710, "Generated for SOC2 / ISO 27001 / FTC Compliance.")
+        c.drawString(100, 710, "KIBO PRIVACY OS - SHA-256 VERIFIED AUDIT EVIDENCE ARTIFACT")
         c.drawString(100, 690, "LangGraph Aggregation: SUCCESS")
         
         y = 650
@@ -6927,5 +6965,14 @@ try:
     app.include_router(hub_router)
 except Exception as _e:
     print(f"[Router Mount Warning] hub_router: {_e}")
+
+try:
+    from core.regulatory_intelligence.api import router as regulatory_intelligence_router
+    app.include_router(regulatory_intelligence_router)
+except ImportError as _e:
+    print(f"[Router Mount Warning] regulatory_intelligence_router: {_e}")
+except Exception as _e:
+    print(f"[Router Mount Warning] regulatory_intelligence_router: {_e}")
+
 
 

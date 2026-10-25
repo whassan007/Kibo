@@ -4,7 +4,9 @@ import re
 import sqlite3
 import json
 import subprocess
+from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
 DB_FILE = os.path.join(os.path.dirname(__file__), "kibo_state.db")
 DOT_FILE = os.path.join(os.path.dirname(__file__), "src", "LegalNet.md")
 
@@ -260,12 +262,17 @@ Format your response as a valid JSON object containing a "changes" array:
 Respond with the raw JSON only. Do not include markdown code block syntax.
 """
     
-    # Query nemotron-3-super:latest on waelbot using the query_nemotron helper script or system prompt
-    sys.path.append("/Users/dr.wael/.gemini/antigravity-ide/brain/f23bbb0f-bf38-4d3e-82bf-c701d2834305")
-    from scratch.query_nemotron import query_nemotron
-    print("Querying reasoning-core:latest on waelbot for growth suggestions...")
-    res = query_nemotron(prompt, "You are a professional legal compliance graph generator. Return only raw JSON.")
-    
+    # Resolve repository root dynamically rather than using hardcoded user paths
+    repo_root_str = str(Path(__file__).resolve().parent.parent)
+    if repo_root_str not in sys.path:
+        sys.path.append(repo_root_str)
+    try:
+        from scratch.query_nemotron import query_nemotron
+        print("Querying reasoning-core:latest for growth suggestions...")
+        res = query_nemotron(prompt, "You are a professional legal compliance graph generator. Return only raw JSON.")
+    except ImportError:
+        return {"changes": []}
+
     # Clean json block wrappers if any
     res_clean = re.sub(r'```json\s*|\s*```', '', res).strip()
     return json.loads(res_clean)
@@ -279,14 +286,23 @@ def apply_growth_suggestions(data):
     for item in data.get("changes", []):
         node_id = item["node_id"]
         label = item["label"]
-        reason = item["reason"]
+        reason = item.get("reason", "")
         edges = item.get("edges", [])
+        verification_status = "REQUIRES_LEGAL_REVIEW"
+        item["verification_status"] = verification_status
         
-        # Insert node
+        # Insert node quarantined for human legal review (never active obligation automatically)
         cls = determine_class(node_id)
+        node_props = {
+            "verification_status": verification_status,
+            "promotion_state": "REQUIRES_LEGAL_REVIEW",
+            "active_obligation": False,
+            "requires_human_legal_review": True,
+            "reason": reason,
+        }
         cursor.execute("INSERT OR REPLACE INTO ontology_instances VALUES (?, ?, ?, ?)",
-                       (node_id, cls, label, json.dumps({})))
-        changes_made.append(f"Added Node: {node_id} ({label})")
+                       (node_id, cls, label, json.dumps(node_props)))
+        changes_made.append(f"Added Node: {node_id} ({label}) [verification_status={verification_status}]")
         
         # Insert edges
         for edge in edges:
@@ -299,7 +315,7 @@ def apply_growth_suggestions(data):
     # Log to change log
     if changes_made:
         cursor.execute("INSERT INTO ontology_change_log (proposed_by, reason, change_details_json) VALUES (?, ?, ?)",
-                       ("LegalNet Grow Agent", "Continuous network self-improvement", json.dumps(changes_made)))
+                       ("LegalNet Grow Agent", "Quarantined candidate proposals (REQUIRES_LEGAL_REVIEW)", json.dumps(changes_made)))
         
     conn.commit()
     conn.close()
