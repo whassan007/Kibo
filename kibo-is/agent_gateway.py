@@ -6972,5 +6972,12 @@ try:
 except Exception as _e:
     print(f"[Router Mount Warning] regulatory_intelligence_router: {_e}")
 
+try:
+    from core.live_events import router as live_events_router
+    app.include_router(live_events_router)
+except Exception as _e:
+    print(f"[Router Mount Warning] live_events_router: {_e}")
+
+
 
 
