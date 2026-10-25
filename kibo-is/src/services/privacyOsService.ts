@@ -412,22 +412,105 @@ export interface GovernedAssistantResponse {
   };
 }
 
+export type OperationalDataStatus =
+  | 'live'
+  | 'updating'
+  | 'stale'
+  | 'offline'
+  | 'demo'
+  | 'error'
+  | 'unverified';
+
+export type WorkspaceRole =
+  | 'CPO'
+  | 'DPO'
+  | 'ANALYST'
+  | 'LEGAL'
+  | 'SECURITY'
+  | 'MANAGER'
+  | 'EMPLOYEE'
+  | 'AUDITOR'
+  | 'ADMIN';
+
+export interface AuthorizedOrganizationEntry {
+  tenant_id: string;
+  name: string;
+  industry: string;
+  jurisdictions: string[];
+  is_empty_workspace: boolean;
+  role: WorkspaceRole;
+}
+
+export interface VerifiedSessionInfo {
+  user_id: string;
+  display_name: string;
+  email: string;
+  role: WorkspaceRole;
+  active_tenant_id: string;
+  session_verified: boolean;
+  auth_method: string;
+  authorized_organizations: AuthorizedOrganizationEntry[];
+  permissions: string[];
+}
+
+export interface AssessmentDraftRecord {
+  draft_id: string;
+  tenant_id: string;
+  title: string;
+  activity_name: string;
+  jurisdictions: string[];
+  current_step: number;
+  answers: Record<string, string>;
+  evidence_links: string[];
+  status: 'draft' | 'submitted_for_review' | 'approved' | 'changes_requested';
+  updated_at: string;
+  reviewer_notes?: string;
+}
+
 export interface CorporateAiHubIntegrationStatus {
   hub_id: 'm365_copilot' | 'claude_mcp' | 'gemini_enterprise';
   name: string;
   protocol: string;
   manifest_path: string;
-  status: 'connected' | 'degraded' | 'offline_demo';
+  status: 'connected' | 'degraded' | 'offline_demo' | 'offline';
   auth_mode: string;
   exposed_tools: string[];
   zero_egress_enforced: boolean;
   audit_trail_active: boolean;
   last_heartbeat: string;
+  operational_state?: OperationalDataStatus;
 }
 
 // ============================================================================
-// DEFAULT TENANT & IDENTITY HEADERS
+// DEFAULT TENANT & IDENTITY HEADERS (SERVER-VERIFIED SESSION MODEL — UX-08)
 // ============================================================================
+
+const DEFAULT_AUTHORIZED_ORGANIZATIONS: AuthorizedOrganizationEntry[] = [
+  {
+    tenant_id: 'tnt-enterprise-global-001',
+    name: 'Aegis Global Health & Financial Corp.',
+    industry: 'Healthcare & Regulated Financial Services',
+    jurisdictions: ['US-FED', 'US-CA', 'US-NY', 'CA-FED', 'CA-QC', 'CA-ON', 'EU-GDPR', 'EU-DE', 'EU-FR'],
+    is_empty_workspace: false,
+    role: 'CPO',
+  },
+  {
+    tenant_id: 'tnt-eu-bank-sovereign-002',
+    name: 'EuroSovereign Banque SA (Frankfurt / Paris)',
+    industry: 'Banking & Capital Markets',
+    jurisdictions: ['EU-GDPR', 'EU-DE', 'EU-FR', 'CA-QC', 'US-NY'],
+    is_empty_workspace: false,
+    role: 'DPO',
+  },
+  {
+    tenant_id: 'tnt-new-onboarding-empty',
+    name: 'NovaMed Regional Clinic (New Workspace)',
+    industry: 'Healthcare Provider',
+    jurisdictions: [],
+    is_empty_workspace: true,
+    role: 'CPO',
+  },
+];
 
 let currentTenantContext: TenantIdentityContext = {
   tenantId: 'tnt-enterprise-global-001',
@@ -435,7 +518,37 @@ let currentTenantContext: TenantIdentityContext = {
   bearerToken: 'kibo_ent_jwt_v1_verified_session',
 };
 
+let demoModeEnabled = false;
+let lastOperationalStatus: OperationalDataStatus = 'updating';
+const responseCache = new Map<string, { data: unknown; cachedAt: string }>();
+
+export function setDemoModeEnabled(enabled: boolean): void {
+  demoModeEnabled = enabled;
+  if (enabled) {
+    lastOperationalStatus = 'demo';
+  }
+}
+
+export function isDemoModeEnabled(): boolean {
+  return demoModeEnabled;
+}
+
+export function getLastOperationalStatus(): OperationalDataStatus {
+  return demoModeEnabled ? 'demo' : lastOperationalStatus;
+}
+
+export function getAuthorizedOrganizations(): AuthorizedOrganizationEntry[] {
+  return DEFAULT_AUTHORIZED_ORGANIZATIONS;
+}
+
 export function setPrivacyOsTenantContext(ctx: Partial<TenantIdentityContext>): void {
+  // Enforce authorized organization membership check on client side as well as server side (UX-08)
+  if (ctx.tenantId) {
+    const allowed = DEFAULT_AUTHORIZED_ORGANIZATIONS.some((o) => o.tenant_id === ctx.tenantId);
+    if (!allowed) {
+      throw new Error(`Unauthorized tenant switch blocked: ${ctx.tenantId}`);
+    }
+  }
   currentTenantContext = { ...currentTenantContext, ...ctx };
 }
 
@@ -457,7 +570,13 @@ async function apiRequestWithFallback<T>(
   path: string,
   options: RequestInit,
   fallbackFactory: () => T
-): Promise<{ data: T; live: boolean }> {
+): Promise<{ data: T; live: boolean; status: OperationalDataStatus; cachedAt?: string }> {
+  const cacheKey = `${currentTenantContext.tenantId}:${options.method || 'GET'}:${path}`;
+  if (demoModeEnabled) {
+    lastOperationalStatus = 'demo';
+    return { data: fallbackFactory(), live: false, status: 'demo' };
+  }
+
   const baseUrl = VITE_API_BASE.replace(/\/api\/?$/, '');
   const url = path.startsWith('http') ? path : `${baseUrl}${path}`;
   try {
@@ -473,9 +592,23 @@ async function apiRequestWithFallback<T>(
       throw new Error(`HTTP ${response.status}`);
     }
     const json = (await response.json()) as T;
-    return { data: json, live: true };
+    const now = new Date().toISOString();
+    responseCache.set(cacheKey, { data: json, cachedAt: now });
+    lastOperationalStatus = 'live';
+    return { data: json, live: true, status: 'live', cachedAt: now };
   } catch {
-    return { data: fallbackFactory(), live: false };
+    const cached = responseCache.get(cacheKey);
+    if (cached) {
+      lastOperationalStatus = 'stale';
+      return {
+        data: cached.data as T,
+        live: false,
+        status: 'stale',
+        cachedAt: cached.cachedAt,
+      };
+    }
+    lastOperationalStatus = 'offline';
+    return { data: fallbackFactory(), live: false, status: 'offline' };
   }
 }
 
@@ -1960,12 +2093,80 @@ export const FALLBACK_INTEGRATION_STATUS: CorporateAiHubIntegrationStatus[] = [
   },
 ];
 
+const ASSESSMENT_DRAFT_STORAGE_KEY = 'kibo_privacy_os_assessment_drafts_v2';
+
+export function loadAssessmentDrafts(tenantId?: string): AssessmentDraftRecord[] {
+  const targetTenant = tenantId || currentTenantContext.tenantId;
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return [];
+  }
+  try {
+    const raw = window.localStorage.getItem(ASSESSMENT_DRAFT_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as AssessmentDraftRecord[];
+    return Array.isArray(parsed) ? parsed.filter((d) => d.tenant_id === targetTenant) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveAssessmentDraft(
+  draft: Omit<AssessmentDraftRecord, 'updated_at' | 'tenant_id'> & { tenant_id?: string }
+): AssessmentDraftRecord {
+  const targetTenant = draft.tenant_id || currentTenantContext.tenantId;
+  const record: AssessmentDraftRecord = {
+    ...draft,
+    tenant_id: targetTenant,
+    updated_at: new Date().toISOString(),
+  };
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const raw = window.localStorage.getItem(ASSESSMENT_DRAFT_STORAGE_KEY);
+      const all: AssessmentDraftRecord[] = raw ? JSON.parse(raw) : [];
+      const idx = all.findIndex((d) => d.draft_id === record.draft_id && d.tenant_id === targetTenant);
+      if (idx >= 0) {
+        all[idx] = record;
+      } else {
+        all.unshift(record);
+      }
+      window.localStorage.setItem(ASSESSMENT_DRAFT_STORAGE_KEY, JSON.stringify(all));
+    } catch {
+      // ignore storage quota errors
+    }
+  }
+  return record;
+}
+
 // ============================================================================
 // EXPORTED PRIVACY OS SERVICE CLIENT
 // ============================================================================
 
 export const PrivacyOsService = {
-  getJurisdictions: async (country?: string): Promise<{ jurisdictions: JurisdictionEntry[]; live: boolean }> => {
+  getVerifiedSession: async (role?: WorkspaceRole): Promise<{ session: VerifiedSessionInfo; live: boolean; status: OperationalDataStatus }> => {
+    const result = await apiRequestWithFallback<VerifiedSessionInfo>(
+      '/api/v1/auth/session',
+      {
+        method: 'GET',
+        headers: role ? { 'X-User-Role': role } : undefined,
+      },
+      () => ({
+        user_id: currentTenantContext.userId,
+        display_name: 'Dr. Elena Vance, CIPP/E, CIPP/US, CIPM',
+        email: 'elena.vance@kibo.is',
+        role: role || 'CPO',
+        active_tenant_id: currentTenantContext.tenantId,
+        session_verified: false,
+        auth_method: demoModeEnabled ? 'demo_session' : 'offline_cached_session',
+        authorized_organizations: DEFAULT_AUTHORIZED_ORGANIZATIONS,
+        permissions: ['read:all', 'approve:assessments', 'manage:incidents'],
+      })
+    );
+    return { session: result.data, live: result.live, status: result.status };
+  },
+
+  getJurisdictions: async (
+    country?: string
+  ): Promise<{ jurisdictions: JurisdictionEntry[]; live: boolean; status: OperationalDataStatus; cachedAt?: string }> => {
     const query = country ? `?country=${encodeURIComponent(country)}` : '';
     const result = await apiRequestWithFallback<{ total: number; jurisdictions: JurisdictionEntry[] }>(
       `/api/v1/compliance/jurisdictions${query}`,
@@ -1976,12 +2177,17 @@ export const PrivacyOsService = {
         return { total: filtered.length, jurisdictions: filtered };
       }
     );
-    return { jurisdictions: result.data.jurisdictions, live: result.live };
+    return {
+      jurisdictions: result.data.jurisdictions,
+      live: result.live,
+      status: result.status,
+      cachedAt: result.cachedAt,
+    };
   },
 
   evaluateApplicability: async (
     payload: ApplicabilityEvaluationRequest
-  ): Promise<{ evaluation: ApplicabilityEvaluationResponse; live: boolean }> => {
+  ): Promise<{ evaluation: ApplicabilityEvaluationResponse; live: boolean; status: OperationalDataStatus }> => {
     const result = await apiRequestWithFallback<ApplicabilityEvaluationResponse>(
       '/api/v1/compliance/applicability/evaluate',
       {
@@ -1990,12 +2196,12 @@ export const PrivacyOsService = {
       },
       () => buildFallbackEvaluation(payload)
     );
-    return { evaluation: result.data, live: result.live };
+    return { evaluation: result.data, live: result.live, status: result.status };
   },
 
   evaluateIncidentWarRoom: async (
     payload: BreachIncidentInput
-  ): Promise<{ warRoom: BreachWarRoomResponse; live: boolean }> => {
+  ): Promise<{ warRoom: BreachWarRoomResponse; live: boolean; status: OperationalDataStatus }> => {
     const result = await apiRequestWithFallback<BreachWarRoomResponse>(
       '/api/v1/office/incidents',
       {
@@ -2004,12 +2210,12 @@ export const PrivacyOsService = {
       },
       () => buildFallbackBreachWarRoom(payload)
     );
-    return { warRoom: result.data, live: result.live };
+    return { warRoom: result.data, live: result.live, status: result.status };
   },
 
   recommendAssessments: async (
     payload: AssessmentRecommendationRequest
-  ): Promise<{ recommendation: AssessmentRecommendationResponse; live: boolean }> => {
+  ): Promise<{ recommendation: AssessmentRecommendationResponse; live: boolean; status: OperationalDataStatus }> => {
     const result = await apiRequestWithFallback<AssessmentRecommendationResponse>(
       '/api/v1/office/assessments/recommend',
       {
@@ -2018,12 +2224,12 @@ export const PrivacyOsService = {
       },
       () => buildFallbackAssessments(payload)
     );
-    return { recommendation: result.data, live: result.live };
+    return { recommendation: result.data, live: result.live, status: result.status };
   },
 
   evaluateDsarRequest: async (
     payload: DsarEvaluateRequest
-  ): Promise<{ dsar: DsarNexusEvaluationResponse; live: boolean }> => {
+  ): Promise<{ dsar: DsarNexusEvaluationResponse; live: boolean; status: OperationalDataStatus }> => {
     const result = await apiRequestWithFallback<DsarNexusEvaluationResponse>(
       '/api/v1/office/rights/evaluate-request',
       {
@@ -2032,21 +2238,21 @@ export const PrivacyOsService = {
       },
       () => buildFallbackDsarEvaluation(payload)
     );
-    return { dsar: result.data, live: result.live };
+    return { dsar: result.data, live: result.live, status: result.status };
   },
 
-  getRopaRecords: async (): Promise<{ records: RopaRecord[]; live: boolean }> => {
+  getRopaRecords: async (): Promise<{ records: RopaRecord[]; live: boolean; status: OperationalDataStatus }> => {
     const result = await apiRequestWithFallback<{ records: RopaRecord[] }>(
       '/api/v1/office/ropa/records',
       { method: 'GET' },
       () => ({ records: FALLBACK_ROPA_RECORDS })
     );
-    return { records: result.data.records || FALLBACK_ROPA_RECORDS, live: result.live };
+    return { records: result.data.records || FALLBACK_ROPA_RECORDS, live: result.live, status: result.status };
   },
 
   queryGovernedAssistant: async (
     payload: AssistantQueryRequest
-  ): Promise<{ response: GovernedAssistantResponse; live: boolean }> => {
+  ): Promise<{ response: GovernedAssistantResponse; live: boolean; status: OperationalDataStatus }> => {
     const result = await apiRequestWithFallback<GovernedAssistantResponse>(
       '/api/v1/office/assistant/query',
       {
@@ -2055,15 +2261,31 @@ export const PrivacyOsService = {
       },
       () => buildFallbackAssistantResponse(payload)
     );
-    return { response: result.data, live: result.live };
+    return { response: result.data, live: result.live, status: result.status };
   },
 
-  getIntegrationsStatus: async (): Promise<{ integrations: CorporateAiHubIntegrationStatus[]; live: boolean }> => {
+  getIntegrationsStatus: async (): Promise<{
+    integrations: CorporateAiHubIntegrationStatus[];
+    live: boolean;
+    status: OperationalDataStatus;
+  }> => {
     const result = await apiRequestWithFallback<{ integrations: CorporateAiHubIntegrationStatus[] }>(
       '/api/v1/integrations/status',
       { method: 'GET' },
-      () => ({ integrations: FALLBACK_INTEGRATION_STATUS })
+      () => ({
+        // UX-07: Never claim integrations are 'connected' when backend is unreachable
+        integrations: FALLBACK_INTEGRATION_STATUS.map((item) => ({
+          ...item,
+          status: demoModeEnabled ? 'offline_demo' : 'offline',
+          operational_state: demoModeEnabled ? 'demo' : 'offline',
+        })),
+      })
     );
-    return { integrations: result.data.integrations || FALLBACK_INTEGRATION_STATUS, live: result.live };
+    const list = (result.data.integrations || FALLBACK_INTEGRATION_STATUS).map((item) => ({
+      ...item,
+      status: result.live ? item.status : demoModeEnabled ? 'offline_demo' : 'offline',
+      operational_state: result.status,
+    }));
+    return { integrations: list, live: result.live, status: result.status };
   },
 };
